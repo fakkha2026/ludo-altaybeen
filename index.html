@@ -256,7 +256,8 @@ svg#board{width:100%;height:100%;display:block}
 .tray button{border:0;background:var(--panel-2);border-radius:20px;padding:7px 12px;font-weight:800;font-size:.9rem;cursor:pointer}
 
 /* ---------- overlays ---------- */
-.overlay{position:fixed;inset:0;background:#06111acc;backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;z-index:30}
+.overlay{position:fixed;inset:0;background:#06111acc;backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));z-index:30;overflow-y:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box}
+.overlay>*{margin-block:auto;flex:none}
 .card{background:var(--panel);border-radius:22px;padding:22px 18px;width:100%;max-width:400px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 50px #000a;align-items:stretch}
 .card h2{font-family:var(--display);font-weight:400;font-size:1.9rem;margin:0;text-align:center;color:var(--sand)}
 .card p{margin:0;color:var(--muted);text-align:center}
@@ -321,6 +322,38 @@ svg#board{width:100%;height:100%;display:block}
 .pf-head{display:flex;flex-direction:column;align-items:center;gap:6px}
 .pf-head .av{width:72px;height:72px;font-size:2.4rem}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pf{gap:12px;padding:18px 16px}
+.pf-top{display:flex;align-items:center;gap:14px}
+.pf-top .av{width:76px;height:76px;font-size:2.6rem;flex:none;position:relative;cursor:pointer}
+.pf-top .av i{position:absolute;bottom:-2px;left:-2px;width:26px;height:26px;border-radius:50%;background:var(--sand);color:#3a2408;font-size:.8rem;font-style:normal;display:grid;place-items:center;box-shadow:0 2px 0 var(--sand-dk)}
+.pf-id{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.pf-id b{font-family:var(--display);font-weight:400;font-size:1.6rem;color:var(--sand);line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-id small{color:var(--muted);font-size:.85rem;font-weight:700}
+.pf-xp{height:8px;border-radius:5px;background:var(--night);overflow:hidden}.pf-xp i{display:block;height:100%;background:var(--teal);border-radius:5px}
+.pf-x{position:absolute;top:10px;left:10px;width:34px;height:34px;border-radius:50%;border:0;background:var(--panel-2);color:var(--ink);font-size:1rem;cursor:pointer}
+.au-logo{font-size:3rem;text-align:center;line-height:1}
+.au-tabs{grid-template-columns:1fr 1fr!important}
+#authBox .field{text-align:start}
+.pf-tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--night);border-radius:12px;padding:3px;gap:3px}
+.pf-tabs button{border:0;background:transparent;color:var(--muted);font:800 .9rem var(--body);padding:9px 2px;border-radius:9px;cursor:pointer}
+.pf-tabs button.sel{background:var(--panel-2);color:var(--ink);box-shadow:0 0 0 1px #ffffff22}
+.pf-pane{display:flex;flex-direction:column;gap:10px}
+.pf-lbl{font-weight:800;font-size:.85rem;color:var(--muted);margin:2px 2px -2px}
+.pf-row{display:flex;gap:8px}.pf-row .field{flex:1;text-align:start;padding:10px 12px}
+.pf-row .ghost{flex:none;font-size:.95rem;padding:0 16px;background:var(--teal);color:#062824;border:0;border-radius:12px}
+.pf-avs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.pf-avs button{aspect-ratio:1;border:2px solid transparent;border-radius:12px;background:var(--night);font-size:1.6rem;cursor:pointer;padding:0}
+.pf-avs button.on{border-color:var(--sand);background:var(--panel-2)}
+.pf-wal{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pf-list{display:flex;flex-direction:column;background:var(--night);border-radius:14px;overflow:hidden}
+.pf-list>*{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border:0;background:transparent;color:var(--ink);font:700 .95rem var(--body);text-decoration:none;cursor:pointer;text-align:start;width:100%;box-sizing:border-box}
+.pf-list>*+*{border-top:1px solid #ffffff12}
+.pf-list .go{color:var(--muted)}
+.pf-list .danger{color:#ff8a80}
+.tgl{width:46px;height:28px;border-radius:15px;background:#ffffff22;position:relative;flex:none;transition:background .2s}
+.tgl::after{content:'';position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .2s}
+.tgl.on{background:var(--teal)}.tgl.on::after{transform:translateX(-18px)}
+
 .stat{background:var(--night);border-radius:14px;padding:10px 4px;text-align:center}
 .stat b{display:block;font-family:var(--display);font-weight:400;font-size:1.5rem;color:var(--sand);font-variant-numeric:tabular-nums}
 .stat small{color:var(--muted);font-size:.75rem}
@@ -654,13 +687,13 @@ svg#board{width:100%;height:100%;display:block}
 <div class="overlay" id="online" hidden>
   <div class="card" id="onA">
     <h2>أونلاين مع الربع</h2>
-    <input class="field" id="onNick" maxlength="14" placeholder="اسمك في اللعبة" autocomplete="off">
+    <input class="field" id="onNick" maxlength="14" placeholder="اسمك في اللعبة" autocomplete="off" readonly>
     <button class="btn sand" id="onCreate" type="button">أنشئ غرفة جديدة</button>
     <div class="or">أو ادخل غرفة ربعك</div>
     <input class="field" id="onCode" maxlength="5" inputmode="numeric" placeholder="رمز الغرفة" autocomplete="off" style="letter-spacing:4px">
     <button class="btn teal" id="onJoin" type="button">ادخل الغرفة</button>
     <div class="err" id="onErr"></div>
-    <p class="note">كل واحد يفتح اللعبة من جواله بنفس الرابط وهو مسجل دخول في Claude. شارك اللعبة مع ربعك من زر المشاركة أول.</p>
+    <p class="note">أنشئ غرفة وعطِ ربعك الرمز، أو اكتب رمز غرفتهم وادخل. كل واحد يلعب من جواله بحسابه.</p>
     <button class="ghost" id="onBack" type="button">رجوع</button>
   </div>
   <div class="card" id="onB" hidden>
@@ -735,17 +768,66 @@ svg#board{width:100%;height:100%;display:block}
     <button class="ghost" id="wheelClose" type="button">سكّر</button>
   </div>
 </div>
+<div class="overlay" id="authBox" hidden style="z-index:40">
+  <div class="card" style="gap:12px">
+    <div class="au-logo">🎲</div>
+    <h2 style="margin-top:-6px">لودو الطيبين</h2>
+    <div class="pf-tabs au-tabs" id="auTabs"><button type="button" data-a="in" class="sel">تسجيل دخول</button><button type="button" data-a="up">حساب جديد</button></div>
+    <p class="note" id="auMsg" style="color:var(--ink);font-weight:800" hidden></p>
+    <input class="field" id="auUser" maxlength="14" placeholder="اسم المستخدم" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <input class="field" id="auPass" type="password" maxlength="40" placeholder="كلمة السر" autocomplete="current-password">
+    <input class="field" id="auPass2" type="password" maxlength="40" placeholder="أعد كلمة السر" autocomplete="new-password" hidden>
+    <p class="note" id="auHint" hidden>اسم المستخدم من ٣ إلى ١٤ حرف أو رقم (بدون مسافات، وتقدر تستخدم _ )، وما يتكرر بين اللاعبين. كلمة السر ٦ خانات أو أكثر، واحفظها لأننا ما نقدر نرجعها لك.</p>
+    <div class="err" id="auErr"></div>
+    <button class="btn sand" id="auGo" type="button">دخول</button>
+    <button class="ghost" id="auGuest" type="button">العب كضيف</button>
+    <p class="note">بالدخول أو التسجيل توافق على <a href="https://fakkha2026.github.io/ludo-altaybeen/privacy.html" target="_blank" rel="noopener" style="color:var(--sand)">الخصوصية والشروط</a></p>
+  </div>
+</div>
 <div class="overlay" id="profBox" hidden>
-  <div class="card">
-    <div class="pf-head"><div class="av" id="pfAv">🦅</div><h2 id="pfName" style="font-size:1.6rem">ملفي</h2><p id="pfLv"></p></div>
-    <div class="stats" id="pfStats"></div>
-    <div style="display:flex;flex-direction:column;gap:6px" id="pfRules"></div>
-    <p class="note" style="text-align:center">الإحصائيات من لعبك ضد الكمبيوتر والأونلاين.</p>
-    <p class="note" id="pfCloud" style="text-align:center;font-weight:800;color:var(--ink)"></p>
-    <button class="btn teal" id="pfHow" type="button" style="font-size:1.15rem;padding:10px">📖 طريقة اللعب</button>
-    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-      <a class="ghost" id="pfPriv" href="https://fakkha2026.github.io/ludo-altaybeen/privacy.html" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">🔒 الخصوصية والشروط</a>
-      <button class="ghost" id="pfDel" type="button" style="color:#ff8a80">🗑️ حذف حسابي</button>
+  <div class="card pf" style="position:relative">
+    <button class="pf-x" id="pfX" type="button" aria-label="سكّر">✕</button>
+    <div class="pf-top">
+      <div class="av" id="pfAv" role="button" aria-label="غيّر صورتك">🦅<i>✏️</i></div>
+      <div class="pf-id"><b id="pfName">ملفي</b><small id="pfLv"></small><div class="pf-xp"><i id="pfXp"></i></div></div>
+    </div>
+    <div class="pf-tabs" id="pfTabs"><button type="button" data-p="me" class="sel">👤 ملفي</button><button type="button" data-p="st">📊 إحصائياتي</button><button type="button" data-p="set">⚙️ الإعدادات</button></div>
+    <div class="pf-pane" id="pf-me">
+      <div class="pf-lbl">اسم المستخدم</div>
+      <div class="pf-row" id="pfNameRow"><input class="field" id="pfNick" maxlength="14" placeholder="اسم المستخدم" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="ghost" id="pfNickSave" type="button">حفظ</button></div>
+      <div id="pfGuest" hidden style="background:var(--night);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;text-align:center">
+        <b style="color:var(--ink)">أنت تلعب كضيف 👤</b>
+        <small style="color:var(--muted)">سوّ حساب عشان يكون لك اسم مستخدم خاص فيك، وتلعب أونلاين، ويرجع لك تقدمك من أي جوال.</small>
+        <div style="display:flex;gap:8px"><button class="btn sand" id="pfSignUp" type="button" style="font-size:1.05rem;padding:9px">حساب جديد</button><button class="btn teal" id="pfSignIn" type="button" style="font-size:1.05rem;padding:9px">تسجيل دخول</button></div>
+      </div>
+      <div class="err" id="pfNickErr"></div>
+      <div class="pf-lbl">صورتك</div>
+      <div class="pf-avs" id="pfAvs"></div>
+      <div class="pf-lbl">رصيدك</div>
+      <div class="pf-wal"><div class="stat"><b id="pfCoins">٠</b><small>🪙 عملات</small></div><div class="stat"><b id="pfGems">٠</b><small>💎 جواهر</small></div></div>
+      <p class="note" id="pfCloud" style="font-weight:800;color:var(--ink)"></p>
+    </div>
+    <div class="pf-pane" id="pf-st" hidden>
+      <div class="stats" id="pfStats"></div>
+      <div class="pf-lbl">حسب نمط اللعب</div>
+      <div style="display:flex;flex-direction:column;gap:6px" id="pfRules"></div>
+      <p class="note">الإحصائيات من لعبك ضد الكمبيوتر والأونلاين.</p>
+    </div>
+    <div class="pf-pane" id="pf-set" hidden>
+      <div class="pf-lbl">اللعب</div>
+      <div class="pf-list">
+        <button type="button" id="pfSnd"><span>🔊 الأصوات</span><span class="tgl" id="pfSndT"></span></button>
+        <button type="button" id="pfHow"><span>📖 طريقة اللعب</span><span class="go">‹</span></button>
+      </div>
+      <div class="pf-lbl">الحساب</div>
+      <div class="pf-list">
+        <div id="pfAcct" style="cursor:default"><span id="pfAcctTxt">👤 ضيف</span><span></span></div>
+        <button type="button" id="pfOut"><span>🚪 تسجيل خروج</span><span class="go">‹</span></button>
+        <a id="pfPriv" href="https://fakkha2026.github.io/ludo-altaybeen/privacy.html" target="_blank" rel="noopener"><span>🔒 الخصوصية والشروط</span><span class="go">‹</span></a>
+        <a href="mailto:fakkha2026@gmail.com"><span>✉️ تواصل معنا</span><span class="go">‹</span></a>
+        <button type="button" id="pfDel" class="danger"><span>🗑️ حذف حسابي</span><span class="go">‹</span></button>
+      </div>
+      <p class="note" id="pfVer">لودو الطيبين · النسخة ١٫٠</p>
     </div>
     <button class="ghost" id="profClose" type="button">سكّر</button>
   </div>
@@ -755,6 +837,7 @@ svg#board{width:100%;height:100%;display:block}
     <h2 style="font-size:1.5rem;margin:0">حذف الحساب؟</h2>
     <p class="note" style="font-size:.95rem;color:var(--ink)">بينحذف حسابك نهائياً من السيرفر: تقدمك، عملاتك وجواهرك، مشترياتك داخل اللعبة، إحصائياتك، واسمك في لوحة الصدارة. ما تقدر ترجعه بعد الحذف.</p>
     <p class="note">الاشتراكات والمشتريات اللي دفعتها عن طريق أبل تنلغى وتسترجع من إعدادات حسابك في أبل، مو من اللعبة.</p>
+    <input class="field" id="delPass" type="password" maxlength="40" placeholder="اكتب كلمة السر للتأكيد" autocomplete="current-password" hidden>
     <div class="err" id="delErr"></div>
     <button class="btn" id="delGo" type="button" style="background:var(--red);color:#fff;box-shadow:0 5px 0 #8f2620;font-size:1.2rem;padding:11px">نعم، احذف حسابي</button>
     <button class="ghost" id="delNo" type="button">لا، رجوع</button>
@@ -893,7 +976,8 @@ async function initCloud(){try{
   const uid=await u.id();if(!uid)return;const ref=db.doc('data/users/'+uid+'/save');
   const snap=await ref.get();const R=snap.exists?snap.data():null;
   if(R&&typeof R==='object'){
-    const newer=(+R.t||0)>(+W.t||0),base=newer?R:W,other=newer?W:R;
+    let pull=false;try{pull=localStorage.getItem('ludo-pull')==='1';localStorage.removeItem('ludo-pull')}catch(e){}
+    const newer=pull||(+R.t||0)>(+W.t||0),base=newer?R:W,other=newer?W:R;
     const M=Object.assign({},DEF,base);['ownD','ownT','ownH'].forEach(k=>{M[k]=[...new Set([...(Array.isArray(base[k])?base[k]:[]),...(Array.isArray(other[k])?other[k]:[]),...DEF[k]])]});
     M.pid=R.pid||W.pid;W=M;try{localStorage.setItem('ludo-dira',JSON.stringify(W))}catch(e){}
     renderWallet();if(!$('shop').hidden)renderShop();if(!$('closet').hidden)renderCloset();if(!$('home').hidden){renderMissions();renderModes()}}
@@ -966,13 +1050,20 @@ async function recordOnline(winCi){
     const won=p.ci===winCi||p.ci===m;
     try{const ref=DB.doc('board/'+p.pid),cur=await ref.get(),o=cur.exists?cur.data():{};
       await ref.set({pid:p.pid,nick:String(p.name||'لاعب').replace(' 🤖','').slice(0,14),av:String(p.av||'🙂').slice(0,4),w:(+o.w||0)+(won?1:0),p:(+o.p||0)+1,at:Date.now()})}catch(e){}}}
-function openProfile(){const st=ST();
-  $('pfAv').textContent=W.av;$('pfName').textContent=(W.nick||'').trim()||'ملفي';$('pfLv').textContent='مستوى '+toAr(level());
+function openProfile(){pfTab('me');renderProfile();$('pfNick').value=W.nick||'';$('pfNickErr').textContent='';$('profBox').hidden=false;$('profBox').scrollTop=0}
+function pfTab(k){document.querySelectorAll('#pfTabs button').forEach(b=>b.classList.toggle('sel',b.dataset.p===k));['me','st','set'].forEach(x=>$('pf-'+x).hidden=x!==k)}
+function renderProfile(){const st=ST();
+  $('pfAv').firstChild.textContent=W.av;$('pfName').textContent=(W.nick||'').trim()||'لاعب';
+  const lv=level(),inLv=W.xp%300;$('pfLv').textContent=`مستوى ${toAr(lv)}، خبرتك ${toAr(inLv)} من ${toAr(300)}`;$('pfXp').style.width=Math.round(inLv*100/300)+'%';
+  $('pfCoins').textContent=toAr((+W.coins||0).toLocaleString('en-US'));$('pfGems').textContent=toAr(+W.gems||0);
+  const box=$('pfAvs');box.innerHTML='';AVS.forEach(e=>{const b=document.createElement('button');b.type='button';b.textContent=e;b.className=W.av===e?'on':'';b.setAttribute('aria-label','اختر '+e);
+    b.onclick=()=>{W.av=e;save();renderProfile();renderWallet();if(!$('closet').hidden)renderCloset()};box.appendChild(b)});
   const rate=st.play?Math.round(st.win*100/st.play):0;
   $('pfStats').innerHTML=[[st.play,'لعبت'],[st.win,'فزت'],[toAr(rate)+'٪','نسبة الفوز'],[st.eat,'أكلت حجر'],[st.home,'وصّلت حجر'],[st.six,'طلع لك ٦'],[st.best,'أطول سلسلة فوز'],[st.run,'سلسلتك الحين'],[W.days||1,'أيام متتالية']]
     .map(([v,t])=>`<div class="stat"><b>${typeof v==='number'?toAr(v):v}</b><small>${t}</small></div>`).join('');
   $('pfRules').innerHTML=Object.keys(RULES).map(k=>{const x=st.rules[k]||[0,0];return `<div class="rrow"><b>${RULES[k].name}</b><span>فزت ${toAr(x[1])} من ${toAr(x[0])}</span></div>`}).join('');
-  cloudBadge();$('profBox').hidden=false}
+  $('pfSndT').classList.toggle('on',!!sndOn);
+  renderAcct();cloudBadge()}
 const level=()=>Math.floor(W.xp/300)+1;
 const today=()=>new Date().toDateString();
 let toastT;
@@ -1704,17 +1795,104 @@ function badName(n){const a=nrmName(n,false),b=nrmName(n,true);
   return false}
 function safeName(n){n=String(n||'').trim();return !n||badName(n)?'لاعب':n}
 // ---------- حذف الحساب ----------
-$('pfDel').onclick=()=>{$('delErr').textContent='';$('delGo').disabled=false;$('profBox').hidden=true;$('delBox').hidden=false};
+document.querySelectorAll('#pfTabs button').forEach(b=>b.onclick=()=>pfTab(b.dataset.p));
+$('pfX').onclick=()=>$('profBox').hidden=true;
+$('pfAv').onclick=()=>{pfTab('me');$('pfAvs').scrollIntoView({behavior:'smooth',block:'center'})};
+$('pfNick').addEventListener('keydown',ev=>{if(ev.key==='Enter')$('pfNickSave').click()});
+$('pfSnd').onclick=()=>{$('sndBtn').click();$('pfSndT').classList.toggle('on',!!sndOn)};
+$('pfDel').onclick=()=>{$('delErr').textContent='';$('delPass').value='';$('delPass').hidden=!AU.user;$('delGo').disabled=false;$('profBox').hidden=true;$('delBox').hidden=false};
 $('delNo').onclick=()=>{$('delBox').hidden=true;$('profBox').hidden=false};
-$('delGo').onclick=async()=>{const go=$('delGo');go.disabled=true;$('delErr').textContent='لحظة، نحذف حسابك…';
-  CLOUD=null;clearTimeout(cloudT);
-  try{if(window.__FB){const c=await window.__FB;
-      await c.fs.collection('leaderboard').doc(c.uid).delete();
-      await c.fs.collection('users').doc(c.uid).delete();
-      try{await c.auth.currentUser.delete()}catch(e){await c.auth.signOut().catch(()=>{})}}
-    try{localStorage.removeItem('ludo-dira');localStorage.removeItem('ludo-snd')}catch(e){}
-    $('delErr').textContent='انحذف حسابك ✔️';setTimeout(()=>location.reload(),900)
-  }catch(e){go.disabled=false;$('delErr').textContent='ما قدرنا نحذف الحساب الحين. تأكد من الإنترنت وجرّب مرة ثانية.';initCloud()}};
+// ---------- الحساب: اسم مستخدم وكلمة سر ----------
+const AU={c:null,user:false,key:''};
+function unKey(n){return String(n||'').trim().toLowerCase().replace(/[ً-ٰٟـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي')}
+function unValid(n){return /^[a-zA-Z0-9_ء-ي٠-٩]{3,14}$/.test(n)}
+function unMail(k){return 'u'+Array.from(new TextEncoder().encode(k)).map(b=>b.toString(16).padStart(2,'0')).join('')+'@ludo-altaybeen.app'}
+function auErrTxt(e){const c=(e&&e.code)||'';
+  if(c==='taken'||c==='auth/email-already-in-use')return 'اسم المستخدم مستخدم، اختر اسم ثاني.';
+  if(c==='nouser')return 'اسم المستخدم مو موجود. تأكد منه أو سوّ حساب جديد.';
+  if(c==='auth/wrong-password'||c==='auth/invalid-credential'||c==='auth/invalid-login-credentials')return 'كلمة السر غلط.';
+  if(c==='auth/too-many-requests')return 'محاولات كثيرة، انتظر شوي وجرّب.';
+  if(c==='auth/network-request-failed'||c==='unavailable')return 'ما فيه اتصال، تأكد من الإنترنت.';
+  if(c==='auth/operation-not-allowed')return 'الدخول بكلمة السر مو مفعّل في السيرفر.';
+  if(c==='permission-denied')return 'السيرفر رفض الطلب. تأكد إن قواعد السيرفر محدّثة.';
+  return 'صار خطأ، جرّب مرة ثانية.'}
+let auMode='in';
+function auSet(m){auMode=m;document.querySelectorAll('#auTabs button').forEach(b=>b.classList.toggle('sel',b.dataset.a===m));
+  $('auPass2').hidden=m!=='up';$('auHint').hidden=m!=='up';$('auGo').textContent=m==='up'?'سوّ حسابي':'دخول';
+  $('auPass').autocomplete=m==='up'?'new-password':'current-password';$('auErr').textContent=''}
+function openAuth(m,msg){auSet(m||'in');const e=$('auMsg');e.textContent=msg||'';e.hidden=!msg;
+  let g=null;try{g=localStorage.getItem('ludo-guest')}catch(x){}
+  $('auGuest').textContent=g||AU.user||msg?'رجوع':'العب كضيف';$('authBox').hidden=false}
+document.querySelectorAll('#auTabs button').forEach(b=>b.onclick=()=>auSet(b.dataset.a));
+$('auGuest').onclick=()=>{try{localStorage.setItem('ludo-guest','1')}catch(e){}$('authBox').hidden=true};
+[$('auUser'),$('auPass'),$('auPass2')].forEach(i=>i.addEventListener('keydown',ev=>{if(ev.key==='Enter')$('auGo').click()}));
+$('auGo').onclick=async()=>{const go=$('auGo'),er=$('auErr'),name=$('auUser').value.trim(),pass=$('auPass').value;er.textContent='';
+  if(!AU.c){er.textContent='ما فيه اتصال بالسيرفر، تأكد من الإنترنت.';return}
+  if(!name){er.textContent='اكتب اسم المستخدم.';return}
+  if(auMode==='up'){
+    if(!unValid(name)){er.textContent='اسم المستخدم من ٣ إلى ١٤ حرف أو رقم، بدون مسافات أو رموز.';return}
+    if(badName(name)){er.textContent='الاسم فيه كلمة غير لائقة، اختر اسم ثاني.';return}
+    if(pass.length<6){er.textContent='كلمة السر لازم ٦ خانات أو أكثر.';return}
+    if(pass!==$('auPass2').value){er.textContent='كلمتين السر مو نفس بعض.';return}}
+  else if(!pass){er.textContent='اكتب كلمة السر.';return}
+  go.disabled=true;const old=go.textContent;go.textContent='لحظة…';
+  const c=AU.c,key=unKey(name),ref=c.fs.collection('usernames').doc(key);
+  try{
+    if(auMode==='up'){const cu=c.auth.currentUser,mail=unMail(key);
+      await c.fs.runTransaction(async t=>{const d=await t.get(ref);if(d.exists)throw {code:'taken'};t.set(ref,{uid:cu.uid,name,mail,at:Date.now()})});
+      try{await cu.linkWithCredential(firebase.auth.EmailAuthProvider.credential(mail,pass))}catch(e){await ref.delete().catch(()=>{});throw e}
+      AU.user=true;AU.key=key;W.nick=name;save();try{localStorage.removeItem('ludo-guest')}catch(e){}
+      $('authBox').hidden=true;$('auPass').value=$('auPass2').value='';renderAcct();if(!$('profBox').hidden)renderProfile();toast('أهلاً '+name+' 👋 انحفظ حسابك')}
+    else{const d=await ref.get();if(!d.exists)throw {code:'nouser'};
+      if(CLOUD){try{await CLOUD.set(JSON.parse(JSON.stringify(W)))}catch(e){}}CLOUD=null;clearTimeout(cloudT);
+      await c.auth.signInWithEmailAndPassword(d.data().mail,pass);
+      try{localStorage.removeItem('ludo-dira');localStorage.removeItem('ludo-guest');localStorage.setItem('ludo-pull','1')}catch(e){}
+      go.textContent='تم ✔️';location.reload();return}
+  }catch(e){er.textContent=auErrTxt(e)}
+  go.disabled=false;go.textContent=old};
+function renderAcct(){const has=!!window.__FB;
+  $('pfNameRow').hidden=has&&!AU.user;$('pfGuest').hidden=!(has&&!AU.user);
+  $('pfAcct').hidden=$('pfOut').hidden=!has;$('pfOut').hidden=!AU.user;
+  $('pfAcctTxt').textContent=AU.user?'👤 مسجل باسم '+(W.nick||''):'👤 تلعب كضيف';
+  const pa=$('pfAcct');pa.style.display=has?'':'none'}
+$('pfSignUp').onclick=()=>openAuth('up');$('pfSignIn').onclick=()=>openAuth('in');
+$('pfOut').onclick=async()=>{const b=$('pfOut');b.disabled=true;
+  try{if(CLOUD)await CLOUD.set(JSON.parse(JSON.stringify(W)))}catch(e){}CLOUD=null;clearTimeout(cloudT);
+  try{await AU.c.auth.signOut()}catch(e){}
+  try{localStorage.removeItem('ludo-dira');localStorage.removeItem('ludo-guest')}catch(e){}location.reload()};
+$('pfNickSave').onclick=async()=>{const v=$('pfNick').value.trim(),e=$('pfNickErr');e.style.color='';
+  if(!window.__FB){if(!v){e.textContent='اكتب اسم.';return}if(badName(v)){e.textContent='الاسم فيه كلمة غير لائقة، اختر اسم ثاني.';return}W.nick=v.slice(0,14);save();renderProfile();e.style.color='var(--teal)';e.textContent='انحفظ اسمك ✔️';return}
+  if(!AU.user){openAuth('up');return}
+  if(!unValid(v)){e.textContent='اسم المستخدم من ٣ إلى ١٤ حرف أو رقم، بدون مسافات أو رموز.';return}
+  if(badName(v)){e.textContent='الاسم فيه كلمة غير لائقة، اختر اسم ثاني.';return}
+  if(v===W.nick){e.textContent='هذا اسمك الحين.';return}
+  const c=AU.c,key=unKey(v),nref=c.fs.collection('usernames').doc(key),oref=AU.key?c.fs.collection('usernames').doc(AU.key):null,btn=$('pfNickSave');btn.disabled=true;e.textContent='لحظة…';
+  try{await c.fs.runTransaction(async t=>{const n=await t.get(nref);let mail=c.auth.currentUser.email;
+      if(oref){const o=await t.get(oref);if(o.exists&&o.data().mail)mail=o.data().mail}
+      if(n.exists&&n.data().uid!==c.auth.currentUser.uid)throw {code:'taken'};
+      if(oref&&AU.key!==key)t.delete(oref);t.set(nref,{uid:c.auth.currentUser.uid,name:v,mail,at:Date.now()})});
+    AU.key=key;W.nick=v;save();renderProfile();e.style.color='var(--teal)';e.textContent='تغيّر اسم المستخدم ✔️ وتدخل فيه من الحين'}
+  catch(x){e.textContent=auErrTxt(x)}btn.disabled=false};
+async function initAuth(){if(!window.__FB)return;let c;try{c=await window.__FB}catch(e){return}AU.c=c;
+  const u=c.auth.currentUser;AU.user=!!(u&&!u.isAnonymous);
+  if(AU.user){try{const q=await c.fs.collection('usernames').where('uid','==',u.uid).limit(1).get();
+      if(!q.empty){AU.key=q.docs[0].id;const nm=q.docs[0].data().name;if(nm&&W.nick!==nm){W.nick=nm;save()}}}catch(e){}}
+  else{let g=null;try{g=localStorage.getItem('ludo-guest')}catch(e){}if(!g)openAuth('in')}
+  renderAcct()}
+setTimeout(initAuth,0);
+$('delGo').onclick=async()=>{const go=$('delGo'),er=$('delErr');
+  if(AU.user&&!$('delPass').value){er.textContent='اكتب كلمة السر عشان نتأكد إنه أنت.';return}
+  go.disabled=true;er.textContent='لحظة، نحذف حسابك…';
+  try{if(window.__FB){const c=await window.__FB,cu=c.auth.currentUser;
+      if(AU.user){try{await cu.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(cu.email,$('delPass').value))}catch(e){go.disabled=false;er.textContent=auErrTxt(e);return}}
+      CLOUD=null;clearTimeout(cloudT);
+      await c.fs.collection('leaderboard').doc(cu.uid).delete();
+      await c.fs.collection('users').doc(cu.uid).delete();
+      if(AU.key)await c.fs.collection('usernames').doc(AU.key).delete();
+      try{await cu.delete()}catch(e){await c.auth.signOut().catch(()=>{})}}
+    try{localStorage.removeItem('ludo-dira');localStorage.removeItem('ludo-snd');localStorage.removeItem('ludo-guest')}catch(e){}
+    er.textContent='انحذف حسابك ✔️';setTimeout(()=>location.reload(),900)
+  }catch(e){go.disabled=false;er.textContent='ما قدرنا نحذف الحساب الحين. تأكد من الإنترنت وجرّب مرة ثانية.';initCloud()}};
 
 // ---------- اللعب (يشتغل على جوال صاحب اللعبة) ----------
 function startTurn(){
@@ -1941,7 +2119,7 @@ function sync(){
   queueMicrotask(()=>{syncPending=false;if(NET.host&&NET.r&&S)NET.r.presence({g:snap()}).catch(()=>{})});
 }
 function sendAct(a){if(!NET.r)return;NET.seq++;NET.r.presence({act:Object.assign({n:NET.seq},a)}).catch(()=>{})}
-function nick(){const v=$('onNick').value.trim().slice(0,14);return v||'لاعب'}
+function nick(){return String(W.nick||'').trim().slice(0,14)||'لاعب'}
 function openOnline(){
   $('onA').hidden=false;$('onB').hidden=true;$('online').hidden=false;
   $('onNick').value=W.nick||'';$('onErr').textContent='';
@@ -2075,7 +2253,7 @@ function leaveOnline(){
   if(MODE==='online'){GEN++;S=null;MODE=null}
   $('online').hidden=true;
 }
-$('modeO').onclick=openOnline;
+$('modeO').onclick=()=>{if(window.__FB&&!AU.user){openAuth('up','اللعب أونلاين يحتاج حساب. سوّ حسابك أو سجّل دخول.');return}openOnline()};
 $('onBack').onclick=()=>$('online').hidden=true;
 $('onCreate').onclick=createRoom;
 $('onJoin').onclick=joinRoom;
