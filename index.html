@@ -808,6 +808,7 @@ const DICE=[
  {id:'nd',name:'أخضر وطني',bg:'#1c6b3a',pip:'#ffffff',six:'#ffffff',edge:'#0e3f22',price:900,season:'national'}
 ];
 const TOKS=[
+ {id:'tayb',name:'حجر الطيبين',price:0,stand:1},
  {id:'dot',name:'دائرة',price:0},
  {id:'star',name:'نجمة',price:500},
  {id:'gemt',name:'ألماسة',price:30,gem:true},
@@ -859,11 +860,13 @@ const MIS={
 const DIFF={easy:{name:'سهل',mult:.5},mid:{name:'متوسط',mult:1},hard:{name:'صعب',mult:1.5}};
 
 // ---------- المحفظة ----------
-const DEF={tut:0,stake:'n',t:0,coins:1000,gems:10,xp:0,gift:'',dice:'classic',tok:'dot',theme:'classic',av:'🦅',ownD:['classic'],ownT:['dot'],ownH:['classic'],diff:'mid',rule:'classic',st:null,pid:'',spin:'',days:0,lastDay:'',nick:'',mis:null};
+const DEF={tut:0,stake:'n',t:0,coins:1000,gems:10,xp:0,gift:'',dice:'classic',tok:'tayb',theme:'classic',av:'🦅',ownD:['classic'],ownT:['tayb','dot'],ownH:['classic'],diff:'mid',rule:'classic',st:null,pid:'',spin:'',days:0,lastDay:'',nick:'',mis:null};
 let W=Object.assign({},DEF);
 try{const s=JSON.parse(localStorage.getItem('ludo-dira')||'null');if(s)W=Object.assign({},DEF,s)}catch(e){}
 if(!W.pid)W.pid='p'+Math.random().toString(36).slice(2,12)+Date.now().toString(36);
-if(!TOKS.some(t=>t.id===W.tok))W.tok='dot';
+if(!TOKS.some(t=>t.id===W.tok))W.tok='tayb';
+if(!W.m1){W.m1=1;if(W.tok==='dot')W.tok='tayb'}
+if(Array.isArray(W.ownT)&&!W.ownT.includes('tayb'))W.ownT.unshift('tayb');
 ['ownD','ownT','ownH'].forEach(k=>{if(!Array.isArray(W[k]))W[k]=DEF[k].slice()});
 function save(){W.t=Date.now();try{localStorage.setItem('ludo-dira',JSON.stringify(W))}catch(e){}cloudPush()}
 // ---------- حفظ الحساب في Claude: يرجع لك تقدمك ومشترياتك من أي جهاز ----------
@@ -1072,12 +1075,26 @@ function grad(g,c){
   [[0,c.hex],[1,c.dark]].forEach(([o,col])=>el('stop',{offset:o,'stop-color':col},lg));
   return svg._g[c.hex]=[`url(#${id})`,`url(#${id2})`];
 }
-const STAND=new Set(['pawn','shield','falcon','dallah','camel','crown']);
+const STAND=new Set(['tayb','pawn','shield','falcon','dallah','camel','crown']);
 function twin(g,d,fill,dark){el('path',{d,fill:'none',stroke:'#fff','stroke-width':.075,'stroke-linejoin':'round'},g);return el('path',{d,fill,stroke:dark,'stroke-width':.025,'stroke-linejoin':'round'},g)}
 function standToken(g,style,c,top,side){
   g=el('g',{transform:'translate(0,-.03) scale(1.32)'},g);
   el('ellipse',{cx:.03,cy:.31,rx:.3,ry:.09,fill:'#0006'},g);
   const D=c.dark;
+  if(style==='tayb'){
+    const svg=g.ownerSVGElement;svg._cg=svg._cg||{};let cid=svg._cg[c.hex];
+    if(!cid){let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);cid='cg'+(++UID);svg._cg[c.hex]=cid;
+      const lg=el('linearGradient',{id:cid,x1:0,y1:0,x2:1,y2:0},defs);[[0,c.dark],[.3,c.lite],[.55,c.hex],[1,c.dark]].forEach(([o,col])=>el('stop',{offset:o,'stop-color':col},lg));
+      const rg=el('radialGradient',{id:cid+'h',cx:'.38',cy:'.32',r:'.72'},defs);[[0,'#ffffff'],[.22,c.lite],[.62,c.hex],[1,c.dark]].forEach(([o,col])=>el('stop',{offset:o,'stop-color':col},rg))}
+    const F='url(#'+cid+')',H='url(#'+cid+'h)',st={stroke:D,'stroke-width':.022,'stroke-linejoin':'round'};
+    el('path',Object.assign({d:'M-.25,.19 L-.25,.25 A.25,.08 0 0 0 .25,.25 L.25,.19 Z',fill:F},st),g);
+    el('ellipse',Object.assign({cx:0,cy:.19,rx:.25,ry:.08,fill:F},st),g);
+    el('path',Object.assign({d:'M-.2,.19 L-.07,-.1 L.07,-.1 L.2,.19 A.2,.06 0 0 1 -.2,.19 Z',fill:F},st),g);
+    el('ellipse',Object.assign({cx:0,cy:-.1,rx:.13,ry:.042,fill:F},st),g);
+    el('circle',Object.assign({cx:0,cy:-.25,r:.145,fill:H},st),g);
+    el('ellipse',{cx:-.05,cy:-.3,rx:.055,ry:.035,fill:'#fff',opacity:.85},g);
+    el('ellipse',{cx:-.12,cy:.175,rx:.07,ry:.022,fill:'#fff',opacity:.45},g);
+    el('path',{d:'M-.13,.15 L-.05,-.06',stroke:'#fff',opacity:.3,'stroke-width':.03,'stroke-linecap':'round'},g)}
   if(style==='pawn'){
     el('ellipse',{cx:0,cy:.25,rx:.27,ry:.09,fill:side,stroke:'#fff','stroke-width':.04},g);
     twin(g,'M-.21,.24 C-.19,.06 -.1,-.01 -.08,-.08 L.08,-.08 C.1,-.01 .19,.06 .21,.24 Z',top,D);
@@ -1332,7 +1349,7 @@ function renderSeasons(){const box=$('seasonList');box.innerHTML='';
     card.append(g,pv);box.appendChild(card)})}
 function openPreview(id){const z=SEASONS.find(x=>x.id===id),th=THEMES.find(t=>t.season===id);
   $('pvTitle').textContent=z.emoji+' '+z.name;$('pvSub').textContent=seasonLine(z);
-  const svg=$('pvBoard');drawBoard(svg,th);const toks=TOKS.filter(t=>t.season===id),tk=toks[0]?toks[0].id:'dot';
+  const svg=$('pvBoard');drawBoard(svg,th);const toks=TOKS.filter(t=>t.season===id),tk=toks[0]?toks[0].id:'tayb';
   COL.forEach((c,ci)=>[0,3].forEach(k=>{const [sx,sy]=SPOTS[k];const g=el('g',{transform:`translate(${c.base[0]+sx},${c.base[1]+sy}) scale(1.35)`},svg);tokenInner(g,tk,c)}));
   const dk=DICE.find(d=>d.season===id);$('pvDice').hidden=!dk;if(dk)diceSvg(dk,6,$('pvDice'));
   $('pvBox').hidden=false}
@@ -1451,8 +1468,8 @@ function startMode(m){
   const pool=BOTS.slice().sort(()=>Math.random()-.5);
   let hn=0;const players=[];
   roles.forEach((r,ci)=>{if(r==='off')return;
-    if(r==='human'){hn++;players.push({ci,kind:'local',name:m==='friends'?'لاعب '+toAr(hn):'أنت',av:m==='friends'?['😎','🤠','🧐','😄'][ci]:W.av,tok:m==='friends'?'dot':W.tok})}
-    else{const b=pool.pop();players.push({ci,kind:'bot',name:b.n,av:b.a,tok:'dot'})}
+    if(r==='human'){hn++;players.push({ci,kind:'local',name:m==='friends'?'لاعب '+toAr(hn):'أنت',av:m==='friends'?['😎','🤠','🧐','😄'][ci]:W.av,tok:m==='friends'?'tayb':W.tok})}
+    else{const b=pool.pop();players.push({ci,kind:'bot',name:b.n,av:b.a,tok:'tayb'})}
   });
   newGame(players);show('game');
 }
@@ -1470,7 +1487,7 @@ function buildPieces(players){
     tokEls[p.ci]=[0,1,2,3].map(k=>{
       const g=el('g',{class:'tok'},tokLayer);
       el('circle',{class:'ring',cx:0,cy:0,r:.5,fill:'none',stroke:'#1d1622'},g);
-      tokenInner(g,TOKS.some(t=>t.id===p.tok)?p.tok:'dot',COL[p.ci]);
+      tokenInner(g,TOKS.some(t=>t.id===p.tok)?p.tok:'tayb',COL[p.ci]);
       g.addEventListener('click',()=>onTokenClick(p.ci,k));
       return g;
     });
@@ -1870,7 +1887,7 @@ let roomNS=null,roomReady=false;
 (async()=>{try{roomNS=window.claude&&window.claude.use?await window.claude.use('room'):null}catch(e){roomNS=null}roomReady=true})();
 const SEATS={2:[0,2],3:[0,1,2],4:[0,1,2,3]};
 function resetNet(){Object.assign(NET,{r:null,host:false,guest:false,code:'',myPeer:'',myCi:-1,last:{},hostPeer:'',lastEv:0,winShown:false,order:[],lobby:[],seenSay:{},wait:false})}
-function snap(){return {p:S.players.map(p=>[p.ci,p.name,p.av,p.peer||'',p.tok||'dot',p.pid||'']),c:S.cur,d:S.dice,ph:S.phase,t:S.players.map(p=>S.tok[p.ci]),m:S.moves,s:S.msg,ev:S.ev,h:S.hop,w:S.winner,gid:S.gid,r:S.rule,k:S.kills,pl:S.pool||[],sl:S.sel||0,mv:S.moved||0,dl:S.dl?Math.max(0,S.dl-Date.now()):0}}
+function snap(){return {p:S.players.map(p=>[p.ci,p.name,p.av,p.peer||'',p.tok||'tayb',p.pid||'']),c:S.cur,d:S.dice,ph:S.phase,t:S.players.map(p=>S.tok[p.ci]),m:S.moves,s:S.msg,ev:S.ev,h:S.hop,w:S.winner,gid:S.gid,r:S.rule,k:S.kills,pl:S.pool||[],sl:S.sel||0,mv:S.moved||0,dl:S.dl?Math.max(0,S.dl-Date.now()):0}}
 let syncPending=false;
 function sync(){
   if(!NET.host||!NET.r||!S||MODE!=='online'||syncPending)return;
@@ -1931,7 +1948,7 @@ function onHostPeers(ch){
     NET.order=NET.order.filter(pe=>guests.some(g=>g.peer===pe));
     guests.forEach(g=>{if(!NET.order.includes(g.peer))NET.order.push(g.peer)});
     const lob=[{peer:NET.myPeer,nick:W.nick,av:W.av,tok:W.tok,pid:W.pid}];
-    NET.order.slice(0,3).forEach(pe=>{const g=guests.find(x=>x.peer===pe),pr=g.presence;lob.push({peer:pe,nick:String(pr.nick||'لاعب').slice(0,14),av:String(pr.av||'🙂').slice(0,4),tok:String(pr.tok||'dot').slice(0,8),pid:String(pr.pid||'').slice(0,40)})});
+    NET.order.slice(0,3).forEach(pe=>{const g=guests.find(x=>x.peer===pe),pr=g.presence;lob.push({peer:pe,nick:String(pr.nick||'لاعب').slice(0,14),av:String(pr.av||'🙂').slice(0,4),tok:String(pr.tok||'tayb').slice(0,8),pid:String(pr.pid||'').slice(0,40)})});
     const changed=JSON.stringify(lob)!==JSON.stringify(NET.lobby);
     NET.lobby=lob;if(changed)NET.r.presence({lobby:lob}).catch(()=>{});
     renderLobby();
