@@ -1,0 +1,30 @@
+workflows:
+  ios-check:
+    name: لودو الطيبين - تجربة البناء
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      node: 20
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: تجهيز ملفات اللعبة
+        script: |
+          mkdir -p www assets
+          cp index.html www/
+          cp icon.png www/
+          cp icon.png assets/icon-only.png
+          cp icon.png assets/icon.png
+      - name: تثبيت الأدوات
+        script: npm install
+      - name: إضافة الآيفون
+        script: npx cap add ios
+      - name: الأيقونة
+        script: npx capacitor-assets generate --ios --iconBackgroundColor '#0d2230' --splashBackgroundColor '#0d2230'
+      - name: مزامنة
+        script: npx cap sync ios
+      - name: بناء تجريبي
+        script: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build | tail -40
+          exit ${PIPESTATUS[0]}

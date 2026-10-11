@@ -1,0 +1,10 @@
+{
+  "appId": "com.fakkha.ludo",
+  "appName": "لودو الطيبين",
+  "webDir": "www",
+  "backgroundColor": "#0d2230",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#0d2230"
+  }
+}
