@@ -14,7 +14,7 @@
       var auth=firebase.auth(),fs=firebase.firestore();
       var done=false;
       auth.onAuthStateChanged(function(u){
-        if(u&&!done){done=true;res({uid:u.uid,fs:fs})}
+        if(u&&!done){done=true;res({uid:u.uid,fs:fs,auth:auth})}
         else if(!u)auth.signInAnonymously().catch(rej);
       });
     }catch(e){rej(e)}
@@ -743,7 +743,21 @@ svg#board{width:100%;height:100%;display:block}
     <p class="note" style="text-align:center">الإحصائيات من لعبك ضد الكمبيوتر والأونلاين.</p>
     <p class="note" id="pfCloud" style="text-align:center;font-weight:800;color:var(--ink)"></p>
     <button class="btn teal" id="pfHow" type="button" style="font-size:1.15rem;padding:10px">📖 طريقة اللعب</button>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <a class="ghost" id="pfPriv" href="https://fakkha2026.github.io/ludo-altaybeen/privacy.html" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">🔒 الخصوصية والشروط</a>
+      <button class="ghost" id="pfDel" type="button" style="color:#ff8a80">🗑️ حذف حسابي</button>
+    </div>
     <button class="ghost" id="profClose" type="button">سكّر</button>
+  </div>
+</div>
+<div class="overlay" id="delBox" hidden>
+  <div class="card" style="text-align:center">
+    <h2 style="font-size:1.5rem;margin:0">حذف الحساب؟</h2>
+    <p class="note" style="font-size:.95rem;color:var(--ink)">بينحذف حسابك نهائياً من السيرفر: تقدمك، عملاتك وجواهرك، مشترياتك داخل اللعبة، إحصائياتك، واسمك في لوحة الصدارة. ما تقدر ترجعه بعد الحذف.</p>
+    <p class="note">الاشتراكات والمشتريات اللي دفعتها عن طريق أبل تنلغى وتسترجع من إعدادات حسابك في أبل، مو من اللعبة.</p>
+    <div class="err" id="delErr"></div>
+    <button class="btn" id="delGo" type="button" style="background:var(--red);color:#fff;box-shadow:0 5px 0 #8f2620;font-size:1.2rem;padding:11px">نعم، احذف حسابي</button>
+    <button class="ghost" id="delNo" type="button">لا، رجوع</button>
   </div>
 </div>
 <div class="overlay" id="payBox" hidden>
@@ -939,7 +953,7 @@ function renderBoard(){const box=$('lbList');
   box.innerHTML='';LB.forEach((r,i)=>{const d=document.createElement('div');d.className='lb-row'+(r.pid===W.pid?' me':'');
     const rk=document.createElement('span');rk.className='rk';rk.textContent=i<3?['🥇','🥈','🥉'][i]:toAr(i+1);
     const av=document.createElement('span');av.className='lav';av.textContent=String(r.av||'🙂').slice(0,4);
-    const nm=document.createElement('span');nm.className='ln';nm.textContent=String(r.nick||'لاعب').slice(0,14);
+    const nm=document.createElement('span');nm.className='ln';nm.textContent=safeName(String(r.nick||'لاعب').slice(0,14));
     const sc=document.createElement('span');sc.className='ls';sc.textContent=`${toAr(+r.w||0)} فوز · ${toAr(+r.p||0)} لعبة`;
     d.append(rk,av,nm,sc);box.appendChild(d)})}
 async function recordOnline(winCi){
@@ -1446,7 +1460,7 @@ function timerLoop(){
   requestAnimationFrame(timerLoop)}
 requestAnimationFrame(timerLoop);
 const cfg=['human','human','off','off'];
-const NET={r:null,host:false,guest:false,code:'',myPeer:'',myCi:-1,seq:0,last:{},hostPeer:'',lastEv:0,winShown:false,order:[],lobby:[],saidN:0,seenSay:{},wait:false};
+const NET={r:null,host:false,guest:false,code:'',myPeer:'',myCi:-1,seq:0,last:{},hostPeer:'',lastEv:0,winShown:false,order:[],lobby:[],saidN:0,seenSay:{},muted:{},wait:false};
 function absOf(ci,p){return (COL[ci].start+p)%52}
 function posOf(ci,p,k){
   if(p===-1){const [bx,by]=COL[ci].base;return [bx+SPOTS[k][0],by+SPOTS[k][1]]}
@@ -1669,7 +1683,38 @@ PHRASES.forEach((t,i)=>{const b=document.createElement('button');b.type='button'
   if(MODE!=='friends'&&Math.random()<.5){const bots=S.players.filter(p=>p.kind==='bot');const bt=bots[Math.floor(Math.random()*bots.length)];if(bt)setTimeout(()=>{if(S)bubble(bt.ci,PHRASES[Math.floor(Math.random()*PHRASES.length)])},900)}
 };$('tray').appendChild(b)});
 $('rrBtn').onclick=rerollClick;$('chOut').onclick=chooseOut;$('chWalk').onclick=chooseWalk;
-$('chatBtn').onclick=()=>$('tray').hidden=!$('tray').hidden;
+$('chatBtn').onclick=()=>{const t=$('tray');t.hidden=!t.hidden;if(!t.hidden)renderMute()};
+function renderMute(){let row=$('muteRow');if(row)row.remove();
+  if(MODE!=='online'||!S)return;const others=S.players.filter(p=>p.peer&&p.peer!==NET.myPeer);if(!others.length)return;
+  row=document.createElement('div');row.id='muteRow';row.style.cssText='display:flex;flex-wrap:wrap;gap:6px;width:100%;border-top:1px solid #ffffff1a;padding-top:8px;align-items:center';
+  const lb=document.createElement('small');lb.textContent='كتم رسائل لاعب:';lb.style.cssText='color:var(--muted);font-weight:800;width:100%';row.appendChild(lb);
+  others.forEach(p=>{const b=document.createElement('button');b.type='button';const m=!!NET.muted[p.peer];
+    b.textContent=(m?'🔇 ':'🔈 ')+safeName(String(p.name||'لاعب').replace(' 🤖',''));if(m)b.style.background='#5a2a2a';
+    b.onclick=e=>{e.stopPropagation();if(NET.muted[p.peer])delete NET.muted[p.peer];else NET.muted[p.peer]=1;renderMute()};row.appendChild(b)});
+  $('tray').appendChild(row)}
+// ---------- فلتر الأسماء ----------
+const BAD_SUB=['شرموط','قحبه','قحاب','منيوك','منيك','ينيك','انيك','نيكه','متناك','منيوج','ينيج','كسمك','كسامك','كسختك','كسخت','كساختك','طيز','زبك','زبه','لوطي','معرص','عرص','ديوث','قواد','سكس','خنزير','حمار','كلب','حيوان','وسخ','حقير','يلعن','ملعون','داعش','هتلر','نازي','fuck','fuk','fck','fvck','shit','bitch','btch','bastard','cunt','dick','pussy','whore','slut','nigg','faggot','porn','sex','rape','nazi','hitler','asshole','motherf','penis','vagina','retard','sharmo','sharmu','9a7ba','ga7ba','qa7ba','gahba','manyo','manyak','kalb','7mar','hmar','kosom','ksom','kosmk','kosomak','khara','puta','merde','putain','scheisse','hure','cazzo','orospu','siktir','kurwa','blyat','chutiya','madarchod','behenchod','bhenchod'];
+const BAD_EXACT=['زب','كس','نيك','خول','شاذ','ass','cum','tit','hoe','kos','zeb','zb','tez','kys','amk','suka','fag','randi','زبي','خرا','خره','زق'];
+function nrmName(s,leet){s=String(s||'').toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/ؤ/g,'و').replace(/ئ/g,'ي');
+  if(leet)s=s.replace(/0/g,'o').replace(/[1!|]/g,'i').replace(/3/g,'e').replace(/4|@/g,'a').replace(/[5$]/g,'s').replace(/7/g,'t');
+  return s.replace(/[^a-z0-9\u0621-\u064A ]/g,'').replace(/(.)\1+/g,'$1')}
+function badName(n){const a=nrmName(n,false),b=nrmName(n,true);
+  for(const v of [a,b]){const flat=v.replace(/ /g,'');if(BAD_SUB.some(w=>flat.includes(nrmName(w,false))))return true;
+    if(v.split(' ').concat([flat]).some(t=>BAD_EXACT.includes(t)))return true}
+  return false}
+function safeName(n){n=String(n||'').trim();return !n||badName(n)?'لاعب':n}
+// ---------- حذف الحساب ----------
+$('pfDel').onclick=()=>{$('delErr').textContent='';$('delGo').disabled=false;$('profBox').hidden=true;$('delBox').hidden=false};
+$('delNo').onclick=()=>{$('delBox').hidden=true;$('profBox').hidden=false};
+$('delGo').onclick=async()=>{const go=$('delGo');go.disabled=true;$('delErr').textContent='لحظة، نحذف حسابك…';
+  CLOUD=null;clearTimeout(cloudT);
+  try{if(window.__FB){const c=await window.__FB;
+      await c.fs.collection('leaderboard').doc(c.uid).delete();
+      await c.fs.collection('users').doc(c.uid).delete();
+      try{await c.auth.currentUser.delete()}catch(e){await c.auth.signOut().catch(()=>{})}}
+    try{localStorage.removeItem('ludo-dira');localStorage.removeItem('ludo-snd')}catch(e){}
+    $('delErr').textContent='انحذف حسابك ✔️';setTimeout(()=>location.reload(),900)
+  }catch(e){go.disabled=false;$('delErr').textContent='ما قدرنا نحذف الحساب الحين. تأكد من الإنترنت وجرّب مرة ثانية.';initCloud()}};
 
 // ---------- اللعب (يشتغل على جوال صاحب اللعبة) ----------
 function startTurn(){
@@ -1905,6 +1950,7 @@ function openOnline(){
 function onlineGuard(){
   if(!roomReady){$('onErr').textContent='لحظة، نجهز الاتصال…';return false}
   if(!roomNS){$('onErr').textContent='ما قدرنا نتصل بالسيرفر. تأكد من الإنترنت وجرّب مرة ثانية.';return false}
+  if(badName($('onNick').value)){$('onErr').textContent='الاسم فيه كلمة غير لائقة، اختر اسم ثاني.';return false}
   W.nick=nick();save();return true;
 }
 function renderLobby(){
@@ -1914,7 +1960,7 @@ function renderLobby(){
   NET.lobby.forEach((l,i)=>{
     const ci=n>=2?seats[i]:i===0?0:2;
     const r=document.createElement('div');r.className='prow';r.style.setProperty('--c',COL[ci].hex);
-    r.innerHTML=`<div class="pic">${esc(l.av||'🙂')}</div><b>${esc(l.nick||'لاعب')}</b><small>${i===0?'صاحب الغرفة':l.peer===NET.myPeer?'أنت':''}</small>`;
+    r.innerHTML=`<div class="pic">${esc(l.av||'🙂')}</div><b>${esc(safeName(l.nick))}</b><small>${i===0?'صاحب الغرفة':l.peer===NET.myPeer?'أنت':''}</small>`;
     list.appendChild(r);
   });
   $('onRule').hidden=!NET.host;if(NET.host)renderRules();
@@ -1930,7 +1976,7 @@ function renderLobby(){
 function sayCheck(ch){
   ch.peers.forEach(p=>{const s=p.presence&&p.presence.say;if(s&&typeof s.n==='number'&&s.n>(NET.seenSay[p.peer]||0)){
     const first=!(p.peer in NET.seenSay);NET.seenSay[p.peer]=s.n;
-    if(!first&&!p.sameTab&&S&&MODE==='online'&&(PHRASES.includes(s.x)||EMOJIS.includes(s.x))){const pl=S.players.find(x=>x.peer===p.peer);if(pl){if(EMOJIS.includes(s.x))flyEmoji(pl.ci,s.x);else bubble(pl.ci,s.x)}}}});
+    if(!first&&!p.sameTab&&!NET.muted[p.peer]&&S&&MODE==='online'&&(PHRASES.includes(s.x)||EMOJIS.includes(s.x))){const pl=S.players.find(x=>x.peer===p.peer);if(pl){if(EMOJIS.includes(s.x))flyEmoji(pl.ci,s.x);else bubble(pl.ci,s.x)}}}});
 }
 async function createRoom(){
   if(!onlineGuard())return;
@@ -1949,7 +1995,7 @@ function onHostPeers(ch){
     NET.order=NET.order.filter(pe=>guests.some(g=>g.peer===pe));
     guests.forEach(g=>{if(!NET.order.includes(g.peer))NET.order.push(g.peer)});
     const lob=[{peer:NET.myPeer,nick:W.nick,av:W.av,tok:W.tok,pid:W.pid}];
-    NET.order.slice(0,3).forEach(pe=>{const g=guests.find(x=>x.peer===pe),pr=g.presence;lob.push({peer:pe,nick:String(pr.nick||'لاعب').slice(0,14),av:String(pr.av||'🙂').slice(0,4),tok:String(pr.tok||'tayb').slice(0,8),pid:String(pr.pid||'').slice(0,40)})});
+    NET.order.slice(0,3).forEach(pe=>{const g=guests.find(x=>x.peer===pe),pr=g.presence;lob.push({peer:pe,nick:safeName(String(pr.nick||'لاعب').slice(0,14)),av:String(pr.av||'🙂').slice(0,4),tok:String(pr.tok||'tayb').slice(0,8),pid:String(pr.pid||'').slice(0,40)})});
     const changed=JSON.stringify(lob)!==JSON.stringify(NET.lobby);
     NET.lobby=lob;if(changed)NET.r.presence({lobby:lob}).catch(()=>{});
     renderLobby();
