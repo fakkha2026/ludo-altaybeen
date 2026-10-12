@@ -432,6 +432,13 @@ svg#board{width:100%;height:100%;display:block}
 .ev-row{display:flex;align-items:center;gap:8px;background:var(--panel);border-radius:10px;padding:8px 10px;font-size:.88rem}
 .ev-row span{flex:1;min-width:0}
 .ev-row small{display:block;color:var(--muted);font-size:.75rem}
+.ev-row .eb{background:var(--panel-2);color:var(--ink)}
+.sz-chk{display:flex;align-items:center;gap:8px;font:800 .88rem var(--body);color:var(--ink)}
+.sz-chk input{width:20px;height:20px;accent-color:var(--sand)}
+.sz-gift{display:flex;align-items:center;gap:10px;background:linear-gradient(120deg,#5a3d12,#2a2030);border-radius:14px;padding:10px 12px}
+.sz-gift span{flex:1;font-weight:800;font-size:.9rem}
+.sz-gift button{border:0;border-radius:10px;padding:8px 12px;background:var(--sand);color:#3a2408;font:800 .9rem var(--body);cursor:pointer}
+.sz-gift button:disabled{background:var(--panel-2);color:var(--muted)}
 .ev-row button{border:0;border-radius:8px;padding:6px 10px;background:var(--red);color:#fff;font:800 .8rem var(--body);cursor:pointer}
 .banner.season-b{width:100%;text-align:right;cursor:pointer;font-family:inherit;color:inherit;background:linear-gradient(120deg,#5a2c1c,#2a2030)}
 .banner.season-b.live{background:linear-gradient(120deg,#8a3a1c,#3a1d14);box-shadow:0 0 0 2px var(--sand)}
@@ -942,13 +949,22 @@ svg#board{width:100%;height:100%;display:block}
         <div class="grid" id="vaultGrid"></div>
       </div>
       <div class="adm-card">
-        <b>📅 الفعاليات</b>
-        <div class="pf-row"><input class="field" id="evEmoji" maxlength="4" placeholder="🎉" style="flex:none;width:64px;text-align:center"><input class="field" id="evName" maxlength="24" placeholder="اسم الفعالية"></div>
-        <input class="field" id="evDesc" maxlength="50" placeholder="وصف قصير (اختياري)" style="text-align:start">
-        <div class="pf-row"><label class="ev-d">من<input class="field" id="evFrom" type="date"></label><label class="ev-d">إلى<input class="field" id="evTo" type="date"></label></div>
-        <button class="btn sand" id="evAdd" type="button" style="font-size:1.05rem;padding:9px">أضف الفعالية</button>
-        <div class="err" id="evErr"></div>
+        <b>🌙 المواسم <small style="color:var(--muted);font-weight:700">· أنت اللي تتحكم فيها</small></b>
+        <p class="note" style="margin:0;text-align:start">عدّل اسم أي موسم ووقته وجايزته، أو احذفه، أو أضف موسم جديد. بعدها انشر فيه نرد من الخزنة.</p>
         <div id="evList" style="display:flex;flex-direction:column;gap:6px"></div>
+        <button class="btn sand" id="szNew" type="button" style="font-size:1.05rem;padding:9px">➕ موسم جديد</button>
+        <div id="szForm" hidden style="display:flex;flex-direction:column;gap:8px;background:var(--night);border-radius:14px;padding:12px">
+          <b id="szFormT" style="color:var(--sand)">موسم جديد</b>
+          <div class="pf-row"><input class="field" id="evEmoji" maxlength="4" placeholder="🎉" style="flex:none;width:64px;text-align:center"><input class="field" id="evName" maxlength="24" placeholder="اسم الموسم"></div>
+          <input class="field" id="evDesc" maxlength="50" placeholder="وصف قصير (اختياري)" style="text-align:start">
+          <div class="pf-row"><label class="ev-d">من<input class="field" id="evFrom" type="date"></label><label class="ev-d">إلى<input class="field" id="evTo" type="date"></label></div>
+          <label class="sz-chk"><input type="checkbox" id="evRep"> يتكرر كل سنة بنفس التاريخ</label>
+          <div class="pf-lbl" style="margin:0">🎁 جايزة الموسم <small style="color:var(--muted)">(كل لاعب ياخذها مرة وحدة وقت الموسم، خلّها فاضية إذا ما تبي)</small></div>
+          <div class="pf-row"><input class="field" id="evGc" type="number" inputmode="numeric" min="0" placeholder="🪙 عملات" style="text-align:start"><input class="field" id="evGg" type="number" inputmode="numeric" min="0" placeholder="💎 جواهر" style="text-align:start"></div>
+          <div class="adm-btns"><button type="button" class="gold" id="evAdd">حفظ الموسم</button><button type="button" id="szCancel">إلغاء</button></div>
+          <div class="err" id="evErr"></div>
+        </div>
+        <div id="szOff"></div>
       </div>
       <div class="adm-card">
         <b>🧪 أدوات التجربة (لك بس)</b>
@@ -2141,25 +2157,32 @@ $('payOk').onclick=doPay;$('payNo').onclick=()=>{if(!paying)$('payBox').hidden=t
 function renderShop(){renderGemPacks();fillGrid('shopTh','h',false);fillGrid('shopDice','d',false);fillGrid('shopTok','t',false);renderSeasons()}
 function seasonItems(id){const out=[];['h','t','d'].forEach(k=>KINDS[k].list.filter(it=>it.season===id&&!it.hidden).forEach(it=>out.push([it,k])));return out}
 function renderSeasons(){const box=$('seasonList');box.innerHTML='';
-  SEASONS.filter(z=>!z.ev||(seasonRange(z)&&seasonItems(z.id).length)).sort((x,y)=>{const a=seasonRange(x),b=seasonRange(y);return (b&&b.on)-(a&&a.on)||(a?a.a:0)-(b?b.a:0)}).forEach(z=>{
+  SEASONS.filter(z=>!z.ev||(seasonRange(z)&&(seasonItems(z.id).length||z.gift))).sort((x,y)=>{const a=seasonRange(x),b=seasonRange(y);return (b&&b.on)-(a&&a.on)||(a?a.a:0)-(b?b.a:0)}).forEach(z=>{
     const on=seasonOn(z.id),card=document.createElement('div');card.className='season'+(on?' live':'');
-    card.innerHTML=`<div class="sz-h"><span class="sz-e">${z.emoji}</span><div><b>${z.name}</b><small>${z.desc}</small></div></div><div class="sz-st">${seasonLine(z)}</div>`;
-    const g=document.createElement('div');g.className='grid';
-    seasonItems(z.id).forEach(([it,k])=>{const K=KINDS[k],own=W[K.own].includes(it.id);
+    card.innerHTML=`<div class="sz-h"><span class="sz-e">${esc(z.emoji)}</span><div><b>${esc(z.name)}</b><small>${esc(z.desc)}</small></div></div><div class="sz-st">${seasonLine(z)}</div>`;
+    if(z.gift){const r=seasonRange(z),key=r?z.id+':'+ymd(r.a):'',got=!!(W.szg&&W.szg[key]),gd=document.createElement('div');gd.className='sz-gift';
+      const txt=[z.gift.c?toAr(z.gift.c)+' 🪙':'',z.gift.g?toAr(z.gift.g)+' 💎':''].filter(Boolean).join(' و ');
+      gd.innerHTML=`<span>🎁 جايزة الموسم: ${txt}</span><button type="button"></button>`;const bt=gd.querySelector('button');
+      bt.textContent=got?'استلمتها ✓':on?'استلم':'🔒 وقت الموسم';bt.disabled=got||!on;
+      bt.onclick=()=>{if(!on||!key)return;if(!W.szg||typeof W.szg!=='object')W.szg={};if(W.szg[key])return;W.szg[key]=1;
+        W.coins=(+W.coins||0)+z.gift.c;W.gems=(+W.gems||0)+z.gift.g;save();renderWallet();renderSeasons();toast('🎁 استلمت جايزة '+z.name)};
+      card.appendChild(gd)}
+    const g=document.createElement('div');g.className='grid';const its=seasonItems(z.id);
+    its.forEach(([it,k])=>{const K=KINDS[k],own=W[K.own].includes(it.id);
       const b=itemCard(it,k,own,W[K.sel]===it.id,()=>{if(own||on)buy(it,k);else toast(`${z.name} ${seasonLine(z).replace('🔒 ','')}، تقدر تجربه الحين من زر "شوف شكله"`)});
       if(!own&&!on)b.classList.add('locked');g.appendChild(b)});
     const pv=document.createElement('button');pv.type='button';pv.className='ghost';pv.textContent='👀 شوف شكله';pv.onclick=()=>openPreview(z.id);
-    card.append(g,pv);box.appendChild(card)})}
+    if(its.length)card.append(g,pv);box.appendChild(card)})}
 function openPreview(id){const z=SEASONS.find(x=>x.id===id),th=THEMES.find(t=>t.season===id)||THEMES.find(t=>t.id===W.theme)||THEMES[0];
   $('pvTitle').textContent=z.emoji+' '+z.name;$('pvSub').textContent=seasonLine(z);
   const svg=$('pvBoard');drawBoard(svg,th);const toks=TOKS.filter(t=>t.season===id),tk=toks[0]?toks[0].id:'tayb';
   COL.forEach((c,ci)=>[0,3].forEach(k=>{const [sx,sy]=SPOTS[k];const g=el('g',{transform:`translate(${c.base[0]+sx},${c.base[1]+sy}) scale(1.35)`},svg);tokenInner(g,tk,c)}));
   const dk=DICE.find(d=>d.season===id&&!d.hidden);$('pvDice').hidden=!dk;if(dk)diceSvg(dk,6,$('pvDice'));
   $('pvBox').hidden=false}
-function renderSeasonBanner(){const list=SEASONS.filter(z=>!z.ev||seasonItems(z.id).length).map(z=>[z,seasonRange(z)]).filter(x=>x[1]);
-  const live=list.find(x=>x[1].on),next=list.filter(x=>!x[1].on).sort((a,b)=>a[1].a-b[1].a)[0],pick=live||next;if(!pick)return;
-  const [z,r]=pick;$('szEmoji').textContent=z.emoji;$('szTitle').textContent=r.on?z.name+' بدأ!':'قريب: '+z.name;
-  $('szTxt').textContent=r.on?`ثيم وأحجار خاصة لفترة محدودة · باقي ${toAr(daysTo(r.b))} يوم`:`يبدأ بعد ${toAr(daysTo(r.a))} يوم · شوف وش بيجيك`;$('szBanner').classList.toggle('live',r.on)}
+function renderSeasonBanner(){const list=SEASONS.filter(z=>!z.ev||seasonItems(z.id).length||z.gift).map(z=>[z,seasonRange(z)]).filter(x=>x[1]);
+  const live=list.find(x=>x[1].on),next=list.filter(x=>!x[1].on).sort((a,b)=>a[1].a-b[1].a)[0],pick=live||next;if(!pick){$('szBanner').hidden=true;return}
+  $('szBanner').hidden=false;const [z,r]=pick;$('szEmoji').textContent=z.emoji;$('szTitle').textContent=r.on?z.name+' بدأ!':'قريب: '+z.name;
+  $('szTxt').textContent=r.on?`${z.gift?'🎁 فيه جايزة تنتظرك · ':''}أغراض خاصة لفترة محدودة · باقي ${toAr(daysTo(r.b))} يوم`:`يبدأ بعد ${toAr(daysTo(r.a))} يوم · شوف وش بيجيك`;$('szBanner').classList.toggle('live',r.on)}
 function renderCloset(){
   const a=$('avGrid');a.innerHTML='';
   {const b=document.createElement('button');b.type='button';b.className='item'+(myPic()?' on':'');b.innerHTML=myPic()?`<span style="width:52px;height:52px;display:block"><img class="avimg" src="${W.pic}" alt=""></span><small>صورتك</small>`:`<span style="font-size:2.4rem;line-height:1.3">📷</span><small>من الاستديو</small>`;b.onclick=()=>$('pfFile').click();a.appendChild(b)}
@@ -2682,29 +2705,51 @@ async function devInit(){if(!window.__FB)return;let c;try{c=await window.__FB}ca
     const a=String(o.ann||'').trim();$('annBar').hidden=!a;$('annTxt').textContent=a;$('admShopT').classList.toggle('on',SHOP_OPEN);if(document.activeElement!==$('admAnn'))$('admAnn').value=a},()=>{})}
 setTimeout(devInit,0);
 // ---------- خزنة النرد والفعاليات (المطوّر) ----------
-const BASE_SEASONS=SEASONS.slice();
+SEASONS.forEach(z=>z.base=true);const BASE_SEASONS=SEASONS.slice();
 function applyDrops(o){
   DROPS=(o&&o.drops&&typeof o.drops==='object')?o.drops:{};
-  EVENTS=Array.isArray(o&&o.events)?o.events.filter(e=>e&&e.id&&e.from&&e.to):[];
-  SEASONS.length=0;BASE_SEASONS.forEach(z=>SEASONS.push(z));
-  EVENTS.forEach(e=>SEASONS.push({id:e.id,ev:1,name:String(e.name||'فعالية').slice(0,24),emoji:e.emoji||'🎉',desc:String(e.desc||'فعالية لفترة محدودة').slice(0,50),dates:[[e.from,e.to]]}));
+  EVENTS=Array.isArray(o&&o.events)?o.events.filter(e=>e&&e.id&&(e.base||(e.from&&e.to))):[];
+  SEASONS.length=0;
+  BASE_SEASONS.forEach(z=>{const e=EVENTS.find(x=>x.base&&x.id===z.id);if(e&&e.off)return;SEASONS.push(e?mkSz(e,z):z)});
+  EVENTS.filter(e=>!e.base).forEach(e=>SEASONS.push(mkSz(e)));
   VAULT.forEach(d=>{const p=DROPS[d.id],ok=p&&(p.where==='shop'||SEASONS.some(z=>z.id===p.where));
     d.hidden=ok?0:1;d.season=ok&&p.where!=='shop'?p.where:undefined;d.price=ok?(+p.price||600):0});
   if(!$('shop').hidden)renderShop();renderSeasonBanner();if(IS_ADMIN)renderVault()}
+const isD=x=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x);
+function mkSz(e,bz){const z={id:e.id,ev:bz?0:1,base:!!bz,name:String(e.name||(bz&&bz.name)||'موسم').slice(0,24),emoji:String(e.emoji||(bz&&bz.emoji)||'🎉').slice(0,4),desc:String(e.desc!=null&&e.desc!==''?e.desc:(bz?bz.desc:'موسم لفترة محدودة')).slice(0,50)};
+  if(isD(e.from)&&isD(e.to)){if(e.rep){const f=e.from.split('-'),t=e.to.split('-');z.md=[[+f[1],+f[2]],[+t[1],+t[2]]]}else z.dates=[[e.from,e.to]]}
+  else if(bz){if(bz.md)z.md=bz.md;if(bz.dates)z.dates=bz.dates}
+  const c=Math.max(0,Math.min(1e6,+(e.gc||0)|0)),g=Math.max(0,Math.min(1e4,+(e.gg||0)|0));if(c||g)z.gift={c,g};return z}
 function whereName(w){if(w==='shop')return 'المتجر العادي';const z=SEASONS.find(x=>x.id===w);return z?z.emoji+' '+z.name:''}
 function renderVault(){const g=$('vaultGrid');if(!g)return;g.innerHTML='';
   VAULT.forEach(d=>{const b=itemCard(d,'d',false,false,()=>openVault(d));b.querySelector('.pr').outerHTML='';
     const p=DROPS[d.id],t=document.createElement('span');t.className='vtag'+(d.hidden?'':' live');t.textContent=d.hidden?'🔒 مخفي':'🟢 '+whereName(p.where);b.appendChild(t);
     if(!d.hidden)b.insertAdjacentHTML('beforeend',`<span class="pr">${sarOf(d)} ر.س</span>`);g.appendChild(b)});
-  const l=$('evList');l.innerHTML='';
-  if(!EVENTS.length){l.innerHTML='<p class="note" style="margin:0">ما فيه فعاليات للحين.</p>';return}
-  EVENTS.forEach(e=>{const z=SEASONS.find(x=>x.id===e.id),r=document.createElement('div');r.className='ev-row';
-    const n=VAULT.filter(d=>DROPS[d.id]&&DROPS[d.id].where===e.id).length;
-    r.innerHTML=`<span>${esc(e.emoji||'🎉')} <b>${esc(e.name)}</b><small>${esc(seasonLine(z))} · ${toAr(n)} نرد</small></span><button type="button">احذف</button>`;
-    r.querySelector('button').onclick=async()=>{if(!confirm('تحذف فعالية "'+e.name+'"؟ النرد اللي فيها بيرجع للخزنة.'))return;
-      const drops=Object.assign({},DROPS);Object.keys(drops).forEach(k=>{if(drops[k].where===e.id)delete drops[k]});
-      if(await admCfg({events:EVENTS.filter(x=>x.id!==e.id),drops}))toast('انحذفت الفعالية')};
-    l.appendChild(r)})}
+  renderSzAdm()}
+function renderSzAdm(){const l=$('evList');if(!l)return;l.innerHTML='';
+  if(!SEASONS.length)l.innerHTML='<p class="note" style="margin:0">ما فيه مواسم للحين.</p>';
+  SEASONS.forEach(z=>{const r=document.createElement('div');r.className='ev-row';
+    const n=seasonItems(z.id).length,gf=z.gift?` · 🎁 ${z.gift.c?toAr(z.gift.c)+' عملة':''}${z.gift.c&&z.gift.g?' و':''}${z.gift.g?toAr(z.gift.g)+' جوهرة':''}`:'';
+    r.innerHTML=`<span>${esc(z.emoji)} <b>${esc(z.name)}</b><small>${esc(seasonLine(z))} · ${toAr(n)} غرض${gf}${z.md?' · 🔁 كل سنة':''}</small></span><button type="button" class="eb">تعديل</button><button type="button">احذف</button>`;
+    const [eb,db]=r.querySelectorAll('button');eb.onclick=()=>szEdit(z);
+    db.onclick=async()=>{if(!confirm('تحذف موسم "'+z.name+'"؟ الأغراض اللي فيه بتختفي من المتجر، والنرد بيرجع للخزنة.'))return;
+      const drops=Object.assign({},DROPS);Object.keys(drops).forEach(k=>{if(drops[k].where===z.id)delete drops[k]});
+      const ev=EVENTS.filter(x=>x.id!==z.id);if(z.base)ev.push({id:z.id,base:1,off:1});
+      if(await admCfg({events:ev,drops}))toast('انحذف الموسم')};
+    l.appendChild(r)});
+  const off=$('szOff');off.innerHTML='';const gone=BASE_SEASONS.filter(z=>!SEASONS.some(x=>x.id===z.id));
+  if(gone.length){const t=document.createElement('div');t.className='pf-lbl';t.style.margin='4px 0 0';t.textContent='مواسم محذوفة';off.appendChild(t);
+    gone.forEach(z=>{const r=document.createElement('div');r.className='ev-row';r.innerHTML=`<span>${esc(z.emoji)} <b>${esc(z.name)}</b></span><button type="button" class="eb">رجّعه</button>`;
+      r.querySelector('button').onclick=async()=>{if(await admCfg({events:EVENTS.filter(x=>x.id!==z.id)}))toast('رجع الموسم')};off.appendChild(r)})}}
+let SZE=null;
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function szEdit(z){SZE=z||null;$('szFormT').textContent=z?'تعديل: '+z.name:'موسم جديد';$('evErr').textContent='';
+  const r=z&&seasonRange(z);$('evEmoji').value=z?z.emoji:'';$('evName').value=z?z.name:'';$('evDesc').value=z?z.desc:'';
+  $('evFrom').value=r?ymd(r.a):'';$('evTo').value=r?ymd(r.b):'';$('evRep').checked=!!(z&&z.md);
+  $('evGc').value=z&&z.gift&&z.gift.c?z.gift.c:'';$('evGg').value=z&&z.gift&&z.gift.g?z.gift.g:'';
+  $('szForm').hidden=false;$('szNew').hidden=true;$('szForm').scrollIntoView({behavior:'smooth',block:'center'})}
+function szClose(){SZE=null;$('szForm').hidden=true;$('szNew').hidden=false}
+$('szNew').onclick=()=>szEdit(null);$('szCancel').onclick=szClose;
 let vbCur=null,vbWhere='',vbPrice=600,vbT=null;
 function openVault(d){vbCur=d;const p=DROPS[d.id];vbWhere=p?p.where:'';vbPrice=p?(+p.price||600):600;
   $('vbTitle').textContent=d.name+(d.fx?' ✨':'');$('vbSub').textContent=d.hidden?'🔒 مخفي عن اللاعبين':'🟢 معروض في: '+whereName(p.where);
@@ -2721,12 +2766,15 @@ $('vbGo').onclick=async()=>{if(!vbCur)return;if(!vbWhere){toast('اختر وين
   if(await admCfg({drops})){$('vaultBox').hidden=true;toast(was?`🎲 نزل "${vbCur.name}" في ${whereName(vbWhere)}`:'تم حفظ التعديل ✓')}};
 $('vbHide').onclick=async()=>{if(!vbCur)return;const drops=Object.assign({},DROPS);delete drops[vbCur.id];
   if(await admCfg({drops})){$('vaultBox').hidden=true;toast('🔒 رجع "'+vbCur.name+'" للخزنة')}};
-$('evAdd').onclick=async()=>{const e=$('evErr'),name=$('evName').value.trim(),from=$('evFrom').value,to=$('evTo').value;e.textContent='';
-  if(!name){e.textContent='اكتب اسم الفعالية';return}if(!from||!to){e.textContent='اختر تاريخ البداية والنهاية';return}
-  if(to<from){e.textContent='تاريخ النهاية لازم يكون بعد البداية';return}
-  if(new Date(to+'T23:59:59')<new Date()){e.textContent='تاريخ النهاية راح';return}
-  const ev={id:'ev_'+Date.now().toString(36),name:name.slice(0,24),emoji:($('evEmoji').value.trim()||'🎉').slice(0,4),desc:$('evDesc').value.trim().slice(0,50),from,to};
-  if(await admCfg({events:EVENTS.concat(ev)})){['evName','evEmoji','evDesc','evFrom','evTo'].forEach(k=>$(k).value='');toast('📅 انضافت الفعالية، الحين انشر فيها نرد من الخزنة')}};
+$('evAdd').onclick=async()=>{const e=$('evErr'),name=$('evName').value.trim(),from=$('evFrom').value,to=$('evTo').value,rep=$('evRep').checked;e.textContent='';
+  if(!name){e.textContent='اكتب اسم الموسم';return}if(!from||!to){e.textContent='اختر تاريخ البداية والنهاية';return}
+  if(!rep&&to<from){e.textContent='تاريخ النهاية لازم يكون بعد البداية';return}
+  if(!rep&&new Date(to+'T23:59:59')<new Date()){e.textContent='تاريخ النهاية راح';return}
+  const gc=Math.max(0,+$('evGc').value||0)|0,gg=Math.max(0,+$('evGg').value||0)|0;
+  const ed=SZE,id=ed?ed.id:'ev_'+Date.now().toString(36);
+  const ev={id,name:name.slice(0,24),emoji:($('evEmoji').value.trim()||'🎉').slice(0,4),desc:$('evDesc').value.trim().slice(0,50),from,to};
+  if(rep)ev.rep=1;if(gc)ev.gc=gc;if(gg)ev.gg=gg;if(ed&&ed.base)ev.base=1;
+  if(await admCfg({events:EVENTS.filter(x=>x.id!==id).concat(ev)})){szClose();toast(ed?'✓ انحفظ الموسم':'🌙 انضاف الموسم، الحين انشر فيه نرد من الخزنة')}};
 function admSub(c){if(ADMSUB)return;
   ADMSUB=c.fs.collection('reports').orderBy('ts','desc').limit(40).onSnapshot(sn=>{const now=Date.now(),list=[];
     sn.docs.forEach(d=>{const x=d.data();if((+x.ts||0)<now-REP_TTL)d.ref.delete().catch(()=>{});else list.push(Object.assign({id:d.id},x))});admDrawReports(list)},()=>{$('admReports').innerHTML='<p class="note">ما قدرنا نحمّل البلاغات. تأكد إن قواعد السيرفر محدّثة.</p>'})}
