@@ -402,10 +402,23 @@ svg#board{width:100%;height:100%;display:block}
 .lb-row{display:flex;align-items:center;gap:10px;background:var(--night);border-radius:12px;padding:8px 12px}
 .lb-row .rk{width:24px;text-align:center;font-family:var(--display);font-size:1.2rem;color:var(--sand)}
 .lb-row .lav{font-size:1.4rem}
+.lb-row.tap{cursor:pointer}.lb-row.tap:active{filter:brightness(1.25)}
+.lb-row .lav{border-radius:50%;overflow:hidden}
+.lb-champ{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#e9c46a26,#e9c46a0d);border:1px solid #e9c46a55;border-radius:12px;padding:8px 12px;font-weight:800;font-size:.9rem}
+.lb-champ .lav{width:34px;height:34px;display:grid;place-items:center;flex:none;font-size:1.5rem;border-radius:50%;overflow:hidden;box-shadow:0 0 0 2px #e9c46a}
+.lb-champ small{display:block;color:var(--muted);font-weight:700;font-size:.75rem}
 .lb-row .ln{flex:1;min-width:0;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lb-row .ls{color:var(--muted);font-size:.8rem;font-variant-numeric:tabular-nums;text-align:left}
 .lb-row.me{box-shadow:0 0 0 2px var(--sand)}
 .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bgrid button{border:2px solid #ffffff1a;background:var(--night);border-radius:12px;padding:9px 4px;font:800 .95rem var(--body);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.bgrid button small{font-size:.68rem;color:var(--muted);font-weight:700}
+.bgrid button.sel{border-color:var(--sand);background:#e9c46a1f}
+.bgrid button:disabled{opacity:.4;cursor:not-allowed}
+.bet-info{text-align:center;font-weight:800;background:#e9c46a1a;border:1px solid #e9c46a55;border-radius:12px;padding:10px}
+.bet-info.bad{background:#c0392b26;border-color:#c0392b88}
+.lb-row .ls b{color:var(--sand);font-size:.95rem}
 .rcard{background:var(--night);border:2px solid transparent;border-radius:16px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-family:inherit;color:var(--ink)}
 .rcard .ri{font-size:1.7rem;line-height:1.1}
 .rcard b{font-family:var(--display);font-weight:400;font-size:1.2rem}
@@ -664,7 +677,8 @@ svg#board{width:100%;height:100%;display:block}
     </button>
   </div>
   <div class="block" id="lbBlock">
-    <div class="block-h"><h3>لوحة الصدارة 🏆</h3><small>أونلاين مع الربع</small></div>
+    <div class="block-h"><h3 id="lbTitle">صدارة الشهر 🏆</h3><small id="lbLeft">أونلاين مع الربع</small></div>
+    <div class="lb-champ" id="lbChamp" hidden></div>
     <div id="lbList" style="display:flex;flex-direction:column;gap:6px"><p class="note" style="text-align:center">نجهّز اللوحة…</p></div>
     <p class="note" id="lbNote"></p>
   </div>
@@ -758,6 +772,8 @@ svg#board{width:100%;height:100%;display:block}
     <p>عطِ ربعك هالرمز</p>
     <div class="code"><b id="onCodeShow">00000</b><button class="ghost" id="onCopy" type="button">نسخ</button></div>
     <div class="plist" id="onList"></div>
+    <div id="onBetBox" hidden style="display:flex;flex-direction:column;gap:8px"><div class="pre-lbl">مبلغ الطاولة</div><div class="bgrid" id="onBets"></div></div>
+    <div class="bet-info" id="onBetInfo" hidden></div>
     <div id="onRule" hidden style="display:flex;flex-direction:column;gap:10px"><div class="pre-lbl">نمط اللعب</div><div class="rgrid" data-rgrid="online"></div></div>
     <p class="note" id="onWait"></p>
     <button class="btn sand" id="onStart" type="button">ابدأ اللعب</button>
@@ -1234,31 +1250,55 @@ function spinWheel(){if(spinning||W.spin===today())return;spinning=true;
     $('wheelRes').textContent=`طلع لك ${x.g?toAr(x.g)+' جواهر':toAr(x.c)+' عملة'} + ${toAr(b)} عملة مكافأة الأيام 🎉`;
     const [px,py]=elPt($('wheelRes'));coinRain(px,py,26);SFX.coin();bump('coins');if(x.g)bump('gems');buzz([40,30,40])},4300)}
 // ---------- لوحة الصدارة ----------
-let DB=null,LB=[],LBRAW=[];
+let DB=null,LB=[],LBRAW=[],LBUNS=null,LBMK='';
+const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+function monthKey(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
+function prevMonthKey(){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-1);return monthKey(d)}
+function lbSort(a,b){return (+b.c||0)-(+a.c||0)||(+b.w||0)-(+a.w||0)||(+a.p||0)-(+b.p||0)||(+a.at||0)-(+b.at||0)}
+function lbHead(){const d=new Date(),end=new Date(d.getFullYear(),d.getMonth()+1,1),left=Math.ceil((end-d)/864e5);
+  $('lbTitle').textContent='صدارة شهر '+MONTHS_AR[d.getMonth()]+' 🏆';
+  $('lbLeft').textContent=left<=1?'آخر يوم!':'باقي '+toAr(left)+' يوم'}
 async function initBoard(){
   try{DB=await window.claude.use('db')}catch(e){DB=null}
   if(!DB){$('lbList').innerHTML='<p class="note" style="text-align:center">ما قدرنا نتصل بالسيرفر. تأكد من الإنترنت.</p>';return}
-  $('lbNote').textContent=window.__FB?'تنحسب نتايج اللعب أونلاين مع الربع.':'تنحسب نتايج الأونلاين لما يكون صاحب اللعبة معكم في الغرفة.';
-  try{DB.collection('board').orderBy('w','desc').limit(25).onSnapshot(snap=>{LBRAW=snap.docs.map(d=>Object.assign({id:d.id},d.data()));renderBoard()},()=>{$('lbList').innerHTML='<p class="note" style="text-align:center">ما قدرنا نحمّل اللوحة الحين.</p>'})}catch(e){}
-}
-function renderBoard(){const box=$('lbList');LB=LBRAW.filter(x=>!ADMINS.has(x.id)&&!BANNED.has(x.id)).slice(0,10);
-  if(!LB.length){box.innerHTML='<p class="note" style="text-align:center">ما فيه نتايج للحين. العب أونلاين مع ربعك وتطلع أسماءكم هنا.</p>';return}
-  box.innerHTML='';LB.forEach((r,i)=>{const d=document.createElement('div');d.className='lb-row'+(r.pid===W.pid?' me':'');
+  $('lbNote').textContent=window.__FB?'تنحسب الفلوس اللي تكسبها من طاولات الأونلاين خلال الشهر، وأول كل شهر تتصفّر اللوحة وتبدأ منافسة جديدة.':'تنحسب نتايج الأونلاين لما يكون صاحب اللعبة معكم في الغرفة.';
+  lbWatch();setInterval(()=>{lbHead();if(monthKey()!==LBMK)lbWatch()},60000)}
+function lbWatch(){LBMK=monthKey();lbHead();if(LBUNS){try{LBUNS()}catch(e){}LBUNS=null}LBRAW=[];
+  try{LBUNS=DB.collection('board').where('m','==',LBMK).limit(300).onSnapshot(snap=>{LBRAW=snap.docs.map(d=>Object.assign({id:d.id},d.data()));renderBoard()},()=>{$('lbList').innerHTML='<p class="note" style="text-align:center">ما قدرنا نحمّل اللوحة الحين.</p>'})}catch(e){}
+  lbChamp()}
+async function lbChamp(){const box=$('lbChamp');box.hidden=true;
+  try{const sn=await DB.collection('board').where('m','==',prevMonthKey()).limit(300).get();
+    const top=sn.docs.map(d=>Object.assign({id:d.id},d.data())).filter(x=>!ADMINS.has(x.id)&&!BANNED.has(x.id)&&((+x.c||0)>0||(+x.w||0)>0)).sort(lbSort)[0];if(!top)return;
+    box.innerHTML='';const av=document.createElement('span');av.className='lav';avSet(av,String(top.av||'🙂').slice(0,4),top.pid===W.pid?myPic():top.pic);
+    const t=document.createElement('div');const b=document.createElement('b');b.textContent='👑 بطل الشهر الماضي: '+safeName(String(top.nick||'لاعب').slice(0,14));
+    const sm=document.createElement('small');sm.innerHTML='كسب '+coinI+' '+fmt(+top.c||0)+' · '+toAr(+top.w||0)+' فوز';t.append(b,sm);box.append(av,t);box.hidden=false}catch(e){}}
+function renderBoard(){const box=$('lbList');LB=LBRAW.filter(x=>!ADMINS.has(x.id)&&!BANNED.has(x.id)).sort(lbSort).slice(0,10);
+  if(!LB.length){box.innerHTML='<p class="note" style="text-align:center">المنافسة بدأت! العب أونلاين مع ربعك وكون أول اسم هنا 🏁</p>';return}
+  box.innerHTML='';LB.forEach((r,i)=>{const mine=r.pid===W.pid||r.id===MYUID;const d=document.createElement('div');d.className='lb-row'+(mine?' me':'');
     const rk=document.createElement('span');rk.className='rk';rk.textContent=i<3?['🥇','🥈','🥉'][i]:toAr(i+1);
-    const av=document.createElement('span');av.className='lav';avSet(av,String(r.av||'🙂').slice(0,4),r.pid===W.pid?myPic():'');
+    const av=document.createElement('span');av.className='lav';avSet(av,String(r.av||'🙂').slice(0,4),mine?myPic():r.pic);
     const nm=document.createElement('span');nm.className='ln';nm.textContent=safeName(String(r.nick||'لاعب').slice(0,14));
-    const sc=document.createElement('span');sc.className='ls';sc.textContent=`${toAr(+r.w||0)} فوز · ${toAr(+r.p||0)} لعبة`;
-    d.append(rk,av,nm,sc);box.appendChild(d)})}
-async function recordOnline(winCi){
+    const sc=document.createElement('span');sc.className='ls';sc.innerHTML=`<b>${coinI} ${fmtS(+r.c||0)}</b><br>${toAr(+r.w||0)} فوز`;sc.style.textAlign='end';sc.style.lineHeight='1.35';
+    d.append(rk,av,nm,sc);
+    if(!mine&&window.__FB&&r.id){d.classList.add('tap');d.setAttribute('role','button');d.onclick=()=>lbAct(r)}
+    box.appendChild(d)})}
+function lbAct(r){const nm=safeName(String(r.nick||'لاعب').slice(0,14));
+  if(IS_ADMIN){if(okPic(r.pic)&&confirm('تحذف صورة '+nm+' من لوحة الصدارة؟'))admDelPic(r.id,nm);else if(confirm('توقف '+nm+'؟'))admBan(r.id,nm);return}
+  if(!AU.user){toast('سجّل دخولك عشان تقدر تبلّغ');return}
+  reportPlayer(r.id,nm,okPic(r.pic)?'صورة غير لائقة':'اسم غير لائق')}
+async function admDelPic(uid,nm){if(!IS_ADMIN||!uid)return;try{await AU.c.fs.collection('leaderboard').doc(uid).update({pic:''});toast('🗑️ انحذفت صورة '+(nm||'اللاعب'))}catch(e){toast('ما قدرنا نحذف الصورة. تأكد إن قواعد السيرفر محدّثة.')}}
+async function lbSyncPic(){if(!window.__FB||!DB||IS_ADMIN||IAMBANNED)return;try{const c=await window.__FB,ref=DB.doc('board/'+c.uid),cur=await ref.get();
+  if(cur.exists&&cur.data().m===monthKey())await ref.update({pic:myPic(),av:String(W.av||'🙂').slice(0,4),nick:String(W.nick||'لاعب').slice(0,14)})}catch(e){}}
+async function recordOnline(winCi,gain){
   if(!DB||!S)return;
   if(window.__FB){if(IS_ADMIN||IAMBANNED)return;try{const c=await window.__FB,me=S.players.find(p=>p.ci===NET.myCi);if(!me)return;const won=me.ci===winCi||me.ci===mate(winCi);
-    const ref=DB.doc('board/'+c.uid),cur=await ref.get(),o=cur.exists?cur.data():{};
-    await ref.set({pid:W.pid,nick:String(W.nick||'لاعب').slice(0,14),av:String(W.av||'🙂').slice(0,4),w:(+o.w||0)+(won?1:0),p:(+o.p||0)+1,at:Date.now()})}catch(e){}return}let own=false;try{const u=await window.claude.use('user');own=u?await u.isOwner():false}catch(e){}
+    const ref=DB.doc('board/'+c.uid),cur=await ref.get(),mk=monthKey(),o0=cur.exists?cur.data():{},o=o0.m===mk?o0:{};
+    await ref.set({pid:W.pid,nick:String(W.nick||'لاعب').slice(0,14),av:String(W.av||'🙂').slice(0,4),pic:myPic(),m:mk,c:(+o.c||0)+Math.max(0,Math.round(+gain||0)),w:(+o.w||0)+(won?1:0),p:(+o.p||0)+1,at:Date.now()})}catch(e){}return}let own=false;try{const u=await window.claude.use('user');own=u?await u.isOwner():false}catch(e){}
   if(!own)return;const m=mate(winCi);
   for(const p of S.players){if(!p.pid||!/^[a-z0-9]{6,40}$/i.test(p.pid))continue;
     const won=p.ci===winCi||p.ci===m;
-    try{const ref=DB.doc('board/'+p.pid),cur=await ref.get(),o=cur.exists?cur.data():{};
-      await ref.set({pid:p.pid,nick:String(p.name||'لاعب').replace(' 🤖','').slice(0,14),av:String(p.av||'🙂').slice(0,4),w:(+o.w||0)+(won?1:0),p:(+o.p||0)+1,at:Date.now()})}catch(e){}}}
+    try{const ref=DB.doc('board/'+p.pid),cur=await ref.get(),mk=monthKey(),o0=cur.exists?cur.data():{},o=o0.m===mk?o0:{};
+      await ref.set({m:mk,pid:p.pid,nick:String(p.name||'لاعب').replace(' 🤖','').slice(0,14),av:String(p.av||'🙂').slice(0,4),w:(+o.w||0)+(won?1:0),p:(+o.p||0)+1,at:Date.now()})}catch(e){}}}
 function openProfile(){pfTab('me');renderProfile();$('pfNick').value=W.nick||'';$('pfNickErr').textContent='';$('profBox').hidden=false;$('profBox').scrollTop=0}
 function pfTab(k){document.querySelectorAll('#pfTabs button').forEach(b=>b.classList.toggle('sel',b.dataset.p===k));['me','st','set','adm'].forEach(x=>$('pf-'+x).hidden=x!==k)}
 function renderProfile(){const st=ST();
@@ -2581,7 +2621,7 @@ $('cropNo').onclick=crClose;
 $('cropOk').onclick=()=>{if(!CR.img)return;const c=document.createElement('canvas');c.width=c.height=160;crPaint(c,160);
   let q=.82,d=c.toDataURL('image/jpeg',q);while(d.length>40000&&q>.4){q-=.1;d=c.toDataURL('image/jpeg',q)}
   if(!okPic(d)){toast('ما قدرنا نحفظ الصورة، جرّب ثانية');return}
-  W.pic=d;save();crClose();renderProfile();renderWallet();if(!$('closet').hidden)renderCloset();toast('تم تغيير صورتك 👌');
+  W.pic=d;save();lbSyncPic();crClose();renderProfile();renderWallet();if(!$('closet').hidden)renderCloset();toast('تم تغيير صورتك 👌');
   if(MODE==='online'&&NET.r)NET.r.presence({pic:d}).catch(()=>{})};
 $('pfNick').addEventListener('keydown',ev=>{if(ev.key==='Enter')$('pfNickSave').click()});
 $('pfSnd').onclick=()=>{$('sndBtn').click();$('pfSndT').classList.toggle('on',!!sndOn)};
@@ -2672,9 +2712,9 @@ $('auGo').onclick=async()=>{const go=$('auGo'),er=$('auErr'),name=$('auUser').va
       await c.fs.runTransaction(async t=>{const d=await t.get(ref);if(d.exists)throw {code:'taken'};t.set(ref,{uid:cu.uid,name,at:Date.now()})});
       try{await cu.linkWithCredential(firebase.auth.EmailAuthProvider.credential(mailIn,pass))}catch(e){await ref.delete().catch(()=>{});throw e}
       try{await cu.sendEmailVerification()}catch(e){}
-      AU.user=true;AU.key=key;W.nick=name;save();try{localStorage.removeItem('ludo-guest')}catch(e){}
+      AU.user=true;AU.key=key;W.nick=name;if(!W.welcome){W.welcome=1;W.coins=(+W.coins||0)+5000;try{renderWallet()}catch(e){}}save();try{localStorage.removeItem('ludo-guest')}catch(e){}
       $('authBox').hidden=true;$('auPass').value=$('auPass2').value=$('auMail').value='';renderAcct();if(!$('profBox').hidden)renderProfile();
-      toast('أهلاً '+name+' 👋 أرسلنا رابط توثيق على إيميلك 📧')}
+      toast('أهلاً '+name+' 👋 🎁 هدية الترحيب ٥٬٠٠٠ عملة، وأرسلنا رابط توثيق على إيميلك 📧')}
     else{let mail;
       if(name.includes('@')){if(!isMail(name.toLowerCase()))throw {code:'badmail'};mail=name.toLowerCase()}
       else{const d=await ref.get();if(!d.exists)throw {code:'nouser'};mail=d.data().mail;if(!mail)throw {code:'usemail'}}
@@ -2821,7 +2861,8 @@ function admDrawReports(list){const el=$('admReports');el.innerHTML='';$('admCou
     const row=document.createElement('div');row.className='adm-btns';
     const bn=document.createElement('button');bn.className='red';bn.textContent='⛔ إيقاف';bn.disabled=BANNED.has(r.uid);bn.onclick=()=>admBan(r.uid,r.name);
     const ok=document.createElement('button');ok.textContent='✔️ تم';ok.onclick=()=>AU.c.fs.doc('reports/'+r.id).delete().catch(()=>toast('ما قدرنا نحذفه'));
-    row.append(bn,ok);d.append(h,t,tm,row);el.appendChild(d)})}
+    const dp=document.createElement('button');dp.textContent='🗑️ حذف صورته';dp.onclick=()=>admDelPic(r.uid,r.name);
+    row.append(bn,dp,ok);d.append(h,t,tm,row);el.appendChild(d)})}
 function admDrawBans(){const el=$('admBans');if(!el||!IS_ADMIN)return;el.innerHTML='';
   if(!ADMBANS.length){el.innerHTML='<p class="note">ما فيه لاعبين موقوفين</p>';return}
   ADMBANS.forEach(b=>{const d=document.createElement('div');d.className='adm-card';d.style.flexDirection='row';d.style.alignItems='center';
@@ -2832,7 +2873,7 @@ async function admBan(uid,name,reason){if(!IS_ADMIN||!uid||uid===MYUID)return;if
   const rs=reason||prompt('سبب إيقاف '+name+'؟','مخالفة شروط الاستخدام');if(rs===null)return;
   try{await AU.c.fs.doc('bans/'+uid).set({name:String(name||'لاعب').slice(0,20),reason:String(rs).slice(0,100),at:Date.now(),by:MYUID});toast('⛔ انوقف '+name)}catch(e){toast('ما قدرنا نوقفه')}}
 async function admUnban(uid,name){if(!confirm('تفك الإيقاف عن '+name+'؟'))return;try{await AU.c.fs.doc('bans/'+uid).delete();toast('✔️ انفك الإيقاف')}catch(e){toast('ما قدرنا نفك الإيقاف')}}
-async function reportPlayer(uid,name){if(!AU.c)return;const why=prompt('وش سوّى '+name+'؟ (اختياري)','ألفاظ أو اسم غير لائق');if(why===null)return;
+async function reportPlayer(uid,name,def){if(!AU.c)return;const why=prompt('وش سوّى '+name+'؟ (اختياري)',def||'ألفاظ أو اسم غير لائق');if(why===null)return;
   try{await AU.c.fs.collection('reports').add({by:MYUID,byName:String(W.nick||'لاعب').slice(0,20),uid,name:String(name||'لاعب').slice(0,20),text:String(why).slice(0,200),ts:Date.now()});toast('شكراً، وصلنا البلاغ وبنراجعه ✅')}catch(e){toast('ما قدرنا نرسل البلاغ')}}
 async function admCfg(o){try{await AU.c.fs.doc('config/app').set(o,{merge:true});return true}catch(e){toast('ما قدرنا نحفظ، تأكد من قواعد السيرفر');return false}}
 $('admShop').onclick=async()=>{if(await admCfg({shop:!SHOP_OPEN}))toast(!SHOP_OPEN?'🛒 انفتح المتجر للكل':'🔒 انقفل المتجر للكل')};
@@ -3037,10 +3078,10 @@ function showWin(ci){
   $('winTitle').innerHTML=youWon?(mp?'فاز فريقك! 🏆':'فزت! 🏆'):mp?`فاز ${nameHtml(pl)} و${nameHtml(mp)} 🎉`:`فاز ${nameHtml(pl)} 🎉`;
   let rw='';
   if(MODE!=='friends'){
-    const prize=MODE==='online'?300:prizeOf(MODE,PLAY_MULT),xp=youWon?100:40,lv0=level();
+    const ob=MODE==='online'?(+S.bet||0):0,on=S.players.length,prize=MODE==='online'?(ob?(mp?ob*2:ob*on):300):prizeOf(MODE,PLAY_MULT),net=ob?prize-ob:0,xp=youWon?100:40,lv0=level();
     W.xp+=xp;if(youWon)W.coins+=prize;
     const up=level()>lv0;if(up)W.gems+=5;
-    save();track('play');if(youWon)track('win');statGame(youWon,rule());if(MODE==='online')recordOnline(ci);
+    save();track('play');if(youWon)track('win');statGame(youWon,rule());if(MODE==='online'){recordOnline(ci,youWon?net:0);if(NET.guest&&NET.r)NET.r.presence({cash:+W.coins||0}).catch(()=>{})}
     $('winSub').textContent=youWon?(mp?'مبروك! وصّلتوا أحجاركم كلها.':rule()==='quick'?'مبروك! وصّلت حجرين أول واحد.':'مبروك! وصّلت أحجارك الأربع.'):'المرة الجاية لك، جرّب مرة ثانية.';
     rw=(youWon?`<span><span class="coin"></span>+${fmt(prize)}</span>`:'')+`<span>⭐ +${toAr(xp)}</span>`+(up?`<span><span class="gem"></span>+٥</span>`:'');
     if(up)rw+=`<div style="width:100%;text-align:center;font-size:1.1rem;color:var(--teal)">ارتقيت لمستوى ${toAr(level())}!</div>`;
@@ -3103,8 +3144,8 @@ function buildSetup(){
 let roomNS=null,roomReady=false;
 (async()=>{try{roomNS=window.claude&&window.claude.use?await window.claude.use('room'):null}catch(e){roomNS=null}roomReady=true})();
 const SEATS={2:[0,2],3:[0,1,2],4:[0,1,2,3]};
-function resetNet(){Object.assign(NET,{r:null,host:false,guest:false,code:'',myPeer:'',myCi:-1,last:{},hostPeer:'',lastEv:0,winShown:false,order:[],lobby:[],seenSay:{},wait:false})}
-function snap(){return {p:S.players.map(p=>[p.ci,p.name,p.av,p.peer||'',p.tok||'tayb',p.pid||'']),c:S.cur,d:S.dice,ph:S.phase,t:S.players.map(p=>S.tok[p.ci]),m:S.moves,s:S.msg,ev:S.ev,h:S.hop,w:S.winner,gid:S.gid,r:S.rule,k:S.kills,pl:S.pool||[],sl:S.sel||0,mv:S.moved||0,dl:S.dl?Math.max(0,S.dl-Date.now()):0}}
+function resetNet(){Object.assign(NET,{r:null,host:false,guest:false,code:'',myPeer:'',myCi:-1,last:{},hostPeer:'',lastEv:0,winShown:false,order:[],lobby:[],seenSay:{},wait:false,bet:0,paid:''})}
+function snap(){return {p:S.players.map(p=>[p.ci,p.name,p.av,p.peer||'',p.tok||'tayb',p.pid||'']),c:S.cur,d:S.dice,ph:S.phase,t:S.players.map(p=>S.tok[p.ci]),m:S.moves,s:S.msg,ev:S.ev,h:S.hop,w:S.winner,gid:S.gid,r:S.rule,k:S.kills,pl:S.pool||[],sl:S.sel||0,mv:S.moved||0,dl:S.dl?Math.max(0,S.dl-Date.now()):0,b:+S.bet||0}}
 let syncPending=false;
 function sync(){
   if(!NET.host||!NET.r||!S||MODE!=='online'||syncPending)return;
@@ -3136,6 +3177,9 @@ function renderLobby(){
     list.appendChild(r);
   });
   $('onRule').hidden=!NET.host;if(NET.host)renderRules();
+  $('onBetBox').hidden=!NET.host;if(NET.host)renderBets();
+  const bi=$('onBetInfo'),poor=!NET.host&&betOf()>(+W.coins||0);bi.hidden=!NET.hostPeer&&!NET.host;bi.classList.toggle('bad',poor);
+  bi.innerHTML=poor?`رصيدك ما يكفي لهالطاولة (تحتاج ${fmt(betOf())} ${coinI}). استلم هدية اليوم أو لف عجلة الحظ.`:betInfoTxt();
   if(NET.host){
     $('onStart').hidden=false;$('onStart').disabled=n<2;
     $('onWait').textContent=n<2?'ننتظر ربعك يدخلون بالرمز…':`جاهزين ${toAr(n)} لاعبين، تقدر تبدأ`;
@@ -3150,13 +3194,21 @@ function sayCheck(ch){
     const first=!(p.peer in NET.seenSay);NET.seenSay[p.peer]=s.n;
     if(!first&&!p.sameTab&&!NET.muted[p.peer]&&S&&MODE==='online'&&(PHRASES.includes(s.x)||EMOJIS.includes(s.x))){const pl=S.players.find(x=>x.peer===p.peer);if(pl){if(EMOJIS.includes(s.x))flyEmoji(pl.ci,s.x);else bubble(pl.ci,s.x)}}}});
 }
+const BETS=[0,500,1000,5000,10000,50000,100000,500000,1000000];
+const coinI='<span class="coin" style="width:14px;height:14px;display:inline-block;vertical-align:-2px"></span>';
+function betOf(){return Math.max(0,+NET.bet||0)}
+function renderBets(){const box=$('onBets');if(!box)return;box.innerHTML='';
+  BETS.forEach(v=>{const b=document.createElement('button');b.type='button';b.className=betOf()===v?'sel':'';b.disabled=v>(+W.coins||0);
+    b.innerHTML=v?`<span>${fmtS(v)}</span><small>الفايز ياخذ الكل</small>`:'<span>ودّية</span><small>بدون مبلغ</small>';
+    b.onclick=()=>{NET.bet=v;NET.r&&NET.r.presence({bet:v}).catch(()=>{});SFX.tap();renderLobby()};box.appendChild(b)})}
+function betInfoTxt(){const v=betOf(),n=Math.max(2,NET.lobby.length);return v?`مبلغ الدخول: ${fmt(v)} ${coinI}<br>الجايزة للفايز: ${fmt(v*n)} ${coinI}`:'طاولة ودّية بدون مبلغ (ما تنحسب في الصدارة)'}
 async function createRoom(){
   if(!onlineGuard())return;
   const code=String(10000+Math.floor(Math.random()*90000));
   let r;try{r=await roomNS.join('ludo-'+code)}catch(e){$('onErr').textContent='ما قدرنا ننشئ الغرفة، جرّب مرة ثانية.';return}
-  resetNet();Object.assign(NET,{r,host:true,code});
+  resetNet();const b0=[...BETS].reverse().find(v=>v&&v<=Math.min(1000,+W.coins||0))||0;Object.assign(NET,{r,host:true,code,bet:b0});
   NET.lobby=[{peer:'',nick:W.nick,av:W.av,tok:W.tok,pid:W.pid}];
-  r.presence({role:'host',code,lobby:NET.lobby,g:null,pic:myPic()}).catch(()=>{});
+  r.presence({role:'host',code,lobby:NET.lobby,g:null,pic:myPic(),bet:b0}).catch(()=>{});
   r.onPeers(onHostPeers);
   $('onA').hidden=true;$('onB').hidden=false;renderLobby();
 }
@@ -3167,6 +3219,7 @@ function onHostPeers(ch){
   if(MODE!=='online'||!S){
     NET.order=NET.order.filter(pe=>guests.some(g=>g.peer===pe));
     guests.forEach(g=>{if(!NET.order.includes(g.peer))NET.order.push(g.peer)});
+    NET.order=NET.order.filter(pe=>{const g=guests.find(x=>x.peer===pe);return g&&(+g.presence.cash||0)>=betOf()});
     const lob=[{peer:NET.myPeer,nick:W.nick,av:W.av,tok:W.tok,pid:W.pid}];
     NET.order.slice(0,3).forEach(pe=>{const g=guests.find(x=>x.peer===pe),pr=g.presence;lob.push({peer:pe,nick:safeName(String(pr.nick||'لاعب').slice(0,14)),av:String(pr.av||'🙂').slice(0,4),tok:String(pr.tok||'tayb').slice(0,8),pid:String(pr.pid||'').slice(0,40)})});
     const changed=JSON.stringify(lob)!==JSON.stringify(NET.lobby);
@@ -3193,9 +3246,10 @@ function startOnline(){
   const seats=SEATS[NET.lobby.length];
   const players=NET.lobby.map((l,i)=>({ci:seats[i],kind:i===0?'local':'remote',name:l.nick,av:l.av,peer:l.peer,tok:l.tok,pid:l.pid||''}));
   NET.r.peers().forEach(p=>{const a=p.presence&&p.presence.act;NET.last[p.peer]=a&&typeof a.n==='number'?a.n:0});
+  const bet=betOf();if(bet>(+W.coins||0)){toast('رصيدك ما يكفي لهالطاولة، اختر مبلغ أقل');return false}
   MODE='online';NET.myCi=seats[0];
   $('online').hidden=true;
-  newGame(players);show('game');
+  newGame(players);S.bet=bet;payBet(S.gid,bet);sync();show('game');return true;
 }
 async function joinRoom(){
   if(!onlineGuard())return;
@@ -3203,7 +3257,7 @@ async function joinRoom(){
   if(code.length!==5){$('onErr').textContent='الرمز ٥ أرقام';return}
   let r;try{r=await roomNS.join('ludo-'+code)}catch(e){$('onErr').textContent='ما قدرنا ندخل الغرفة، جرّب مرة ثانية.';return}
   resetNet();Object.assign(NET,{r,guest:true,code});
-  r.presence({role:'guest',nick:W.nick,av:W.av,tok:W.tok,pid:W.pid,act:null,pic:myPic()}).catch(()=>{});
+  r.presence({role:'guest',nick:W.nick,av:W.av,tok:W.tok,pid:W.pid,act:null,pic:myPic(),cash:+W.coins||0}).catch(()=>{});
   r.onPeers(onGuestPeers);
   $('onA').hidden=true;$('onB').hidden=false;renderLobby();
   setTimeout(()=>{if(NET.guest&&NET.code===code&&!NET.hostPeer){$('onWait').textContent='ما لقينا غرفة بهالرمز. تأكد منه وجرّب مرة ثانية.'}},9000);
@@ -3213,7 +3267,7 @@ function onGuestPeers(ch){
   const me=ch.peers.find(p=>p.sameTab);if(me)NET.myPeer=me.peer;
   const host=ch.peers.find(p=>!p.sameTab&&p.presence&&p.presence.role==='host'&&p.presence.code===NET.code);
   if(!host){if(NET.hostPeer&&ch.left.some(l=>l.peer===NET.hostPeer)){toast('صاحب الغرفة طلع');leaveOnline();show('home')}return}
-  NET.hostPeer=host.peer;
+  NET.hostPeer=host.peer;NET.bet=Math.max(0,+host.presence.bet||0);
   NET.lobby=Array.isArray(host.presence.lobby)?host.presence.lobby.slice(0,4):[];
   if(!S||MODE!=='online')renderLobby();
   const g=host.presence.g;
@@ -3226,7 +3280,7 @@ function applySnap(g){
     const players=g.p.map(x=>({ci:x[0],kind:x[0]===NET.myCi?'local':'remote',name:String(x[1]).slice(0,16),av:String(x[2]).slice(0,4),peer:x[3],tok:x[4],pid:String(x[5]||'').slice(0,40)}));
     S={players,cur:0,dice:0,phase:'roll',tok:{},moves:[],ev:null,evN:0,hop:null,msg:['',''],winner:-1,gid:g.gid,turnId:0};
     players.forEach(p=>S.tok[p.ci]=[-1,-1,-1,-1]);
-    buildPieces(players);show('game');$('winBox').hidden=true;$('tray').hidden=true;
+    buildPieces(players);show('game');$('winBox').hidden=true;$('tray').hidden=true;S.bet=Math.max(0,+g.b||0);payBet(g.gid,S.bet);
     NET.lastEv=g.ev?g.ev.n:0;NET.winShown=false;NET.wait=false;
   }
   const prevCur=S.cur,prevPh=S.phase;
@@ -3244,6 +3298,7 @@ function applySnap(g){
   else paintStatus(S.msg[0]||'',S.msg[1]||'');
   if(S.winner>=0&&!NET.winShown){NET.winShown=true;S.phase='over';showWin(S.winner)}
 }
+function payBet(gid,bet){if(!bet||NET.paid===gid)return;NET.paid=gid;W.coins=Math.max(0,(+W.coins||0)-bet);save();renderWallet();if(NET.guest&&NET.r)NET.r.presence({cash:+W.coins||0}).catch(()=>{});toast('دفعت '+fmt(bet)+' دخول الطاولة 🎲')}
 function leaveOnline(){
   const r=NET.r;resetNet();if(r)r.leave().catch(()=>{});
   if(MODE==='online'){GEN++;S=null;MODE=null}
@@ -3272,7 +3327,7 @@ $('dice').onclick=()=>{
 };
 $('again').onclick=()=>{
   $('winBox').hidden=true;
-  if(MODE==='online'){if(NET.host){const keep=S.players.filter(p=>p.kind!=='bot'||p.ci===NET.myCi);S=null;MODE=null;NET.lobby=NET.lobby.filter(l=>l.peer===NET.myPeer||NET.r.peers().some(p=>p.peer===l.peer));if(NET.lobby.length>=2)startOnline();else{$('online').hidden=false;$('onA').hidden=true;$('onB').hidden=false;show('home');renderLobby()}}return}
+  if(MODE==='online'){if(NET.host){const keep=S.players.filter(p=>p.kind!=='bot'||p.ci===NET.myCi);S=null;MODE=null;NET.lobby=NET.lobby.filter(l=>l.peer===NET.myPeer||NET.r.peers().some(p=>p.peer===l.peer&&(+((p.presence||{}).cash)||0)>=betOf()));if(NET.lobby.length>=2&&startOnline());else{$('online').hidden=false;$('onA').hidden=true;$('onB').hidden=false;show('home');renderLobby()}}return}
   startMode(MODE);
 };
 $('toHome').onclick=()=>{$('winBox').hidden=true;if(MODE==='online')leaveOnline();GEN++;S=null;show('home')};
