@@ -180,6 +180,8 @@ nav.tabs button{background:none;border:0;padding:8px 0 10px;display:flex;flex-di
 nav.tabs button span{font-size:1.5rem;filter:grayscale(.6);transition:transform .15s}
 nav.tabs button.sel{color:var(--sand)}
 nav.tabs button.sel span{filter:none;transform:translateY(-3px) scale(1.15)}
+nav.tabs button.off{opacity:.55;position:relative}
+nav.tabs button.off small{font-size:.62rem;color:#ff7b5f;font-weight:800;line-height:1}
 
 /* ---------- shop & closet ---------- */
 .sec-title{font-family:var(--display);font-weight:400;font-size:1.7rem;margin:6px 0 0;color:var(--sand);text-align:center}
@@ -649,7 +651,7 @@ svg#board{width:100%;height:100%;display:block}
 </section>
 
 <nav class="tabs" id="tabs" hidden>
-  <button type="button" data-t="shop"><span>🛒</span>المتجر</button>
+  <button type="button" data-t="shop" class="off"><span>🛒</span>المتجر<small>غير متاح مؤقتاً</small></button>
   <button type="button" data-t="home" class="sel"><span>🏠</span>الرئيسية</button>
   <button type="button" data-t="closet"><span>🧰</span>الخزانة</button>
 </nav>
@@ -774,12 +776,14 @@ svg#board{width:100%;height:100%;display:block}
     <h2 style="margin-top:-6px">لودو الطيبين</h2>
     <div class="pf-tabs au-tabs" id="auTabs"><button type="button" data-a="in" class="sel">تسجيل دخول</button><button type="button" data-a="up">حساب جديد</button></div>
     <p class="note" id="auMsg" style="color:var(--ink);font-weight:800" hidden></p>
-    <input class="field" id="auUser" maxlength="14" placeholder="اسم المستخدم" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <input class="field" id="auUser" maxlength="60" placeholder="الإيميل أو اسم المستخدم" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <input class="field" id="auMail" type="email" maxlength="80" placeholder="إيميلك" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" hidden dir="ltr">
     <input class="field" id="auPass" type="password" maxlength="40" placeholder="كلمة السر" autocomplete="current-password">
     <input class="field" id="auPass2" type="password" maxlength="40" placeholder="أعد كلمة السر" autocomplete="new-password" hidden>
-    <p class="note" id="auHint" hidden>اسم المستخدم من ٣ إلى ١٤ حرف أو رقم (بدون مسافات، وتقدر تستخدم _ )، وما يتكرر بين اللاعبين. كلمة السر ٦ خانات أو أكثر، واحفظها لأننا ما نقدر نرجعها لك.</p>
+    <p class="note" id="auHint" hidden>اسم المستخدم من ٣ إلى ١٤ حرف أو رقم (بدون مسافات، وتقدر تستخدم _ )، وما يتكرر بين اللاعبين. الإيميل ما يظهر لأحد، ونرسل عليه رابط توثيق، وهو اللي يرجّع لك حسابك لو نسيت كلمة السر. كلمة السر ٦ خانات أو أكثر.</p>
     <div class="err" id="auErr"></div>
     <button class="btn sand" id="auGo" type="button">دخول</button>
+    <button class="ghost" id="auForgot" type="button" style="font-size:.9rem;padding:4px">نسيت كلمة السر؟</button>
     <button class="ghost" id="auGuest" type="button">العب كضيف</button>
     <p class="note">بالدخول أو التسجيل توافق على <a href="https://fakkha2026.github.io/ludo-altaybeen/privacy.html" target="_blank" rel="noopener" style="color:var(--sand)">الخصوصية والشروط</a></p>
   </div>
@@ -795,6 +799,14 @@ svg#board{width:100%;height:100%;display:block}
     <div class="pf-pane" id="pf-me">
       <div class="pf-lbl">اسم المستخدم</div>
       <div class="pf-row" id="pfNameRow"><input class="field" id="pfNick" maxlength="14" placeholder="اسم المستخدم" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="ghost" id="pfNickSave" type="button">حفظ</button></div>
+      <div id="pfMail" hidden style="background:var(--night);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px">
+        <div class="pf-lbl" style="margin:0">الإيميل</div>
+        <p class="note" id="pfMailTxt" style="margin:0;color:var(--ink)"></p>
+        <input class="field" id="pfMailIn" type="email" maxlength="80" placeholder="إيميلك" autocomplete="email" autocapitalize="off" spellcheck="false" dir="ltr" hidden>
+        <input class="field" id="pfMailPass" type="password" maxlength="40" placeholder="كلمة السر الحالية" autocomplete="current-password" hidden>
+        <div style="display:flex;gap:8px"><button class="btn sand" id="pfMailGo" type="button" style="font-size:1rem;padding:8px"></button><button class="btn teal" id="pfMailChk" type="button" style="font-size:1rem;padding:8px" hidden>وثّقته ✔️</button></div>
+        <div class="err" id="pfMailErr"></div>
+      </div>
       <div id="pfGuest" hidden style="background:var(--night);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;text-align:center">
         <b style="color:var(--ink)">أنت تلعب كضيف 👤</b>
         <small style="color:var(--muted)">سوّ حساب عشان يكون لك اسم مستخدم خاص فيك، وتلعب أونلاين، ويرجع لك تقدمك من أي جوال.</small>
@@ -1352,7 +1364,9 @@ function show(id){
   if(id==='shop')renderShop();if(id==='closet')renderCloset();if(id==='home'){renderModes();renderMissions();renderSeasonBanner()}
   renderWallet();window.scrollTo(0,0);
 }
-document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+const SHOP_OPEN=false; // المتجر مقفل مؤقتاً للتجربة — خلّها true لفتحه
+function shopClosed(){toast('🔒 المتجر غير متاح مؤقتاً');}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.t==='shop'&&!SHOP_OPEN){shopClosed();return}show(b.dataset.t)});
 $('playBtn').onclick=()=>{show('home');if(!W.tut)setTimeout(openTut,350)};
 $('wheelBtn').onclick=openWheel;$('spinBtn').onclick=spinWheel;$('wheelClose').onclick=()=>{if(!spinning)$('wheelBox').hidden=true};
 $('meAv').onclick=openProfile;
@@ -1373,7 +1387,7 @@ $('tutNext').onclick=()=>{if(tutI<TUT.length-1){tutI++;tutShow()}else closeTut()
 $('pfHow').onclick=()=>{$('profBox').hidden=true;openTut()};$('howBtn').onclick=openTut;
 $('pvClose').onclick=()=>$('pvBox').hidden=true;
 $('itClose').onclick=()=>$('itemBox').hidden=true;$('itTry').onclick=tryItem;$('itBuy').onclick=()=>{const [it,k]=itemCur;const K=KINDS[k];const had=W[K.own].includes(it.id);buy(it,k,true);if(!had&&W[K.own].includes(it.id))$('itemBox').hidden=true};
-$('szBanner').onclick=()=>{show('shop');setTimeout(()=>{const e=$('seasonList');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})},50)};$('profClose').onclick=()=>$('profBox').hidden=true;
+$('szBanner').onclick=()=>{if(!SHOP_OPEN){shopClosed();return}show('shop');setTimeout(()=>{const e=$('seasonList');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})},50)};$('profClose').onclick=()=>$('profBox').hidden=true;
 $('giftBtn').onclick=()=>{const [x,y]=elPt($('giftBtn'));W.coins+=500;W.gems+=5;W.gift=today();save();renderWallet();coinRain(x,y,30);SFX.coin();bump('coins');bump('gems');toast('وصلتك ٥٠٠ عملة و٥ جواهر 🎁')};
 $('swapBtn').onclick=()=>{if(W.gems<10){toast('تحتاج ١٠ جواهر');return}W.gems-=10;W.coins+=1000;save();renderWallet();const [x,y]=elPt($('swapBtn'));coinRain(x,y);SFX.coin();bump('coins');toast('+١٬٠٠٠ عملة')};
 
@@ -1808,28 +1822,73 @@ function unKey(n){return String(n||'').trim().toLowerCase().replace(/[ً-ٰٟـ]
 function unValid(n){return /^[a-zA-Z0-9_ء-ي٠-٩]{3,14}$/.test(n)}
 function unMail(k){return 'u'+Array.from(new TextEncoder().encode(k)).map(b=>b.toString(16).padStart(2,'0')).join('')+'@ludo-altaybeen.app'}
 function auErrTxt(e){const c=(e&&e.code)||'';
-  if(c==='taken'||c==='auth/email-already-in-use')return 'اسم المستخدم مستخدم، اختر اسم ثاني.';
+  if(c==='taken')return 'اسم المستخدم مستخدم، اختر اسم ثاني.';
+  if(c==='auth/email-already-in-use'||c==='auth/credential-already-in-use')return 'هذا الإيميل مسجل بحساب ثاني. سجّل دخول فيه.';
+  if(c==='auth/invalid-email'||c==='auth/missing-email'||c==='badmail')return 'اكتب إيميل صحيح.';
+  if(c==='usemail')return 'حسابك مربوط بإيميل، ادخل بإيميلك بدل اسم المستخدم.';
+  if(c==='auth/requires-recent-login')return 'سجّل خروج وادخل مرة ثانية، وبعدين جرّب.';
   if(c==='nouser')return 'اسم المستخدم مو موجود. تأكد منه أو سوّ حساب جديد.';
-  if(c==='auth/wrong-password'||c==='auth/invalid-credential'||c==='auth/invalid-login-credentials')return 'كلمة السر غلط.';
+  if(c==='auth/wrong-password'||c==='auth/invalid-credential'||c==='auth/invalid-login-credentials'||c==='auth/user-not-found')return 'الإيميل أو كلمة السر غلط.';
   if(c==='auth/too-many-requests')return 'محاولات كثيرة، انتظر شوي وجرّب.';
   if(c==='auth/network-request-failed'||c==='unavailable')return 'ما فيه اتصال، تأكد من الإنترنت.';
   if(c==='auth/operation-not-allowed')return 'الدخول بكلمة السر مو مفعّل في السيرفر.';
   if(c==='permission-denied')return 'السيرفر رفض الطلب. تأكد إن قواعد السيرفر محدّثة.';
   return 'صار خطأ، جرّب مرة ثانية.'}
+function isMail(m){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(m)}
+function isFake(m){return /@ludo-altaybeen\.app$/i.test(m||'')}
+function maskMail(m){const [a,b]=String(m).split('@');return (a.length<=2?a[0]+'*':a.slice(0,2)+'***')+'@'+b}
+$('auForgot').onclick=async()=>{const er=$('auErr'),v=$('auUser').value.trim().toLowerCase();er.style.color='';
+  if(!AU.c){er.textContent='ما فيه اتصال بالسيرفر، تأكد من الإنترنت.';return}
+  let mail=v;
+  if(!v.includes('@')){
+    if(!v){er.textContent='اكتب إيميلك فوق وبعدين اضغط "نسيت كلمة السر".';return}
+    try{const d=await AU.c.fs.collection('usernames').doc(unKey(v)).get();
+      if(d.exists&&isFake(d.data().mail)){er.textContent='حسابك قديم وما ربطت فيه إيميل، فما نقدر نرجّع كلمة السر. حاول تتذكرها 🙏';return}}catch(e){}
+    er.textContent='اكتب إيميلك فوق (مو اسم المستخدم) وبعدين اضغط "نسيت كلمة السر".';return}
+  if(!isMail(mail)){er.textContent='اكتب إيميل صحيح.';return}
+  try{await AU.c.auth.sendPasswordResetEmail(mail);er.style.color='var(--teal)';er.textContent='إذا الإيميل مسجل عندنا، بتوصلك رسالة فيها رابط تغيير كلمة السر. شيّك على البريد غير المرغوب بعد 📧'}
+  catch(e){er.textContent=auErrTxt(e)}};
+let mailBusy=false;
+function renderMail(){const box=$('pfMail');if(!box)return;const cu=AU.c&&AU.c.auth.currentUser;
+  box.hidden=!(AU.user&&cu);if(box.hidden)return;
+  const t=$('pfMailTxt'),go=$('pfMailGo'),chk=$('pfMailChk'),inp=$('pfMailIn'),pw=$('pfMailPass');$('pfMailErr').textContent='';$('pfMailErr').style.color='';
+  if(isFake(cu.email)){t.innerHTML='⚠️ ما ربطت إيميل بحسابك. لو نسيت كلمة السر <b>يضيع حسابك وتقدمك</b>. اربط إيميلك الحين:';
+    inp.hidden=pw.hidden=false;go.hidden=false;go.textContent='اربط إيميلي';chk.hidden=true;go.dataset.m='link'}
+  else if(!cu.emailVerified){t.innerHTML='📧 <span dir="ltr">'+maskMail(cu.email)+'</span><br>⚠️ ما توثّق للحين. افتح الرسالة اللي وصلتك واضغط الرابط.';
+    inp.hidden=pw.hidden=true;go.hidden=false;go.textContent='أرسل الرابط مرة ثانية';chk.hidden=false;go.dataset.m='resend'}
+  else{t.innerHTML='✅ إيميلك موثّق: <span dir="ltr">'+maskMail(cu.email)+'</span><br>حسابك وتقدمك محفوظين، ولو نسيت كلمة السر ترجعها من شاشة الدخول.';
+    inp.hidden=pw.hidden=true;go.hidden=true;chk.hidden=true}}
+$('pfMailGo').onclick=async()=>{if(mailBusy)return;const er=$('pfMailErr'),cu=AU.c.auth.currentUser,m=$('pfMailGo').dataset.m;er.style.color='';
+  if(m==='link'){const nm=$('pfMailIn').value.trim().toLowerCase(),pw=$('pfMailPass').value;
+    if(!isMail(nm)){er.textContent='اكتب إيميل صحيح.';return}
+    if(!pw){er.textContent='اكتب كلمة السر الحالية عشان نتأكد إنه أنت.';return}
+    mailBusy=true;er.textContent='لحظة…';
+    try{await cu.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(cu.email,pw));
+      await cu.verifyBeforeUpdateEmail(nm);$('pfMailPass').value='';
+      er.style.color='var(--teal)';er.textContent='أرسلنا رابط على '+nm+' 📧 اضغطه عشان ينربط الإيميل، وبعدها ادخل بإيميلك بدل اسم المستخدم.'}
+    catch(e){er.textContent=auErrTxt(e)}mailBusy=false}
+  else if(m==='resend'){mailBusy=true;
+    try{await cu.sendEmailVerification();er.style.color='var(--teal)';er.textContent='أرسلناه ✔️ شيّك على البريد وغير المرغوب.'}
+    catch(e){er.textContent=auErrTxt(e)}mailBusy=false}};
+$('pfMailChk').onclick=async()=>{const er=$('pfMailErr');try{await AU.c.auth.currentUser.reload()}catch(e){}
+  if(AU.c.auth.currentUser.emailVerified){renderMail();toast('✅ توثّق إيميلك')}else{er.style.color='';er.textContent='ما توثّق للحين. اضغط الرابط اللي في الرسالة وبعدين جرّب.'}};
 let auMode='in';
 function auSet(m){auMode=m;document.querySelectorAll('#auTabs button').forEach(b=>b.classList.toggle('sel',b.dataset.a===m));
-  $('auPass2').hidden=m!=='up';$('auHint').hidden=m!=='up';$('auGo').textContent=m==='up'?'سوّ حسابي':'دخول';
+  $('auPass2').hidden=$('auMail').hidden=m!=='up';$('auHint').hidden=m!=='up';$('auForgot').hidden=m==='up';$('auGo').textContent=m==='up'?'سوّ حسابي':'دخول';
+  const u=$('auUser');u.placeholder=m==='up'?'اسم المستخدم':'الإيميل أو اسم المستخدم';u.maxLength=m==='up'?14:60;
   $('auPass').autocomplete=m==='up'?'new-password':'current-password';$('auErr').textContent=''}
 function openAuth(m,msg){auSet(m||'in');const e=$('auMsg');e.textContent=msg||'';e.hidden=!msg;
   let g=null;try{g=localStorage.getItem('ludo-guest')}catch(x){}
   $('auGuest').textContent=g||AU.user||msg?'رجوع':'العب كضيف';$('authBox').hidden=false}
 document.querySelectorAll('#auTabs button').forEach(b=>b.onclick=()=>auSet(b.dataset.a));
 $('auGuest').onclick=()=>{try{localStorage.setItem('ludo-guest','1')}catch(e){}$('authBox').hidden=true};
-[$('auUser'),$('auPass'),$('auPass2')].forEach(i=>i.addEventListener('keydown',ev=>{if(ev.key==='Enter')$('auGo').click()}));
+[$('auUser'),$('auMail'),$('auPass'),$('auPass2')].forEach(i=>i.addEventListener('keydown',ev=>{if(ev.key==='Enter')$('auGo').click()}));
 $('auGo').onclick=async()=>{const go=$('auGo'),er=$('auErr'),name=$('auUser').value.trim(),pass=$('auPass').value;er.textContent='';
   if(!AU.c){er.textContent='ما فيه اتصال بالسيرفر، تأكد من الإنترنت.';return}
-  if(!name){er.textContent='اكتب اسم المستخدم.';return}
+  if(!name){er.textContent=auMode==='up'?'اكتب اسم المستخدم.':'اكتب إيميلك أو اسم المستخدم.';return}
+  const mailIn=$('auMail').value.trim().toLowerCase();
   if(auMode==='up'){
+    if(!isMail(mailIn)){er.textContent='اكتب إيميلك الصحيح، هو اللي يرجّع لك حسابك.';return}
     if(!unValid(name)){er.textContent='اسم المستخدم من ٣ إلى ١٤ حرف أو رقم، بدون مسافات أو رموز.';return}
     if(badName(name)){er.textContent='الاسم فيه كلمة غير لائقة، اختر اسم ثاني.';return}
     if(pass.length<6){er.textContent='كلمة السر لازم ٦ خانات أو أكثر.';return}
@@ -1838,14 +1897,18 @@ $('auGo').onclick=async()=>{const go=$('auGo'),er=$('auErr'),name=$('auUser').va
   go.disabled=true;const old=go.textContent;go.textContent='لحظة…';
   const c=AU.c,key=unKey(name),ref=c.fs.collection('usernames').doc(key);
   try{
-    if(auMode==='up'){const cu=c.auth.currentUser,mail=unMail(key);
-      await c.fs.runTransaction(async t=>{const d=await t.get(ref);if(d.exists)throw {code:'taken'};t.set(ref,{uid:cu.uid,name,mail,at:Date.now()})});
-      try{await cu.linkWithCredential(firebase.auth.EmailAuthProvider.credential(mail,pass))}catch(e){await ref.delete().catch(()=>{});throw e}
+    if(auMode==='up'){const cu=c.auth.currentUser;
+      await c.fs.runTransaction(async t=>{const d=await t.get(ref);if(d.exists)throw {code:'taken'};t.set(ref,{uid:cu.uid,name,at:Date.now()})});
+      try{await cu.linkWithCredential(firebase.auth.EmailAuthProvider.credential(mailIn,pass))}catch(e){await ref.delete().catch(()=>{});throw e}
+      try{await cu.sendEmailVerification()}catch(e){}
       AU.user=true;AU.key=key;W.nick=name;save();try{localStorage.removeItem('ludo-guest')}catch(e){}
-      $('authBox').hidden=true;$('auPass').value=$('auPass2').value='';renderAcct();if(!$('profBox').hidden)renderProfile();toast('أهلاً '+name+' 👋 انحفظ حسابك')}
-    else{const d=await ref.get();if(!d.exists)throw {code:'nouser'};
+      $('authBox').hidden=true;$('auPass').value=$('auPass2').value=$('auMail').value='';renderAcct();if(!$('profBox').hidden)renderProfile();
+      toast('أهلاً '+name+' 👋 أرسلنا رابط توثيق على إيميلك 📧')}
+    else{let mail;
+      if(name.includes('@')){if(!isMail(name.toLowerCase()))throw {code:'badmail'};mail=name.toLowerCase()}
+      else{const d=await ref.get();if(!d.exists)throw {code:'nouser'};mail=d.data().mail;if(!mail)throw {code:'usemail'}}
       if(CLOUD){try{await CLOUD.set(JSON.parse(JSON.stringify(W)))}catch(e){}}CLOUD=null;clearTimeout(cloudT);
-      await c.auth.signInWithEmailAndPassword(d.data().mail,pass);
+      await c.auth.signInWithEmailAndPassword(mail,pass);
       try{localStorage.removeItem('ludo-dira');localStorage.removeItem('ludo-guest');localStorage.setItem('ludo-pull','1')}catch(e){}
       go.textContent='تم ✔️';location.reload();return}
   }catch(e){er.textContent=auErrTxt(e)}
@@ -1854,7 +1917,7 @@ function renderAcct(){const has=!!window.__FB;
   $('pfNameRow').hidden=has&&!AU.user;$('pfGuest').hidden=!(has&&!AU.user);
   $('pfAcct').hidden=$('pfOut').hidden=!has;$('pfOut').hidden=!AU.user;
   $('pfAcctTxt').textContent=AU.user?'👤 مسجل باسم '+(W.nick||''):'👤 تلعب كضيف';
-  const pa=$('pfAcct');pa.style.display=has?'':'none'}
+  const pa=$('pfAcct');pa.style.display=has?'':'none';renderMail()}
 $('pfSignUp').onclick=()=>openAuth('up');$('pfSignIn').onclick=()=>openAuth('in');
 $('pfOut').onclick=async()=>{const b=$('pfOut');b.disabled=true;
   try{if(CLOUD)await CLOUD.set(JSON.parse(JSON.stringify(W)))}catch(e){}CLOUD=null;clearTimeout(cloudT);
@@ -1867,16 +1930,22 @@ $('pfNickSave').onclick=async()=>{const v=$('pfNick').value.trim(),e=$('pfNickEr
   if(badName(v)){e.textContent='الاسم فيه كلمة غير لائقة، اختر اسم ثاني.';return}
   if(v===W.nick){e.textContent='هذا اسمك الحين.';return}
   const c=AU.c,key=unKey(v),nref=c.fs.collection('usernames').doc(key),oref=AU.key?c.fs.collection('usernames').doc(AU.key):null,btn=$('pfNickSave');btn.disabled=true;e.textContent='لحظة…';
-  try{await c.fs.runTransaction(async t=>{const n=await t.get(nref);let mail=c.auth.currentUser.email;
-      if(oref){const o=await t.get(oref);if(o.exists&&o.data().mail)mail=o.data().mail}
+  try{await c.fs.runTransaction(async t=>{const n=await t.get(nref),em=c.auth.currentUser.email;let mail=isFake(em)?em:'';
+      if(oref&&isFake(em)){const o=await t.get(oref);if(o.exists&&isFake(o.data().mail))mail=o.data().mail}
       if(n.exists&&n.data().uid!==c.auth.currentUser.uid)throw {code:'taken'};
-      if(oref&&AU.key!==key)t.delete(oref);t.set(nref,{uid:c.auth.currentUser.uid,name:v,mail,at:Date.now()})});
+      const doc={uid:c.auth.currentUser.uid,name:v,at:Date.now()};if(mail)doc.mail=mail;
+      if(oref&&AU.key!==key)t.delete(oref);t.set(nref,doc)});
     AU.key=key;W.nick=v;save();renderProfile();e.style.color='var(--teal)';e.textContent='تغيّر اسم المستخدم ✔️ وتدخل فيه من الحين'}
   catch(x){e.textContent=auErrTxt(x)}btn.disabled=false};
 async function initAuth(){if(!window.__FB)return;let c;try{c=await window.__FB}catch(e){return}AU.c=c;
+  try{c.auth.languageCode='ar'}catch(e){}
   const u=c.auth.currentUser;AU.user=!!(u&&!u.isAnonymous);
-  if(AU.user){try{const q=await c.fs.collection('usernames').where('uid','==',u.uid).limit(1).get();
-      if(!q.empty){AU.key=q.docs[0].id;const nm=q.docs[0].data().name;if(nm&&W.nick!==nm){W.nick=nm;save()}}}catch(e){}}
+  if(AU.user){try{await u.reload()}catch(e){}
+    try{const q=await c.fs.collection('usernames').where('uid','==',u.uid).limit(1).get();
+      if(!q.empty){const d=q.docs[0];AU.key=d.id;const nm=d.data().name;if(nm&&W.nick!==nm){W.nick=nm;save()}
+        if(d.data().mail&&!isFake(u.email)){const o=Object.assign({},d.data());delete o.mail;d.ref.set(o).catch(()=>{})}}}catch(e){}
+    if(isFake(u.email)||!u.emailVerified){let sh=null;try{sh=sessionStorage.getItem('ludo-mailnag')}catch(e){}
+      if(!sh){try{sessionStorage.setItem('ludo-mailnag','1')}catch(e){}setTimeout(()=>toast(isFake(u.email)?'⚠️ اربط إيميلك من ملفك عشان ما يضيع حسابك':'📧 وثّق إيميلك من الرابط اللي وصلك'),1500)}}}
   else{let g=null;try{g=localStorage.getItem('ludo-guest')}catch(e){}if(!g)openAuth('in')}
   renderAcct()}
 setTimeout(initAuth,0);
@@ -1988,7 +2057,7 @@ function showRR(){const b=$('rrBtn');if(!b)return;const on=rrMine();b.hidden=!on
 function doReroll(){S.turnId++;S.dl=0;S.rollN=(S.rollN||0)+1;S.pool=[];S.phase='roll';S.moves=[];renderTokens();roll()}
 function rerollClick(){if(!rrMine())return;
   if(rrUsed>=RR_MAX){toast(`استخدمت ${toAr(RR_MAX)} محاولات، انقفلت إعادة الرمية لهاللعبة 🔒`);return}
-  if(W.gems<RR_COST){toast(`تحتاج ${toAr(RR_COST)} جواهر، تلقاها في المتجر 💎`);return}
+  if(W.gems<RR_COST){toast(`تحتاج ${toAr(RR_COST)} جواهر 💎`);return}
   W.gems-=RR_COST;rrUsed++;save();renderWallet();const b=$('rrBtn'),[x,y]=elPt(b);burst(x,y,['#b9f6ff','#3fd2f0','#fff'],26,'star',6);tone(1319,.12,'sine',.12);tone(1760,.18,'sine',.1,.08);
   b.hidden=true;$('diceHold').appendChild(b);
   if(NET.guest){NET.wait=true;sendAct({t:'reroll'});return}
