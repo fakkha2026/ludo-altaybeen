@@ -48,12 +48,12 @@
         Object.keys(docs).forEach(function(k){var d=docs[k];if(d.peer===me)return;
           if(now-(+d.hb||0)>STALE){if(now-(+d.hb||0)>600000)c.fs.collection('rooms').doc(k).delete().catch(function(){});return}
           var pr={};try{pr=JSON.parse(d.p||'{}')}catch(e){}
-          peers.push({peer:d.peer,presence:pr,sameTab:false});cur[d.peer]=1});
+          if(d.u)(window.__PU=window.__PU||{})[d.peer]=String(d.u);peers.push({peer:d.peer,presence:pr,sameTab:false});cur[d.peer]=1});
         var left=Object.keys(known).filter(function(p){return !cur[p]}).map(function(p){return{peer:p}});
         known=cur;list=peers;
         cbs.forEach(function(f){try{f({peers:peers,left:left})}catch(e){}});
       }
-      function write(){return ref.set({room:name,peer:me,p:JSON.stringify(state),hb:Date.now()})}
+      function write(){return ref.set({room:name,peer:me,u:c.uid,p:JSON.stringify(state),hb:Date.now()})}
       var r={
         presence:function(o){if(gone)return Promise.resolve();Object.assign(state,o||{});return write()},
         onPeers:function(f){cbs.push(f);setTimeout(emit,0);return function(){cbs=cbs.filter(function(x){return x!==f})}},
@@ -181,6 +181,22 @@ nav.tabs button span{font-size:1.5rem;filter:grayscale(.6);transition:transform 
 nav.tabs button.sel{color:var(--sand)}
 nav.tabs button.sel span{filter:none;transform:translateY(-3px) scale(1.15)}
 nav.tabs button.off{opacity:.55;position:relative}
+/* أدوات المطوّر */
+.dev-av{box-shadow:0 0 0 3px #0b0b0f,0 0 0 5px #e9c46a,0 0 16px 2px #e9c46aaa!important;background:radial-gradient(circle at 35% 30%,#3a3326,#0b0b0f)!important}
+.dev-tag{display:inline-block;font:800 .72rem var(--body);color:#1a1205;background:linear-gradient(135deg,#ffe9a8,#e9c46a 50%,#b8860b);border-radius:8px;padding:1px 7px;margin-inline-start:6px;vertical-align:middle;box-shadow:0 0 10px #e9c46a66}
+.chip.dev .pic{box-shadow:0 0 0 3px #0b0b0f,0 0 0 5px #e9c46a,0 0 14px #e9c46aaa;background:radial-gradient(circle at 35% 30%,#3a3326,#0b0b0f)}
+.chip .dv{position:absolute;top:2px;right:4px;font-size:.75rem}
+#pfTabs.adm4{grid-template-columns:repeat(4,1fr)}#pfTabs.adm4 button{font-size:.78rem}
+.adm-card{background:var(--night);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.adm-card b{font-size:.95rem}
+.adm-card .admtxt{color:var(--ink);font-size:.88rem;line-height:1.6;word-break:break-word}
+.adm-btns{display:flex;gap:6px;flex-wrap:wrap}
+.adm-btns button{flex:1;min-width:80px;border:0;border-radius:10px;padding:8px 6px;font:800 .85rem var(--body);cursor:pointer;background:var(--panel-2);color:var(--ink)}
+.adm-btns .red{background:var(--red);color:#fff}
+.adm-btns .gold{background:var(--sand);color:#3a2408}
+.ann{background:linear-gradient(120deg,#3a2a12,#1d2a33);border:1px solid var(--sand);border-radius:16px;padding:12px 14px;display:flex;gap:10px;align-items:center;font-weight:700;line-height:1.6}
+.ann span{font-size:1.6rem;flex:none}
+.banbar{background:#5a1a16;border:1px solid var(--red);border-radius:14px;padding:12px;text-align:center;font-weight:800;line-height:1.7}
 nav.tabs button.off small{font-size:.62rem;color:#ff7b5f;font-weight:800;line-height:1}
 
 /* ---------- shop & closet ---------- */
@@ -573,6 +589,8 @@ svg#board{width:100%;height:100%;display:block}
 
 <!-- الرئيسية -->
 <section class="screen" id="home" hidden style="padding-top:0">
+  <div class="banbar" id="banBar" hidden>⛔ حسابك موقوف بسبب مخالفة شروط الاستخدام، وما تقدر تلعب أونلاين.<br><small style="font-weight:700">للاستفسار: fakkha2026@gmail.com</small></div>
+  <div class="ann" id="annBar" hidden><span>📢</span><div id="annTxt"></div></div>
   <div class="banner">
     <div class="chest">🎁</div>
     <div><h3>هدية اليوم</h3><p id="giftTxt">٥٠٠ عملة و٥ جواهر مجاناً كل يوم</p></div>
@@ -795,7 +813,7 @@ svg#board{width:100%;height:100%;display:block}
       <div class="av" id="pfAv" role="button" aria-label="غيّر صورتك">🦅<i>✏️</i></div>
       <div class="pf-id"><b id="pfName">ملفي</b><small id="pfLv"></small><div class="pf-xp"><i id="pfXp"></i></div></div>
     </div>
-    <div class="pf-tabs" id="pfTabs"><button type="button" data-p="me" class="sel">👤 ملفي</button><button type="button" data-p="st">📊 إحصائياتي</button><button type="button" data-p="set">⚙️ الإعدادات</button></div>
+    <div class="pf-tabs" id="pfTabs"><button type="button" data-p="me" class="sel">👤 ملفي</button><button type="button" data-p="st">📊 إحصائياتي</button><button type="button" data-p="set">⚙️ الإعدادات</button><button type="button" data-p="adm" id="pfAdmTab" hidden>🛡️ الإدارة</button></div>
     <div class="pf-pane" id="pf-me">
       <div class="pf-lbl">اسم المستخدم</div>
       <div class="pf-row" id="pfNameRow"><input class="field" id="pfNick" maxlength="14" placeholder="اسم المستخدم" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="ghost" id="pfNickSave" type="button">حفظ</button></div>
@@ -839,7 +857,32 @@ svg#board{width:100%;height:100%;display:block}
         <a href="mailto:fakkha2026@gmail.com"><span>✉️ تواصل معنا</span><span class="go">‹</span></a>
         <button type="button" id="pfDel" class="danger"><span>🗑️ حذف حسابي</span><span class="go">‹</span></button>
       </div>
+      <div class="pf-lbl">معرّفي</div>
+      <div class="pf-list"><button type="button" id="pfUid"><span>🆔 <span id="pfUidTxt" dir="ltr" style="font-size:.75rem;font-weight:700">—</span></span><span class="go">نسخ</span></button></div>
       <p class="note" id="pfVer">لودو الطيبين · النسخة ١٫٠</p>
+    </div>
+    <div class="pf-pane" id="pf-adm" hidden>
+      <div class="pf-lbl">إعدادات اللعبة</div>
+      <div class="pf-list">
+        <button type="button" id="admShop"><span>🛒 المتجر مفتوح للاعبين</span><span class="tgl" id="admShopT"></span></button>
+      </div>
+      <div class="adm-card">
+        <b>📢 إعلان في الرئيسية</b>
+        <textarea class="field" id="admAnn" maxlength="200" rows="3" placeholder="اكتب رسالة تظهر لكل اللاعبين (خلّها فاضية عشان تشيل الإعلان)" style="text-align:start;resize:vertical;font-size:.95rem"></textarea>
+        <div class="adm-btns"><button type="button" class="gold" id="admAnnGo">نشر الإعلان</button><button type="button" id="admAnnDel">شيل الإعلان</button></div>
+      </div>
+      <div class="adm-card">
+        <b>⛔ إيقاف لاعب باسم المستخدم</b>
+        <div class="pf-row"><input class="field" id="admBanName" maxlength="14" placeholder="اسم المستخدم" autocapitalize="off" spellcheck="false"><button class="ghost" id="admBanGo" type="button" style="background:var(--red);color:#fff">إيقاف</button></div>
+      </div>
+      <div class="adm-card">
+        <b>🧪 أدوات التجربة (لك بس)</b>
+        <div class="adm-btns"><button type="button" class="gold" id="admCoins">+١٠٬٠٠٠ عملة</button><button type="button" class="gold" id="admGems">+١٠٠ جوهرة</button></div>
+      </div>
+      <div class="pf-lbl">🚩 البلاغات <span id="admCount"></span></div>
+      <div id="admReports" style="display:flex;flex-direction:column;gap:8px"><p class="note">جارٍ التحميل…</p></div>
+      <div class="pf-lbl">⛔ اللاعبين الموقوفين</div>
+      <div id="admBans" style="display:flex;flex-direction:column;gap:8px"><p class="note">جارٍ التحميل…</p></div>
     </div>
     <button class="ghost" id="profClose" type="button">سكّر</button>
   </div>
@@ -973,6 +1016,8 @@ const DIFF={easy:{name:'سهل',mult:.5},mid:{name:'متوسط',mult:1},hard:{na
 const DEF={tut:0,stake:'n',t:0,coins:1000,gems:10,xp:0,gift:'',dice:'classic',tok:'tayb',theme:'classic',av:'🦅',ownD:['classic'],ownT:['tayb','dot'],ownH:['classic'],diff:'mid',rule:'classic',st:null,pid:'',spin:'',days:0,lastDay:'',nick:'',mis:null};
 let W=Object.assign({},DEF);
 try{const s=JSON.parse(localStorage.getItem('ludo-dira')||'null');if(s)W=Object.assign({},DEF,s)}catch(e){}
+let ADMBANS=[];
+const ADMINS=new Set,BANNED=new Set;let IS_ADMIN=false,IAMBANNED=false,MYUID='',ADMSUB=null;const REP_TTL=30*864e5;
 if(!W.pid)W.pid='p'+Math.random().toString(36).slice(2,12)+Date.now().toString(36);
 if(!TOKS.some(t=>t.id===W.tok))W.tok='tayb';
 if(!W.m1){W.m1=1;if(W.tok==='dot')W.tok='tayb'}
@@ -1037,14 +1082,14 @@ function spinWheel(){if(spinning||W.spin===today())return;spinning=true;
     $('wheelRes').textContent=`طلع لك ${x.g?toAr(x.g)+' جواهر':toAr(x.c)+' عملة'} + ${toAr(b)} عملة مكافأة الأيام 🎉`;
     const [px,py]=elPt($('wheelRes'));coinRain(px,py,26);SFX.coin();bump('coins');if(x.g)bump('gems');buzz([40,30,40])},4300)}
 // ---------- لوحة الصدارة ----------
-let DB=null,LB=[];
+let DB=null,LB=[],LBRAW=[];
 async function initBoard(){
   try{DB=await window.claude.use('db')}catch(e){DB=null}
   if(!DB){$('lbList').innerHTML='<p class="note" style="text-align:center">ما قدرنا نتصل بالسيرفر. تأكد من الإنترنت.</p>';return}
   $('lbNote').textContent=window.__FB?'تنحسب نتايج اللعب أونلاين مع الربع.':'تنحسب نتايج الأونلاين لما يكون صاحب اللعبة معكم في الغرفة.';
-  try{DB.collection('board').orderBy('w','desc').limit(10).onSnapshot(snap=>{LB=snap.docs.map(d=>d.data()).filter(Boolean);renderBoard()},()=>{$('lbList').innerHTML='<p class="note" style="text-align:center">ما قدرنا نحمّل اللوحة الحين.</p>'})}catch(e){}
+  try{DB.collection('board').orderBy('w','desc').limit(25).onSnapshot(snap=>{LBRAW=snap.docs.map(d=>Object.assign({id:d.id},d.data()));renderBoard()},()=>{$('lbList').innerHTML='<p class="note" style="text-align:center">ما قدرنا نحمّل اللوحة الحين.</p>'})}catch(e){}
 }
-function renderBoard(){const box=$('lbList');
+function renderBoard(){const box=$('lbList');LB=LBRAW.filter(x=>!ADMINS.has(x.id)&&!BANNED.has(x.id)).slice(0,10);
   if(!LB.length){box.innerHTML='<p class="note" style="text-align:center">ما فيه نتايج للحين. العب أونلاين مع ربعك وتطلع أسماءكم هنا.</p>';return}
   box.innerHTML='';LB.forEach((r,i)=>{const d=document.createElement('div');d.className='lb-row'+(r.pid===W.pid?' me':'');
     const rk=document.createElement('span');rk.className='rk';rk.textContent=i<3?['🥇','🥈','🥉'][i]:toAr(i+1);
@@ -1054,7 +1099,7 @@ function renderBoard(){const box=$('lbList');
     d.append(rk,av,nm,sc);box.appendChild(d)})}
 async function recordOnline(winCi){
   if(!DB||!S)return;
-  if(window.__FB){try{const c=await window.__FB,me=S.players.find(p=>p.ci===NET.myCi);if(!me)return;const won=me.ci===winCi||me.ci===mate(winCi);
+  if(window.__FB){if(IS_ADMIN||IAMBANNED)return;try{const c=await window.__FB,me=S.players.find(p=>p.ci===NET.myCi);if(!me)return;const won=me.ci===winCi||me.ci===mate(winCi);
     const ref=DB.doc('board/'+c.uid),cur=await ref.get(),o=cur.exists?cur.data():{};
     await ref.set({pid:W.pid,nick:String(W.nick||'لاعب').slice(0,14),av:String(W.av||'🙂').slice(0,4),w:(+o.w||0)+(won?1:0),p:(+o.p||0)+1,at:Date.now()})}catch(e){}return}let own=false;try{const u=await window.claude.use('user');own=u?await u.isOwner():false}catch(e){}
   if(!own)return;const m=mate(winCi);
@@ -1063,9 +1108,10 @@ async function recordOnline(winCi){
     try{const ref=DB.doc('board/'+p.pid),cur=await ref.get(),o=cur.exists?cur.data():{};
       await ref.set({pid:p.pid,nick:String(p.name||'لاعب').replace(' 🤖','').slice(0,14),av:String(p.av||'🙂').slice(0,4),w:(+o.w||0)+(won?1:0),p:(+o.p||0)+1,at:Date.now()})}catch(e){}}}
 function openProfile(){pfTab('me');renderProfile();$('pfNick').value=W.nick||'';$('pfNickErr').textContent='';$('profBox').hidden=false;$('profBox').scrollTop=0}
-function pfTab(k){document.querySelectorAll('#pfTabs button').forEach(b=>b.classList.toggle('sel',b.dataset.p===k));['me','st','set'].forEach(x=>$('pf-'+x).hidden=x!==k)}
+function pfTab(k){document.querySelectorAll('#pfTabs button').forEach(b=>b.classList.toggle('sel',b.dataset.p===k));['me','st','set','adm'].forEach(x=>$('pf-'+x).hidden=x!==k)}
 function renderProfile(){const st=ST();
   $('pfAv').firstChild.textContent=W.av;$('pfName').textContent=(W.nick||'').trim()||'لاعب';
+  $('pfAv').classList.toggle('dev-av',IS_ADMIN);if(IS_ADMIN){const t=document.createElement('span');t.className='dev-tag';t.textContent='🛡️ المطوّر';$('pfName').appendChild(t)}
   const lv=level(),inLv=W.xp%300;$('pfLv').textContent=`مستوى ${toAr(lv)}، خبرتك ${toAr(inLv)} من ${toAr(300)}`;$('pfXp').style.width=Math.round(inLv*100/300)+'%';
   $('pfCoins').textContent=toAr((+W.coins||0).toLocaleString('en-US'));$('pfGems').textContent=toAr(+W.gems||0);
   const box=$('pfAvs');box.innerHTML='';AVS.forEach(e=>{const b=document.createElement('button');b.type='button';b.textContent=e;b.className=W.av===e?'on':'';b.setAttribute('aria-label','اختر '+e);
@@ -1364,8 +1410,10 @@ function show(id){
   if(id==='shop')renderShop();if(id==='closet')renderCloset();if(id==='home'){renderModes();renderMissions();renderSeasonBanner()}
   renderWallet();window.scrollTo(0,0);
 }
-const SHOP_OPEN=false; // المتجر مقفل مؤقتاً للتجربة — خلّها true لفتحه
+let SHOP_OPEN=false; // يتحكم فيه المطوّر من لوحة الإدارة (config/app.shop)
+function paintShopTab(){const b=document.querySelector('#tabs button[data-t="shop"]');if(!b)return;b.classList.toggle('off',!SHOP_OPEN);const sm=b.querySelector('small');if(sm)sm.hidden=SHOP_OPEN}
 function shopClosed(){toast('🔒 المتجر غير متاح مؤقتاً');}
+setTimeout(paintShopTab,0);
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.t==='shop'&&!SHOP_OPEN){shopClosed();return}show(b.dataset.t)});
 $('playBtn').onclick=()=>{show('home');if(!W.tut)setTimeout(openTut,350)};
 $('wheelBtn').onclick=openWheel;$('spinBtn').onclick=spinWheel;$('wheelClose').onclick=()=>{if(!spinning)$('wheelBox').hidden=true};
@@ -1660,12 +1708,13 @@ function renderChips(){
   order.forEach(ci=>{const c=COL[ci];const box=$(seatOf(ci)[0]);
     const pl=S&&S.players.find(p=>p.ci===ci);
     const d=document.createElement('div');d.id='chip-'+ci;
-    d.className='chip'+(pl?'':' off')+(pl&&player().ci===ci&&S.phase!=='over'?' on':'');
+    const isDev=!!pl&&(pl.kind==='local'&&MODE==='online'?IS_ADMIN:(pl.peer&&ADMINS.has(peerUid(pl.peer))));
+    d.className='chip'+(pl?'':' off')+(pl&&player().ci===ci&&S.phase!=='over'?' on':'')+(isDev?' dev':'');
     d.style.setProperty('--c',c.hex);
     const done=pl?S.tok[ci].filter(p=>p===56).length:0;
     const team=pl&&rule()==='teams'?(ci%2?'فريق ب · ':'فريق أ · '):'';
     const lk=pl&&locked(ci)?'<span class="lock" title="لازم ياكل">🔒</span>':'';
-    d.innerHTML=`${lk}<div class="pic">${pl?esc(pl.av):'·'}</div><span class="lbl">${pl?esc(pl.name):'—'}</span><small>${pl?team+toAr(done)+'/'+toAr(target()):''}</small>`;
+    d.innerHTML=`${lk}${isDev?'<span class="dv" title="المطوّر">🛡️</span>':''}<div class="pic">${pl?esc(pl.av):'·'}</div><span class="lbl">${pl?esc(pl.name):'—'}</span><small>${pl?team+toAr(done)+'/'+toAr(target()):''}</small>`;
     const seat=document.createElement('div');seat.className='seat '+seatOf(ci)[1]+(pl?'':' hide');
     const slot=document.createElement('div');slot.className='dslot';slot.id='dslot-'+ci;
     seat.append(d,slot);box.appendChild(seat);
@@ -1792,10 +1841,13 @@ $('chatBtn').onclick=()=>{const t=$('tray');t.hidden=!t.hidden;if(!t.hidden)rend
 function renderMute(){let row=$('muteRow');if(row)row.remove();
   if(MODE!=='online'||!S)return;const others=S.players.filter(p=>p.peer&&p.peer!==NET.myPeer);if(!others.length)return;
   row=document.createElement('div');row.id='muteRow';row.style.cssText='display:flex;flex-wrap:wrap;gap:6px;width:100%;border-top:1px solid #ffffff1a;padding-top:8px;align-items:center';
-  const lb=document.createElement('small');lb.textContent='كتم رسائل لاعب:';lb.style.cssText='color:var(--muted);font-weight:800;width:100%';row.appendChild(lb);
+  const lb=document.createElement('small');lb.textContent='كتم رسائل لاعب، أو 🚩 بلّغ عنه:';lb.style.cssText='color:var(--muted);font-weight:800;width:100%';row.appendChild(lb);
   others.forEach(p=>{const b=document.createElement('button');b.type='button';const m=!!NET.muted[p.peer];
     b.textContent=(m?'🔇 ':'🔈 ')+safeName(String(p.name||'لاعب').replace(' 🤖',''));if(m)b.style.background='#5a2a2a';
-    b.onclick=e=>{e.stopPropagation();if(NET.muted[p.peer])delete NET.muted[p.peer];else NET.muted[p.peer]=1;renderMute()};row.appendChild(b)});
+    b.onclick=e=>{e.stopPropagation();if(NET.muted[p.peer])delete NET.muted[p.peer];else NET.muted[p.peer]=1;renderMute()};row.appendChild(b);
+    const uid=peerUid(p.peer),nm=String(p.name||'لاعب').replace(' 🤖','');
+    if(uid&&!ADMINS.has(uid)){const rp=document.createElement('button');rp.type='button';rp.textContent='🚩';rp.setAttribute('aria-label','بلّغ عن '+nm);rp.onclick=e=>{e.stopPropagation();reportPlayer(uid,nm)};row.appendChild(rp);
+      if(IS_ADMIN){const bn=document.createElement('button');bn.type='button';bn.textContent='⛔';bn.style.background='var(--red)';bn.setAttribute('aria-label','أوقف '+nm);bn.onclick=e=>{e.stopPropagation();admBan(uid,nm)};row.appendChild(bn)}}});
   $('tray').appendChild(row)}
 // ---------- فلتر الأسماء ----------
 const BAD_SUB=['شرموط','قحبه','قحاب','منيوك','منيك','ينيك','انيك','نيكه','متناك','منيوج','ينيج','كسمك','كسامك','كسختك','كسخت','كساختك','طيز','زبك','زبه','لوطي','معرص','عرص','ديوث','قواد','سكس','خنزير','حمار','كلب','حيوان','وسخ','حقير','يلعن','ملعون','داعش','هتلر','نازي','fuck','fuk','fck','fvck','shit','bitch','btch','bastard','cunt','dick','pussy','whore','slut','nigg','faggot','porn','sex','rape','nazi','hitler','asshole','motherf','penis','vagina','retard','sharmo','sharmu','9a7ba','ga7ba','qa7ba','gahba','manyo','manyak','kalb','7mar','hmar','kosom','ksom','kosmk','kosomak','khara','puta','merde','putain','scheisse','hure','cazzo','orospu','siktir','kurwa','blyat','chutiya','madarchod','behenchod','bhenchod'];
@@ -1949,6 +2001,58 @@ async function initAuth(){if(!window.__FB)return;let c;try{c=await window.__FB}c
   else{let g=null;try{g=localStorage.getItem('ludo-guest')}catch(e){}if(!g)openAuth('in')}
   renderAcct()}
 setTimeout(initAuth,0);
+// ---------- المطوّر: الصلاحيات، البلاغات، الإيقاف ----------
+function peerUid(peer){return (window.__PU&&window.__PU[peer])||''}
+function admRefresh(){const t=$('pfAdmTab');if(t)t.hidden=!IS_ADMIN;$('pfTabs').classList.toggle('adm4',IS_ADMIN);if(!IS_ADMIN&&!$('pf-adm').hidden)pfTab('me');
+  $('meAv').classList.toggle('dev-av',IS_ADMIN);if(!$('profBox').hidden)renderProfile();if(S)renderChips();try{renderBoard()}catch(e){}}
+function banRefresh(){let bdev='';try{bdev=localStorage.getItem('ludo-bdev')||''}catch(e){}
+  if(BANNED.has(MYUID)){try{localStorage.setItem('ludo-bdev',MYUID)}catch(e){}bdev=MYUID}
+  else if(bdev&&!BANNED.has(bdev)){try{localStorage.removeItem('ludo-bdev')}catch(e){}bdev=''}
+  IAMBANNED=!IS_ADMIN&&(BANNED.has(MYUID)||!!bdev);$('banBar').hidden=!IAMBANNED;
+  if(IAMBANNED&&MODE==='online'&&NET.r){toast('⛔ انوقف حسابك');try{leaveOnline()}catch(e){}show('home')}
+  try{renderBoard()}catch(e){}}
+async function devInit(){if(!window.__FB)return;let c;try{c=await window.__FB}catch(e){return}MYUID=c.auth.currentUser?c.auth.currentUser.uid:c.uid;
+  $('pfUidTxt').textContent=MYUID;
+  c.fs.collection('admins').onSnapshot(sn=>{ADMINS.clear();sn.docs.forEach(d=>ADMINS.add(d.id));const was=IS_ADMIN;IS_ADMIN=ADMINS.has(MYUID);
+    if(IS_ADMIN&&!was){admSub(c);c.fs.collection('leaderboard').doc(MYUID).delete().catch(()=>{})}admRefresh();banRefresh()},()=>{});
+  c.fs.collection('bans').onSnapshot(sn=>{BANNED.clear();ADMBANS=[];sn.docs.forEach(d=>{BANNED.add(d.id);ADMBANS.push(Object.assign({id:d.id},d.data()))});banRefresh();admDrawBans()},()=>{});
+  c.fs.doc('config/app').onSnapshot(d=>{const o=d.exists?d.data():{};SHOP_OPEN=!!o.shop;paintShopTab();if(!SHOP_OPEN&&!$('shop').hidden)show('home');
+    const a=String(o.ann||'').trim();$('annBar').hidden=!a;$('annTxt').textContent=a;$('admShopT').classList.toggle('on',SHOP_OPEN);if(document.activeElement!==$('admAnn'))$('admAnn').value=a},()=>{})}
+setTimeout(devInit,0);
+function admSub(c){if(ADMSUB)return;
+  ADMSUB=c.fs.collection('reports').orderBy('ts','desc').limit(40).onSnapshot(sn=>{const now=Date.now(),list=[];
+    sn.docs.forEach(d=>{const x=d.data();if((+x.ts||0)<now-REP_TTL)d.ref.delete().catch(()=>{});else list.push(Object.assign({id:d.id},x))});admDrawReports(list)},()=>{$('admReports').innerHTML='<p class="note">ما قدرنا نحمّل البلاغات. تأكد إن قواعد السيرفر محدّثة.</p>'})}
+function admDrawReports(list){const el=$('admReports');el.innerHTML='';$('admCount').textContent=list.length?'('+toAr(list.length)+')':'';
+  if(!list.length){el.innerHTML='<p class="note">ما فيه بلاغات 👌</p>';return}
+  list.forEach(r=>{const d=document.createElement('div');d.className='adm-card';
+    const h=document.createElement('b');h.textContent='🚩 '+String(r.name||'لاعب').slice(0,20)+(BANNED.has(r.uid)?' (موقوف)':'');
+    const t=document.createElement('div');t.className='admtxt';t.textContent=String(r.text||'').slice(0,200);
+    const tm=document.createElement('small');tm.style.color='var(--muted)';tm.textContent='من '+String(r.byName||'لاعب').slice(0,20)+' · '+new Date(+r.ts||0).toLocaleString('ar-SA');
+    const row=document.createElement('div');row.className='adm-btns';
+    const bn=document.createElement('button');bn.className='red';bn.textContent='⛔ إيقاف';bn.disabled=BANNED.has(r.uid);bn.onclick=()=>admBan(r.uid,r.name);
+    const ok=document.createElement('button');ok.textContent='✔️ تم';ok.onclick=()=>AU.c.fs.doc('reports/'+r.id).delete().catch(()=>toast('ما قدرنا نحذفه'));
+    row.append(bn,ok);d.append(h,t,tm,row);el.appendChild(d)})}
+function admDrawBans(){const el=$('admBans');if(!el||!IS_ADMIN)return;el.innerHTML='';
+  if(!ADMBANS.length){el.innerHTML='<p class="note">ما فيه لاعبين موقوفين</p>';return}
+  ADMBANS.forEach(b=>{const d=document.createElement('div');d.className='adm-card';d.style.flexDirection='row';d.style.alignItems='center';
+    const t=document.createElement('div');t.style.flex='1';const nb=document.createElement('b');nb.textContent='⛔ '+String(b.name||'لاعب').slice(0,20);
+    const rs=document.createElement('small');rs.style.cssText='display:block;color:var(--muted)';rs.textContent=String(b.reason||'');t.append(nb,rs);
+    const u=document.createElement('button');u.className='ghost';u.textContent='فك الإيقاف';u.onclick=()=>admUnban(b.id,b.name||'اللاعب');d.append(t,u);el.appendChild(d)})}
+async function admBan(uid,name,reason){if(!IS_ADMIN||!uid||uid===MYUID)return;if(ADMINS.has(uid)){toast('ما تقدر توقف مطوّر');return}
+  const rs=reason||prompt('سبب إيقاف '+name+'؟','مخالفة شروط الاستخدام');if(rs===null)return;
+  try{await AU.c.fs.doc('bans/'+uid).set({name:String(name||'لاعب').slice(0,20),reason:String(rs).slice(0,100),at:Date.now(),by:MYUID});toast('⛔ انوقف '+name)}catch(e){toast('ما قدرنا نوقفه')}}
+async function admUnban(uid,name){if(!confirm('تفك الإيقاف عن '+name+'؟'))return;try{await AU.c.fs.doc('bans/'+uid).delete();toast('✔️ انفك الإيقاف')}catch(e){toast('ما قدرنا نفك الإيقاف')}}
+async function reportPlayer(uid,name){if(!AU.c)return;const why=prompt('وش سوّى '+name+'؟ (اختياري)','ألفاظ أو اسم غير لائق');if(why===null)return;
+  try{await AU.c.fs.collection('reports').add({by:MYUID,byName:String(W.nick||'لاعب').slice(0,20),uid,name:String(name||'لاعب').slice(0,20),text:String(why).slice(0,200),ts:Date.now()});toast('شكراً، وصلنا البلاغ وبنراجعه ✅')}catch(e){toast('ما قدرنا نرسل البلاغ')}}
+async function admCfg(o){try{await AU.c.fs.doc('config/app').set(o,{merge:true});return true}catch(e){toast('ما قدرنا نحفظ، تأكد من قواعد السيرفر');return false}}
+$('admShop').onclick=async()=>{if(await admCfg({shop:!SHOP_OPEN}))toast(!SHOP_OPEN?'🛒 انفتح المتجر للكل':'🔒 انقفل المتجر للكل')};
+$('admAnnGo').onclick=async()=>{const v=$('admAnn').value.trim();if(!v){toast('اكتب الإعلان أول');return}if(await admCfg({ann:v.slice(0,200)}))toast('📢 انشر الإعلان')};
+$('admAnnDel').onclick=async()=>{if(await admCfg({ann:''})){$('admAnn').value='';toast('انشال الإعلان')}};
+$('admBanGo').onclick=async()=>{const v=$('admBanName').value.trim();if(!v)return;try{const d=await AU.c.fs.collection('usernames').doc(unKey(v)).get();
+  if(!d.exists){toast('ما لقينا لاعب بهالاسم');return}await admBan(d.data().uid,d.data().name||v);$('admBanName').value=''}catch(e){toast('صار خطأ')}};
+$('admCoins').onclick=()=>{if(!IS_ADMIN)return;W.coins=(+W.coins||0)+10000;save();renderWallet();renderProfile();toast('+١٠٬٠٠٠ عملة 🧪')};
+$('admGems').onclick=()=>{if(!IS_ADMIN)return;W.gems=(+W.gems||0)+100;save();renderWallet();renderProfile();toast('+١٠٠ جوهرة 🧪')};
+$('pfUid').onclick=()=>{if(!MYUID)return;try{navigator.clipboard.writeText(MYUID).then(()=>toast('انسخ معرّفك ✔️'),()=>prompt('انسخ معرّفك:',MYUID))}catch(e){prompt('انسخ معرّفك:',MYUID)}};
 $('delGo').onclick=async()=>{const go=$('delGo'),er=$('delErr');
   if(AU.user&&!$('delPass').value){er.textContent='اكتب كلمة السر عشان نتأكد إنه أنت.';return}
   go.disabled=true;er.textContent='لحظة، نحذف حسابك…';
@@ -2195,6 +2299,7 @@ function openOnline(){
   if(roomReady&&!roomNS){$('onErr').textContent='ما قدرنا نتصل بالسيرفر. تأكد من الإنترنت وجرّب مرة ثانية.';}
 }
 function onlineGuard(){
+  if(IAMBANNED){$('onErr').textContent='⛔ حسابك موقوف وما تقدر تلعب أونلاين.';return false}
   if(!roomReady){$('onErr').textContent='لحظة، نجهز الاتصال…';return false}
   if(!roomNS){$('onErr').textContent='ما قدرنا نتصل بالسيرفر. تأكد من الإنترنت وجرّب مرة ثانية.';return false}
   if(badName($('onNick').value)){$('onErr').textContent='الاسم فيه كلمة غير لائقة، اختر اسم ثاني.';return false}
@@ -2322,7 +2427,7 @@ function leaveOnline(){
   if(MODE==='online'){GEN++;S=null;MODE=null}
   $('online').hidden=true;
 }
-$('modeO').onclick=()=>{if(window.__FB&&!AU.user){openAuth('up','اللعب أونلاين يحتاج حساب. سوّ حسابك أو سجّل دخول.');return}openOnline()};
+$('modeO').onclick=()=>{if(IAMBANNED){toast('⛔ حسابك موقوف وما تقدر تلعب أونلاين');return}if(window.__FB&&!AU.user){openAuth('up','اللعب أونلاين يحتاج حساب. سوّ حسابك أو سجّل دخول.');return}openOnline()};
 $('onBack').onclick=()=>$('online').hidden=true;
 $('onCreate').onclick=createRoom;
 $('onJoin').onclick=joinRoom;
