@@ -242,7 +242,8 @@ nav.tabs button.off small{font-size:.62rem;color:#ff7b5f;font-weight:800;line-he
 .bmsg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#0d2230ee;border:2px solid var(--sand);color:var(--ink);border-radius:18px;padding:10px 18px;text-align:center;font-family:var(--display);font-size:1.5rem;line-height:1.25;box-shadow:0 12px 30px #000a;pointer-events:none;z-index:6;white-space:nowrap;animation:bmsg 1.5s ease-out forwards}
 .bmsg small{display:block;font-family:var(--body);font-size:.85rem;color:var(--muted);font-weight:700}
 @keyframes bmsg{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}25%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%)}}
-.chip .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.chip .lbl{white-space:nowrap;text-align:center;line-height:1.2;max-width:100%}
+.chip .lbl.two{white-space:normal;overflow-wrap:anywhere;word-break:break-word}
 .chip small{color:var(--muted);font-weight:400}
 .chip.off{opacity:.3}
 .chip.on{border-color:var(--c);transform:translateY(-2px);box-shadow:0 6px 18px -6px var(--c)}
@@ -354,8 +355,8 @@ svg#board{width:100%;height:100%;display:block}
 .au-logo{font-size:3rem;text-align:center;line-height:1}
 .au-tabs{grid-template-columns:1fr 1fr!important}
 #authBox .field{text-align:start}
-.pf-tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--night);border-radius:12px;padding:3px;gap:3px}
-.pf-tabs button{border:0;background:transparent;color:var(--muted);font:800 .9rem var(--body);padding:9px 2px;border-radius:9px;cursor:pointer}
+.pf-tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--night);border-radius:12px;padding:3px;gap:3px}
+.pf-tabs button{border:0;background:transparent;color:var(--muted);font:800 .78rem var(--body);white-space:nowrap;padding:9px 2px;border-radius:9px;cursor:pointer}
 .pf-tabs button.sel{background:var(--panel-2);color:var(--ink);box-shadow:0 0 0 1px #ffffff22}
 .pf-pane{display:flex;flex-direction:column;gap:10px}
 .pf-lbl{font-weight:800;font-size:.85rem;color:var(--muted);margin:2px 2px -2px}
@@ -407,7 +408,8 @@ svg#board{width:100%;height:100%;display:block}
 .lb-champ{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#e9c46a26,#e9c46a0d);border:1px solid #e9c46a55;border-radius:12px;padding:8px 12px;font-weight:800;font-size:.9rem}
 .lb-champ .lav{width:34px;height:34px;display:grid;place-items:center;flex:none;font-size:1.5rem;border-radius:50%;overflow:hidden;box-shadow:0 0 0 2px #e9c46a}
 .lb-champ small{display:block;color:var(--muted);font-weight:700;font-size:.75rem}
-.lb-row .ln{flex:1;min-width:0;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-row .ln{flex:1;min-width:0;font-weight:800;white-space:nowrap;line-height:1.25}
+.lb-row .ln.two{white-space:normal;overflow-wrap:anywhere}
 .lb-row .ls{color:var(--muted);font-size:.8rem;font-variant-numeric:tabular-nums;text-align:left}
 .lb-row.me{box-shadow:0 0 0 2px var(--sand)}
 .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -466,6 +468,20 @@ svg#board{width:100%;height:100%;display:block}
 .d3sh{position:absolute;left:calc(var(--s)/-2);top:calc(var(--s)*.25);width:var(--s);height:calc(var(--s)*.35);border-radius:50%;background:radial-gradient(#000a,transparent 70%)}
 .flash{position:fixed;inset:0;z-index:49;pointer-events:none;background:radial-gradient(#bfe9ff99,#5cc2ff22 60%,transparent);animation:flash .4s ease-out forwards}
 @keyframes flash{0%{opacity:1}100%{opacity:0}}
+.chip .frb{position:absolute;bottom:3px;left:5px;font-size:.72rem}
+.chip.tap{cursor:pointer}
+#plMenu .card{max-width:320px;gap:10px;text-align:center}
+#plMenu .pm-av{width:64px;height:64px;border-radius:50%;margin:0 auto;display:grid;place-items:center;font-size:2rem;background:var(--night);overflow:hidden;box-shadow:0 0 0 3px var(--c,var(--sand))}
+#plMenu .pm-av img{width:100%;height:100%;object-fit:cover}
+#plMenu .pm-nm{font-weight:800;font-size:1.2rem;color:var(--ink)}
+#plMenu .btn{font-size:1.05rem;padding:10px}
+.av.tap{position:relative}
+.av.tap[data-req]::after{content:attr(data-req);position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:#e53935;color:#fff;font:800 .7rem/18px var(--body);text-align:center;box-shadow:0 0 0 2px var(--night)}
+.pf-tabs button[data-req]::after{content:" " attr(data-req);color:#ff8a80}
+.pf-list .fr-ok{border:0;border-radius:10px;padding:6px 10px;font:800 .8rem var(--body);cursor:pointer;background:var(--teal);color:#06231f}
+.fr-btns{display:flex;gap:6px;flex:none}
+.fr-empty{padding:14px;color:var(--muted);text-align:center;font-weight:700;cursor:default!important}
+.pf-list .fr-x{border:0;border-radius:10px;padding:6px 10px;font:800 .8rem var(--body);cursor:pointer;background:var(--panel-2);color:var(--ink)}
 .chip .lock{position:absolute;top:2px;left:4px;font-size:.75rem}
 .mode.wide.on{background:linear-gradient(120deg,#3b6fd8,#5a4fcf);box-shadow:0 5px 0 #2a2f7a}
 .field{width:100%;box-sizing:border-box;background:var(--night);border:2px solid var(--line);border-radius:12px;padding:12px;color:var(--ink);font:700 1.05rem var(--body);text-align:center}
@@ -883,6 +899,17 @@ svg#board{width:100%;height:100%;display:block}
     <div class="row"><button class="btn sand" id="cropOk" type="button">اعتمد الصورة</button><button class="btn teal" id="cropNo" type="button">إلغاء</button></div>
   </div>
 </div>
+<div class="overlay" id="plMenu" hidden>
+  <div class="card" style="position:relative">
+    <button class="pf-x" id="pmX" type="button" aria-label="سكّر">✕</button>
+    <div class="pm-av" id="pmAv"></div>
+    <div class="pm-nm" id="pmName"></div>
+    <p class="note" id="pmNote" style="margin:0"></p>
+    <button class="btn teal" id="pmFriend" type="button"></button>
+    <button class="btn" id="pmBlock" type="button" style="background:#7a2a2a;color:#fff"></button>
+    <button class="ghost" id="pmReport" type="button">🚩 بلّغ عنه</button>
+  </div>
+</div>
 <div class="overlay" id="profBox" hidden>
   <div class="card pf" style="position:relative">
     <button class="pf-x" id="pfX" type="button" aria-label="سكّر">✕</button>
@@ -890,7 +917,7 @@ svg#board{width:100%;height:100%;display:block}
       <div class="av" id="pfAv" role="button" aria-label="غيّر صورتك">🦅<i>✏️</i></div>
       <div class="pf-id"><b id="pfName">ملفي</b><small id="pfLv"></small><div class="pf-xp"><i id="pfXp"></i></div></div>
     </div>
-    <div class="pf-tabs" id="pfTabs"><button type="button" data-p="me" class="sel">👤 ملفي</button><button type="button" data-p="st">📊 إحصائياتي</button><button type="button" data-p="set">⚙️ الإعدادات</button><button type="button" data-p="adm" id="pfAdmTab" hidden>🛡️ الإدارة</button></div>
+    <div class="pf-tabs" id="pfTabs"><button type="button" data-p="me" class="sel">👤 ملفي</button><button type="button" data-p="fr">👥 أصدقائي</button><button type="button" data-p="st">📊 إحصائياتي</button><button type="button" data-p="set">⚙️ الإعدادات</button><button type="button" data-p="adm" id="pfAdmTab" hidden>🛡️ الإدارة</button></div>
     <div class="pf-pane" id="pf-me">
       <div class="pf-lbl">اسم المستخدم</div>
       <div class="pf-row" id="pfNameRow"><input class="field" id="pfNick" maxlength="14" placeholder="اسم المستخدم" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="ghost" id="pfNickSave" type="button">حفظ</button></div>
@@ -912,6 +939,15 @@ svg#board{width:100%;height:100%;display:block}
       <div class="pf-lbl">رصيدك</div>
       <div class="pf-wal"><div class="stat"><b id="pfCoins">٠</b><small>🪙 عملات</small></div><div class="stat"><b id="pfGems">٠</b><small>💎 جواهر</small></div></div>
       <p class="note" id="pfCloud" style="font-weight:800;color:var(--ink)"></p>
+    </div>
+    <div class="pf-pane" id="pf-fr" hidden>
+      <div id="rqWrap" hidden style="display:flex;flex-direction:column;gap:14px"><div class="pf-lbl">📩 طلبات الصداقة</div>
+      <div class="pf-list" id="rqList"></div></div>
+      <div class="pf-lbl">👥 أصدقائي</div>
+      <div class="pf-list" id="frList"></div>
+      <div class="pf-lbl">🚫 المحظورين</div>
+      <div class="pf-list" id="blList"></div>
+      <p class="note">ترسل طلب صداقة أو تحظر أي لاعب بالضغط على اسمه وأنت تلعب أونلاين، ويصير صديقك إذا قبل طلبك. المحظور ما تشوف رسائله ولا إيموجياته ولا توصلك طلباته.</p>
     </div>
     <div class="pf-pane" id="pf-st" hidden>
       <div class="stats" id="pfStats"></div>
@@ -1300,7 +1336,7 @@ async function recordOnline(winCi,gain){
     try{const ref=DB.doc('board/'+p.pid),cur=await ref.get(),mk=monthKey(),o0=cur.exists?cur.data():{},o=o0.m===mk?o0:{};
       await ref.set({m:mk,pid:p.pid,nick:String(p.name||'لاعب').replace(' 🤖','').slice(0,14),av:String(p.av||'🙂').slice(0,4),w:(+o.w||0)+(won?1:0),p:(+o.p||0)+1,at:Date.now()})}catch(e){}}}
 function openProfile(){pfTab('me');renderProfile();$('pfNick').value=W.nick||'';$('pfNickErr').textContent='';$('profBox').hidden=false;$('profBox').scrollTop=0}
-function pfTab(k){document.querySelectorAll('#pfTabs button').forEach(b=>b.classList.toggle('sel',b.dataset.p===k));['me','st','set','adm'].forEach(x=>$('pf-'+x).hidden=x!==k)}
+function pfTab(k){document.querySelectorAll('#pfTabs button').forEach(b=>b.classList.toggle('sel',b.dataset.p===k));['me','fr','st','set','adm'].forEach(x=>$('pf-'+x).hidden=x!==k);if(k==='fr')renderFriends()}
 function renderProfile(){const st=ST();
   {const a=$('pfAv'),ic=a.querySelector('i');a.innerHTML='';if(myPic()){const i=new Image();i.alt='';i.src=W.pic;a.appendChild(i)}else a.appendChild(document.createTextNode(W.av));a.appendChild(ic)}$('pfName').textContent=(W.nick||'').trim()||'لاعب';
   $('pfAv').classList.toggle('dev-av',IS_ADMIN);if(IS_ADMIN){const t=document.createElement('span');t.className='dev-tag';t.textContent='🛡️ المطوّر';$('pfName').appendChild(t)}
@@ -2369,7 +2405,7 @@ function startMode(m){
   const pool=BOTS.slice().sort(()=>Math.random()-.5);
   let hn=0;const players=[];
   roles.forEach((r,ci)=>{if(r==='off')return;
-    if(r==='human'){hn++;players.push({ci,kind:'local',name:m==='friends'?'لاعب '+toAr(hn):'أنت',av:m==='friends'?['😎','🤠','🧐','😄'][ci]:W.av,pic:m==='friends'?'':myPic(),tok:m==='friends'?'tayb':W.tok})}
+    if(r==='human'){hn++;players.push({ci,kind:'local',name:m==='friends'?'لاعب '+toAr(hn):((W.nick||'').trim()||'أنت'),av:m==='friends'?['😎','🤠','🧐','😄'][ci]:W.av,pic:m==='friends'?'':myPic(),tok:m==='friends'?'tayb':W.tok})}
     else{const b=pool.pop();players.push({ci,kind:'bot',name:b.n,av:b.a,tok:'tayb'})}
   });
   newGame(players);show('game');
@@ -2448,13 +2484,19 @@ function renderChips(){
     const team=pl&&rule()==='teams'?(ci%2?'فريق ب · ':'فريق أ · '):'';
     const lk=pl&&locked(ci)?'<span class="lock" title="لازم ياكل">🔒</span>':'';
     d.innerHTML=`${lk}${isDev?'<span class="dv" title="المطوّر">🛡️</span>':''}<div class="pic">${pl?avHTML(pl.av,picOf(pl)):'·'}</div><span class="lbl">${pl?esc(pl.name):'—'}</span><small>${pl?team+toAr(done)+'/'+toAr(target()):''}</small>`;
+    const ou=pl&&MODE==='online'&&pl.peer&&pl.peer!==NET.myPeer?peerUid(pl.peer):'';
+    if(pl&&MODE==='online'&&pl.peer&&pl.peer!==NET.myPeer){d.classList.add('tap');d.onclick=()=>openPlMenu(pl);
+      if(ou&&(isFriend(ou)||isBlocked(ou))){const b=document.createElement('span');b.className='frb';b.textContent=isBlocked(ou)?'🚫':'🤝';d.appendChild(b)}}
     const seat=document.createElement('div');seat.className='seat '+seatOf(ci)[1]+(pl?'':' hide');
     const slot=document.createElement('div');slot.className='dslot';slot.id='dslot-'+ci;
-    seat.append(d,slot);box.appendChild(seat);
+    seat.append(d,slot);box.appendChild(seat);fitName(d.querySelector('.lbl'));
   });
   const cur=S&&S.players[S.cur],slot=cur&&$('dslot-'+cur.ci);
   if(dice&&slot)slot.appendChild(dice);
 }
+// الاسم: سطر واحد لين ١٥ حرف (يصغر الخط لين يدخل)، وأطول من كذا ينزل سطرين
+function fitName(e){if(!e)return;e.style.fontSize='';const n=[...(e.textContent||'')].length;e.classList.toggle('two',n>15);if(n>15)return;
+  let f=parseFloat(getComputedStyle(e).fontSize)||12;let i=0;while(e.scrollWidth>e.clientWidth+1&&f>7&&i++<20){f-=.5;e.style.fontSize=f+'px'}}
 let lastMsg='';
 function paintStatus(main,sub){const st=$('status');st.innerHTML=main+(sub?' — '+sub:'');
   const plain=st.textContent,imp=/أكل|وصل 🎯|طلع ٦!|ما فيه حركة/.test(plain);
@@ -2761,6 +2803,65 @@ async function initAuth(){if(!window.__FB)return;let c;try{c=await window.__FB}c
   renderAcct()}
 setTimeout(initAuth,0);
 // ---------- المطوّر: الصلاحيات، البلاغات، الإيقاف ----------
+// ---------- الأصدقاء والحظر ----------
+function frArr(k){if(!Array.isArray(W[k]))W[k]=[];return W[k]}
+function isFriend(u){return !!u&&frArr('friends').some(f=>f.u===u)}
+function isBlocked(u){return !!u&&frArr('blocks').some(f=>f.u===u)}
+function frDel(k,u){W[k]=frArr(k).filter(f=>f.u!==u)}
+let PM=null,FRC=null;const RQIN={},RQOUT={};
+function frOn(){return !!(FRC&&MYUID&&AU.user)}
+function rqId(a,b){return a+'_'+b}
+function frAddLocal(u,n,av){if(!isFriend(u)){frArr('friends').push({u,n:String(n||'لاعب').slice(0,14),av:String(av||'🙂').slice(0,4),t:Date.now()});save()}}
+function frBadge(){const n=Object.keys(RQIN).length,t=n?toAr(n):null;const a=$('meAv');if(a){if(t)a.setAttribute('data-req',t);else a.removeAttribute('data-req')}
+  const b=document.querySelector('#pfTabs button[data-p="fr"]');if(b){if(t)b.setAttribute('data-req','('+t+')');else b.removeAttribute('data-req')}}
+function frRefresh(){frBadge();if(!$('pf-fr').hidden)renderFriends();if(!$('plMenu').hidden)paintPlMenu();try{if(S)renderChips()}catch(e){}}
+function frListen(c){FRC=c;const col=c.fs.collection('friendReqs');
+  col.where('to','==',MYUID).onSnapshot(sn=>{const seen=new Set;
+    sn.docs.forEach(d=>{const x=d.data()||{};if(x.st==='x'){if(isFriend(x.from)){frDel('friends',x.from);save()}d.ref.delete().catch(()=>{});return}
+      if(x.st!=='p')return;if(isBlocked(x.from)){d.ref.update({st:'r',t:Date.now()}).catch(()=>{});return}
+      if(isFriend(x.from)){d.ref.update({st:'a',t:Date.now()}).catch(()=>{});return}
+      seen.add(x.from);if(!RQIN[x.from])toast('📩 '+safeName(String(x.fn||'لاعب'))+' يبي يضيفك صديق');RQIN[x.from]={n:x.fn,av:x.fa}});
+    Object.keys(RQIN).forEach(u=>{if(!seen.has(u))delete RQIN[u]});frRefresh()},()=>{});
+  col.where('from','==',MYUID).onSnapshot(sn=>{const seen=new Set;
+    sn.docs.forEach(d=>{const x=d.data()||{};
+      if(x.st==='a'){frAddLocal(x.to,x.tn,x.ta);toast('🤝 '+safeName(String(x.tn||'لاعب'))+' قبل طلب صداقتك');d.ref.delete().catch(()=>{});return}
+      if(x.st==='r'){d.ref.delete().catch(()=>{});return}
+      if(x.st==='p'){seen.add(x.to);RQOUT[x.to]=1}});
+    Object.keys(RQOUT).forEach(u=>{if(!seen.has(u))delete RQOUT[u]});frRefresh()},()=>{})}
+async function frSend(u,n,av){if(!frOn())return toast('سجّل حساب عشان تضيف أصدقاء');
+  if(RQIN[u])return frAnswer(u,true);
+  try{await FRC.fs.collection('friendReqs').doc(rqId(MYUID,u)).set({from:MYUID,to:u,fn:String(W.nick||'لاعب').slice(0,14),fa:String(W.av||'🙂').slice(0,4),tn:String(n||'لاعب').slice(0,14),ta:String(av||'🙂').slice(0,4),st:'p',t:Date.now()});
+    RQOUT[u]=1;toast('📨 انرسل طلب الصداقة');frRefresh()}catch(e){toast('ما قدرنا نرسل الطلب')}}
+async function frCancel(u){if(!frOn())return;try{await FRC.fs.collection('friendReqs').doc(rqId(MYUID,u)).delete();delete RQOUT[u];toast('انلغى الطلب');frRefresh()}catch(e){toast('ما قدرنا نلغي الطلب')}}
+async function frAnswer(u,ok){if(!frOn())return;const r=RQIN[u]||{};
+  try{await FRC.fs.collection('friendReqs').doc(rqId(u,MYUID)).update({st:ok?'a':'r',tn:String(W.nick||'لاعب').slice(0,14),ta:String(W.av||'🙂').slice(0,4),t:Date.now()});
+    delete RQIN[u];if(ok){frAddLocal(u,r.n,r.av);toast('🤝 صار '+safeName(String(r.n||'لاعب'))+' من أصدقائك')}else toast('انرفض الطلب');frRefresh()}catch(e){toast('ما قدرنا نرد على الطلب')}}
+async function frUnfriend(u){frDel('friends',u);save();frRefresh();if(!frOn())return;
+  try{await FRC.fs.collection('friendReqs').doc(rqId(MYUID,u)).set({from:MYUID,to:u,fn:String(W.nick||'لاعب').slice(0,14),fa:'',tn:'',ta:'',st:'x',t:Date.now()})}catch(e){}}
+async function frBlock(u,n){if(isFriend(u))frUnfriend(u);if(RQIN[u])frAnswer(u,false);if(RQOUT[u])frCancel(u);frArr('blocks').push({u,n:String(n||'لاعب').slice(0,14),t:Date.now()});save();toast('🚫 انحظر '+safeName(n));frRefresh()}
+function openPlMenu(pl){const uid=peerUid(pl.peer),nm=String(pl.name||'لاعب').replace(' 🤖','');const can=!!uid&&uid!==MYUID;PM={uid,nm,av:pl.av,can};
+  const a=$('pmAv');a.style.setProperty('--c',COL[pl.ci].hex);a.innerHTML=avHTML(pl.av,picOf(pl));$('pmName').textContent=safeName(nm);
+  $('pmFriend').hidden=$('pmBlock').hidden=!can;$('pmReport').hidden=!can||ADMINS.has(uid);
+  paintPlMenu();$('plMenu').hidden=false}
+function paintPlMenu(){if(!PM)return;const u=PM.uid,f=isFriend(u),b=isBlocked(u),out=!!RQOUT[u],inc=!!RQIN[u];
+  $('pmFriend').textContent=f?'✔️ صديقك · إزالة':inc?'✅ قبول طلب صداقته':out?'⏳ أرسلت طلب · إلغاء':'➕ إرسال طلب صداقة';$('pmFriend').disabled=b;
+  $('pmBlock').textContent=b?'إلغاء الحظر':'🚫 حظر';
+  $('pmNote').textContent=!PM.can?'ما تقدر تضيف هذا اللاعب.':b?'هذا اللاعب محظور، ما تشوف رسائله.':f?'هذا اللاعب من أصدقائك 🤝':inc?'هذا اللاعب أرسل لك طلب صداقة 📩':out?'ننتظر يوافق على طلبك':!AU.user?'سجّل حساب عشان تضيف أصدقاء':''}
+$('pmX').onclick=()=>{$('plMenu').hidden=true};$('plMenu').addEventListener('click',e=>{if(e.target.id==='plMenu')$('plMenu').hidden=true});
+$('pmFriend').onclick=()=>{if(!PM||!PM.uid)return;const u=PM.uid;if(isFriend(u)){frUnfriend(u);toast('انشال من أصدقائك')}else if(RQIN[u])frAnswer(u,true);else if(RQOUT[u])frCancel(u);else frSend(u,PM.nm,PM.av)};
+$('pmBlock').onclick=()=>{if(!PM||!PM.uid)return;if(isBlocked(PM.uid)){frDel('blocks',PM.uid);save();toast('انلغى الحظر');frRefresh()}else frBlock(PM.uid,PM.nm)};
+$('pmReport').onclick=()=>{if(!PM||!PM.uid)return;$('plMenu').hidden=true;reportPlayer(PM.uid,PM.nm)};
+function renderFriends(){
+  const box0=$('rqList');box0.innerHTML='';const ks=Object.keys(RQIN);$('rqWrap').hidden=!ks.length;
+  ks.forEach(u=>{const r=RQIN[u],row=document.createElement('div');row.style.cursor='default';const n=document.createElement('span');n.textContent=(r.av||'🙂')+' '+safeName(String(r.n||'لاعب'));
+    const bs=document.createElement('span');bs.className='fr-btns';const ok=document.createElement('button');ok.type='button';ok.className='fr-ok';ok.textContent='قبول';ok.onclick=()=>frAnswer(u,true);
+    const no=document.createElement('button');no.type='button';no.className='fr-x';no.textContent='رفض';no.onclick=()=>frAnswer(u,false);bs.append(ok,no);row.append(n,bs);box0.appendChild(row)});
+  const fill=(id,k,empty,btn,act)=>{const box=$(id);box.innerHTML='';const L=frArr(k);
+    if(!L.length){const e=document.createElement('div');e.className='fr-empty';e.textContent=empty;box.appendChild(e);return}
+    L.forEach(f=>{const r=document.createElement('div');r.style.cursor='default';const n=document.createElement('span');n.textContent=(k==='friends'?(f.av||'🙂')+' ':'🚫 ')+safeName(f.n||'لاعب');
+      const x=document.createElement('button');x.type='button';x.className='fr-x';x.textContent=btn;x.onclick=()=>act(f.u);r.append(n,x);box.appendChild(r)})};
+  fill('frList','friends','ما عندك أصدقاء للحين','إزالة',u=>{frUnfriend(u);toast('انشال من أصدقائك')});
+  fill('blList','blocks','ما حظرت أحد','إلغاء الحظر',u=>{frDel('blocks',u);save();toast('انلغى الحظر');frRefresh()})}
 function peerUid(peer){return (window.__PU&&window.__PU[peer])||''}
 function admRefresh(){if(IS_ADMIN)setTimeout(renderVault,0);const t=$('pfAdmTab');if(t)t.hidden=!IS_ADMIN;$('pfTabs').classList.toggle('adm4',IS_ADMIN);paintShopTab();if(!IS_ADMIN&&!$('pf-adm').hidden)pfTab('me');
   $('meAv').classList.toggle('dev-av',IS_ADMIN);if(!$('profBox').hidden)renderProfile();if(S)renderChips();try{renderBoard()}catch(e){}}
@@ -2771,7 +2872,7 @@ function banRefresh(){let bdev='';try{bdev=localStorage.getItem('ludo-bdev')||''
   if(IAMBANNED&&MODE==='online'&&NET.r){toast('⛔ انوقف حسابك');try{leaveOnline()}catch(e){}show('home')}
   try{renderBoard()}catch(e){}}
 async function devInit(){if(!window.__FB)return;let c;try{c=await window.__FB}catch(e){return}MYUID=c.auth.currentUser?c.auth.currentUser.uid:c.uid;
-  $('pfUidTxt').textContent=MYUID;giftListen(c);
+  $('pfUidTxt').textContent=MYUID;giftListen(c);try{frListen(c)}catch(e){}
   c.fs.collection('admins').onSnapshot(sn=>{ADMINS.clear();sn.docs.forEach(d=>ADMINS.add(d.id));const was=IS_ADMIN;IS_ADMIN=ADMINS.has(MYUID);
     if(IS_ADMIN&&!was){admSub(c);c.fs.collection('leaderboard').doc(MYUID).delete().catch(()=>{})}admRefresh();banRefresh()},()=>{});
   c.fs.collection('bans').onSnapshot(sn=>{BANNED.clear();ADMBANS=[];sn.docs.forEach(d=>{BANNED.add(d.id);ADMBANS.push(Object.assign({id:d.id},d.data()))});banRefresh();admDrawBans()},()=>{});
@@ -3192,7 +3293,7 @@ function renderLobby(){
 function sayCheck(ch){
   ch.peers.forEach(p=>{const s=p.presence&&p.presence.say;if(s&&typeof s.n==='number'&&s.n>(NET.seenSay[p.peer]||0)){
     const first=!(p.peer in NET.seenSay);NET.seenSay[p.peer]=s.n;
-    if(!first&&!p.sameTab&&!NET.muted[p.peer]&&S&&MODE==='online'&&(PHRASES.includes(s.x)||EMOJIS.includes(s.x))){const pl=S.players.find(x=>x.peer===p.peer);if(pl){if(EMOJIS.includes(s.x))flyEmoji(pl.ci,s.x);else bubble(pl.ci,s.x)}}}});
+    if(!first&&!p.sameTab&&!NET.muted[p.peer]&&!isBlocked(peerUid(p.peer))&&S&&MODE==='online'&&(PHRASES.includes(s.x)||EMOJIS.includes(s.x))){const pl=S.players.find(x=>x.peer===p.peer);if(pl){if(EMOJIS.includes(s.x))flyEmoji(pl.ci,s.x);else bubble(pl.ci,s.x)}}}});
 }
 const BETS=[0,500,1000,5000,10000,50000,100000,500000,1000000];
 const coinI='<span class="coin" style="width:14px;height:14px;display:inline-block;vertical-align:-2px"></span>';
