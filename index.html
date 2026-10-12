@@ -886,6 +886,8 @@ svg#board{width:100%;height:100%;display:block}
       </div>
       <div class="adm-card">
         <b>🧪 أدوات التجربة (لك بس)</b>
+        <div class="pf-row"><input class="field" id="admSetC" type="number" inputmode="numeric" min="0" placeholder="عملاتي" style="text-align:start"><input class="field" id="admSetG" type="number" inputmode="numeric" min="0" placeholder="جواهري" style="text-align:start"></div>
+        <button class="btn sand" id="admSetGo" type="button" style="font-size:1.05rem;padding:9px">اضبط رصيدي</button>
         <div class="adm-btns"><button type="button" class="gold" id="admCoins">+١٠٬٠٠٠ عملة</button><button type="button" class="gold" id="admGems">+١٠٠ جوهرة</button></div>
       </div>
       <div class="pf-lbl">🚩 البلاغات <span id="admCount"></span></div>
@@ -956,6 +958,7 @@ const NS='http://www.w3.org/2000/svg';
 const $=id=>document.getElementById(id);
 const toAr=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
 const fmt=n=>toAr(Number(n).toLocaleString('en-US')).replace(/,/g,'٬');
+const fmtS=n=>{n=Number(n)||0;const cut=(v,u)=>toAr(String(Math.floor(v*10)/10).replace('.','٫'))+u;if(n>=1e9)return cut(n/1e9,' مليار');if(n>=1e6)return cut(n/1e6,' مليون');return fmt(n)};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
 
@@ -1346,7 +1349,7 @@ function tokSvg(style,svg){svg.innerHTML='';svg._g={};svg.setAttribute('viewBox'
 
 // ---------- المحفظة على الشاشة ----------
 function renderWallet(){
-  $('coins').textContent=fmt(W.coins);$('gems').textContent=fmt(W.gems);
+  $('coins').textContent=fmtS(W.coins);$('gems').textContent=fmtS(W.gems);
   $('lvTxt').textContent='مستوى '+toAr(level());$('xpBar').style.width=((W.xp%300)/3)+'%';
   $('meAv').textContent=W.av;
   const got=W.gift===today();
@@ -2097,6 +2100,10 @@ function giftListen(c){c.fs.collection('gifts').where('to','==',MYUID).onSnapsho
 function showGift(what,msg){$('gfWhat').textContent=what;$('gfMsg').textContent=msg;$('gfMsg').hidden=!msg;$('giftBox').hidden=false;
   try{burst(innerWidth/2,innerHeight/2,['#efd29a','#ffd94a','#fff','#33c2b0'],50,'star',9);coinRain(innerWidth/2,innerHeight/3,30);SFX.home()}catch(e){}}
 $('gfOk').onclick=()=>$('giftBox').hidden=true;
+$('admSetGo').onclick=()=>{if(!IS_ADMIN)return;const c=toEn($('admSetC').value).trim(),g=toEn($('admSetG').value).trim();
+  if(!c&&!g){toast('اكتب الرقم اللي تبيه');return}const MAX=1e12;
+  if(c)W.coins=Math.min(MAX,Math.max(0,Math.floor(+c)||0));if(g)W.gems=Math.min(MAX,Math.max(0,Math.floor(+g)||0));
+  save();renderWallet();renderProfile();$('admSetC').value=$('admSetG').value='';toast('✔️ انضبط رصيدك');coinRain(innerWidth/2,innerHeight/3,30)};
 $('admCoins').onclick=()=>{if(!IS_ADMIN)return;W.coins=(+W.coins||0)+10000;save();renderWallet();renderProfile();toast('+١٠٬٠٠٠ عملة 🧪')};
 $('admGems').onclick=()=>{if(!IS_ADMIN)return;W.gems=(+W.gems||0)+100;save();renderWallet();renderProfile();toast('+١٠٠ جوهرة 🧪')};
 $('pfUid').onclick=()=>{if(!MYUID)return;try{navigator.clipboard.writeText(MYUID).then(()=>toast('انسخ معرّفك ✔️'),()=>prompt('انسخ معرّفك:',MYUID))}catch(e){prompt('انسخ معرّفك:',MYUID)}};
