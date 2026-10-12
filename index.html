@@ -362,6 +362,22 @@ svg#board{width:100%;height:100%;display:block}
 .pf-avs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .pf-avs button{aspect-ratio:1;border:2px solid transparent;border-radius:12px;background:var(--night);font-size:1.6rem;cursor:pointer;padding:0}
 .pf-avs button.on{border-color:var(--sand);background:var(--panel-2)}
+.av img,.pic img,.lav img,.pf-avs img,.avimg{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+.lb-row .lav{width:30px;height:30px;display:grid;place-items:center;flex:none}
+.pf-avs .camb{font-size:1.25rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.1}
+.pf-avs .camb small{font-size:.62rem;font-weight:800;color:var(--sand)}
+.pf-avs .picb{padding:3px}
+.pf-picrow{display:flex;gap:8px;margin-top:8px}
+.pf-picrow button{flex:1;font-size:.95rem!important;padding:8px!important}
+.crop{background:var(--panel);border-radius:22px;padding:18px;width:min(100%,360px);box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.crop h3{margin:0;font-family:var(--display);font-weight:400;font-size:1.6rem;color:var(--sand)}
+.crop-stage{position:relative;width:260px;height:260px;max-width:100%;border-radius:18px;overflow:hidden;background:var(--night);touch-action:none;cursor:grab}
+.crop-stage canvas{width:100%;height:100%;display:block}
+.crop-stage::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 50%,transparent 0 calc(50% - 8px),#06111ab3 calc(50% - 7px));}
+.crop-stage::before{content:"";position:absolute;inset:8px;border-radius:50%;box-shadow:0 0 0 3px var(--sand);pointer-events:none;z-index:1}
+.crop input[type=range]{width:100%;accent-color:var(--sand)}
+.crop .row{display:flex;gap:8px;width:100%}
+.crop .row .btn{font-size:1.15rem;padding:10px}
 .pf-wal{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .pf-list{display:flex;flex-direction:column;background:var(--night);border-radius:14px;overflow:hidden}
 .pf-list>*{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border:0;background:transparent;color:var(--ink);font:700 .95rem var(--body);text-decoration:none;cursor:pointer;text-align:start;width:100%;box-sizing:border-box}
@@ -834,6 +850,15 @@ svg#board{width:100%;height:100%;display:block}
     <p class="note">بالدخول أو التسجيل توافق على <a href="https://fakkha2026.github.io/ludo-altaybeen/privacy.html" target="_blank" rel="noopener" style="color:var(--sand)">الخصوصية والشروط</a></p>
   </div>
 </div>
+<div class="overlay" id="cropBox" hidden style="z-index:40">
+  <div class="crop">
+    <h3>رتّب صورتك</h3>
+    <div class="crop-stage" id="cropStage"><canvas id="cropCv" width="520" height="520"></canvas></div>
+    <small style="color:var(--muted)">اسحب الصورة بإصبعك، وكبّرها أو صغّرها من الشريط</small>
+    <input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1" aria-label="تكبير">
+    <div class="row"><button class="btn sand" id="cropOk" type="button">اعتمد الصورة</button><button class="btn teal" id="cropNo" type="button">إلغاء</button></div>
+  </div>
+</div>
 <div class="overlay" id="profBox" hidden>
   <div class="card pf" style="position:relative">
     <button class="pf-x" id="pfX" type="button" aria-label="سكّر">✕</button>
@@ -861,6 +886,8 @@ svg#board{width:100%;height:100%;display:block}
       <div class="err" id="pfNickErr"></div>
       <div class="pf-lbl">صورتك</div>
       <div class="pf-avs" id="pfAvs"></div>
+      <input type="file" id="pfFile" accept="image/*" hidden>
+      <div class="pf-picrow" id="pfPicRow"><button class="btn sand" id="pfPicPick" type="button">📷 صورة من الاستديو</button><button class="btn teal" id="pfPicDel" type="button" hidden>🗑️ شيل صورتي</button></div>
       <div class="pf-lbl">رصيدك</div>
       <div class="pf-wal"><div class="stat"><b id="pfCoins">٠</b><small>🪙 عملات</small></div><div class="stat"><b id="pfGems">٠</b><small>💎 جواهر</small></div></div>
       <p class="note" id="pfCloud" style="font-weight:800;color:var(--ink)"></p>
@@ -1117,7 +1144,7 @@ const MIS={
 const DIFF={easy:{name:'سهل',mult:.5},mid:{name:'متوسط',mult:1},hard:{name:'صعب',mult:1.5}};
 
 // ---------- المحفظة ----------
-const DEF={tut:0,stake:'n',t:0,coins:1000,gems:10,xp:0,gift:'',dice:'classic',tok:'tayb',theme:'classic',av:'🦅',ownD:['classic'],ownT:['tayb','dot'],ownH:['classic'],diff:'mid',rule:'classic',st:null,pid:'',spin:'',days:0,lastDay:'',nick:'',mis:null};
+const DEF={tut:0,stake:'n',t:0,coins:1000,gems:10,xp:0,gift:'',dice:'classic',tok:'tayb',theme:'classic',av:'🦅',pic:'',ownD:['classic'],ownT:['tayb','dot'],ownH:['classic'],diff:'mid',rule:'classic',st:null,pid:'',spin:'',days:0,lastDay:'',nick:'',mis:null};
 let W=Object.assign({},DEF);
 try{const s=JSON.parse(localStorage.getItem('ludo-dira')||'null');if(s)W=Object.assign({},DEF,s)}catch(e){}
 let ADMBANS=[];
@@ -1127,6 +1154,13 @@ if(!TOKS.some(t=>t.id===W.tok))W.tok='tayb';
 if(!W.m1){W.m1=1;if(W.tok==='dot')W.tok='tayb'}
 if(Array.isArray(W.ownT)&&!W.ownT.includes('tayb'))W.ownT.unshift('tayb');
 ['ownD','ownT','ownH'].forEach(k=>{if(!Array.isArray(W[k]))W[k]=DEF[k].slice()});
+function okPic(x){return typeof x==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x)&&x.length<60000}
+function myPic(){return okPic(W.pic)?W.pic:''}
+function avHTML(av,pic){return okPic(pic)?`<img src="${pic}" alt="">`:esc(String(av||'🙂'))}
+function avSet(el,av,pic){if(!el)return;if(okPic(pic)){el.innerHTML='';const i=new Image();i.alt='';i.src=pic;el.appendChild(i)}else el.textContent=String(av||'🙂')}
+const PICS={};
+function grabPics(ch){let ch2=false;(ch.peers||[]).forEach(p=>{if(p.sameTab||!p.presence)return;const x=p.presence.pic;const v=okPic(x)?x:'';if(PICS[p.peer]!==v){PICS[p.peer]=v;ch2=true}});return ch2}
+function picOf(pl){if(!pl)return '';if(okPic(pl.pic))return pl.pic;if(pl.pid&&pl.pid===W.pid&&!(MODE!=='online'&&pl.kind==='local'&&/^لاعب/.test(pl.name||'')))return myPic();if(pl.peer&&PICS[pl.peer])return PICS[pl.peer];return ''}
 function save(){W.t=Date.now();try{localStorage.setItem('ludo-dira',JSON.stringify(W))}catch(e){}cloudPush()}
 // ---------- حفظ الحساب في Claude: يرجع لك تقدمك ومشترياتك من أي جهاز ----------
 let CLOUD=null,cloudT=null,cloudOn=false;
@@ -1197,7 +1231,7 @@ function renderBoard(){const box=$('lbList');LB=LBRAW.filter(x=>!ADMINS.has(x.id
   if(!LB.length){box.innerHTML='<p class="note" style="text-align:center">ما فيه نتايج للحين. العب أونلاين مع ربعك وتطلع أسماءكم هنا.</p>';return}
   box.innerHTML='';LB.forEach((r,i)=>{const d=document.createElement('div');d.className='lb-row'+(r.pid===W.pid?' me':'');
     const rk=document.createElement('span');rk.className='rk';rk.textContent=i<3?['🥇','🥈','🥉'][i]:toAr(i+1);
-    const av=document.createElement('span');av.className='lav';av.textContent=String(r.av||'🙂').slice(0,4);
+    const av=document.createElement('span');av.className='lav';avSet(av,String(r.av||'🙂').slice(0,4),r.pid===W.pid?myPic():'');
     const nm=document.createElement('span');nm.className='ln';nm.textContent=safeName(String(r.nick||'لاعب').slice(0,14));
     const sc=document.createElement('span');sc.className='ls';sc.textContent=`${toAr(+r.w||0)} فوز · ${toAr(+r.p||0)} لعبة`;
     d.append(rk,av,nm,sc);box.appendChild(d)})}
@@ -1214,12 +1248,16 @@ async function recordOnline(winCi){
 function openProfile(){pfTab('me');renderProfile();$('pfNick').value=W.nick||'';$('pfNickErr').textContent='';$('profBox').hidden=false;$('profBox').scrollTop=0}
 function pfTab(k){document.querySelectorAll('#pfTabs button').forEach(b=>b.classList.toggle('sel',b.dataset.p===k));['me','st','set','adm'].forEach(x=>$('pf-'+x).hidden=x!==k)}
 function renderProfile(){const st=ST();
-  $('pfAv').firstChild.textContent=W.av;$('pfName').textContent=(W.nick||'').trim()||'لاعب';
+  {const a=$('pfAv'),ic=a.querySelector('i');a.innerHTML='';if(myPic()){const i=new Image();i.alt='';i.src=W.pic;a.appendChild(i)}else a.appendChild(document.createTextNode(W.av));a.appendChild(ic)}$('pfName').textContent=(W.nick||'').trim()||'لاعب';
   $('pfAv').classList.toggle('dev-av',IS_ADMIN);if(IS_ADMIN){const t=document.createElement('span');t.className='dev-tag';t.textContent='🛡️ المطوّر';$('pfName').appendChild(t)}
   const lv=level(),inLv=W.xp%300;$('pfLv').textContent=`مستوى ${toAr(lv)}، خبرتك ${toAr(inLv)} من ${toAr(300)}`;$('pfXp').style.width=Math.round(inLv*100/300)+'%';
   $('pfCoins').textContent=toAr((+W.coins||0).toLocaleString('en-US'));$('pfGems').textContent=toAr(+W.gems||0);
-  const box=$('pfAvs');box.innerHTML='';AVS.forEach(e=>{const b=document.createElement('button');b.type='button';b.textContent=e;b.className=W.av===e?'on':'';b.setAttribute('aria-label','اختر '+e);
-    b.onclick=()=>{W.av=e;save();renderProfile();renderWallet();if(!$('closet').hidden)renderCloset()};box.appendChild(b)});
+  const box=$('pfAvs');box.innerHTML='';
+  if(myPic()){const b=document.createElement('button');b.type='button';b.className='picb on';b.setAttribute('aria-label','صورتك');const i=new Image();i.alt='';i.src=W.pic;b.appendChild(i);b.onclick=()=>$('pfFile').click();box.appendChild(b)}
+  else{const b=document.createElement('button');b.type='button';b.className='camb';b.innerHTML='📷<small>الاستديو</small>';b.setAttribute('aria-label','صورة من الاستديو');b.onclick=()=>$('pfFile').click();box.appendChild(b)}
+  AVS.forEach(e=>{const b=document.createElement('button');b.type='button';b.textContent=e;b.className=!myPic()&&W.av===e?'on':'';b.setAttribute('aria-label','اختر '+e);
+    b.onclick=()=>{W.av=e;W.pic='';save();renderProfile();renderWallet();if(!$('closet').hidden)renderCloset()};box.appendChild(b)});
+  $('pfPicPick').textContent=myPic()?'📷 غيّر الصورة':'📷 صورة من الاستديو';$('pfPicDel').hidden=!myPic();
   const rate=st.play?Math.round(st.win*100/st.play):0;
   $('pfStats').innerHTML=[[st.play,'لعبت'],[st.win,'فزت'],[toAr(rate)+'٪','نسبة الفوز'],[st.eat,'أكلت حجر'],[st.home,'وصّلت حجر'],[st.six,'طلع لك ٦'],[st.best,'أطول سلسلة فوز'],[st.run,'سلسلتك الحين'],[W.days||1,'أيام متتالية']]
     .map(([v,t])=>`<div class="stat"><b>${typeof v==='number'?toAr(v):v}</b><small>${t}</small></div>`).join('');
@@ -1932,7 +1970,7 @@ function tokSvg(style,svg){svg.innerHTML='';svg._g={};svg.setAttribute('viewBox'
 function renderWallet(){
   $('coins').textContent=fmtS(W.coins);$('gems').textContent=fmtS(W.gems);
   $('lvTxt').textContent='مستوى '+toAr(level());$('xpBar').style.width=((W.xp%300)/3)+'%';
-  $('meAv').textContent=W.av;
+  avSet($('meAv'),W.av,myPic());
   const got=W.gift===today();
   $('giftBtn').disabled=got;$('giftBtn').textContent=got?'استلمتها':'استلم';
   $('giftTxt').textContent=got?'ارجع بكرة لهدية جديدة':'٥٠٠ عملة و٥ جواهر مجاناً كل يوم';
@@ -2132,7 +2170,8 @@ function renderSeasonBanner(){const list=SEASONS.filter(z=>!z.ev||seasonItems(z.
   $('szTxt').textContent=r.on?`ثيم وأحجار خاصة لفترة محدودة · باقي ${toAr(daysTo(r.b))} يوم`:`يبدأ بعد ${toAr(daysTo(r.a))} يوم · شوف وش بيجيك`;$('szBanner').classList.toggle('live',r.on)}
 function renderCloset(){
   const a=$('avGrid');a.innerHTML='';
-  AVS.forEach(e=>{const b=document.createElement('button');b.type='button';b.className='item'+(W.av===e?' on':'');b.innerHTML=`<span style="font-size:2.4rem;line-height:1.3">${e}</span>`;b.onclick=()=>{W.av=e;save();renderCloset();renderWallet()};a.appendChild(b)});
+  {const b=document.createElement('button');b.type='button';b.className='item'+(myPic()?' on':'');b.innerHTML=myPic()?`<span style="width:52px;height:52px;display:block"><img class="avimg" src="${W.pic}" alt=""></span><small>صورتك</small>`:`<span style="font-size:2.4rem;line-height:1.3">📷</span><small>من الاستديو</small>`;b.onclick=()=>$('pfFile').click();a.appendChild(b)}
+  AVS.forEach(e=>{const b=document.createElement('button');b.type='button';b.className='item'+(!myPic()&&W.av===e?' on':'');b.innerHTML=`<span style="font-size:2.4rem;line-height:1.3">${e}</span>`;b.onclick=()=>{W.av=e;W.pic='';save();renderCloset();renderWallet();if(!$('profBox').hidden)renderProfile()};a.appendChild(b)});
   fillGrid('myTh','h',true,renderCloset);fillGrid('myDice','d',true,renderCloset);fillGrid('myTok','t',true,renderCloset);
 }
 
@@ -2241,7 +2280,7 @@ function startMode(m){
   const pool=BOTS.slice().sort(()=>Math.random()-.5);
   let hn=0;const players=[];
   roles.forEach((r,ci)=>{if(r==='off')return;
-    if(r==='human'){hn++;players.push({ci,kind:'local',name:m==='friends'?'لاعب '+toAr(hn):'أنت',av:m==='friends'?['😎','🤠','🧐','😄'][ci]:W.av,tok:m==='friends'?'tayb':W.tok})}
+    if(r==='human'){hn++;players.push({ci,kind:'local',name:m==='friends'?'لاعب '+toAr(hn):'أنت',av:m==='friends'?['😎','🤠','🧐','😄'][ci]:W.av,pic:m==='friends'?'':myPic(),tok:m==='friends'?'tayb':W.tok})}
     else{const b=pool.pop();players.push({ci,kind:'bot',name:b.n,av:b.a,tok:'tayb'})}
   });
   newGame(players);show('game');
@@ -2319,7 +2358,7 @@ function renderChips(){
     const done=pl?S.tok[ci].filter(p=>p===56).length:0;
     const team=pl&&rule()==='teams'?(ci%2?'فريق ب · ':'فريق أ · '):'';
     const lk=pl&&locked(ci)?'<span class="lock" title="لازم ياكل">🔒</span>':'';
-    d.innerHTML=`${lk}${isDev?'<span class="dv" title="المطوّر">🛡️</span>':''}<div class="pic">${pl?esc(pl.av):'·'}</div><span class="lbl">${pl?esc(pl.name):'—'}</span><small>${pl?team+toAr(done)+'/'+toAr(target()):''}</small>`;
+    d.innerHTML=`${lk}${isDev?'<span class="dv" title="المطوّر">🛡️</span>':''}<div class="pic">${pl?avHTML(pl.av,picOf(pl)):'·'}</div><span class="lbl">${pl?esc(pl.name):'—'}</span><small>${pl?team+toAr(done)+'/'+toAr(target()):''}</small>`;
     const seat=document.createElement('div');seat.className='seat '+seatOf(ci)[1]+(pl?'':' hide');
     const slot=document.createElement('div');slot.className='dslot';slot.id='dslot-'+ci;
     seat.append(d,slot);box.appendChild(seat);
@@ -2469,6 +2508,34 @@ function safeName(n){n=String(n||'').trim();return !n||badName(n)?'لاعب':n}
 document.querySelectorAll('#pfTabs button').forEach(b=>b.onclick=()=>pfTab(b.dataset.p));
 $('pfX').onclick=()=>$('profBox').hidden=true;
 $('pfAv').onclick=()=>{pfTab('me');$('pfAvs').scrollIntoView({behavior:'smooth',block:'center'})};
+// ---------- صورة من الاستديو ----------
+const CR={img:null,z:1,x:0,y:0,base:1};
+$('pfPicPick').onclick=()=>$('pfFile').click();
+$('pfPicDel').onclick=()=>{W.pic='';save();renderProfile();renderWallet();if(!$('closet').hidden)renderCloset();toast('رجعت صورتك الأساسية')};
+$('pfFile').onchange=e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  if(!/^image\//.test(f.type||'image/')){toast('اختر صورة بس');return}
+  const url=URL.createObjectURL(f),im=new Image();
+  im.onload=()=>{CR.img=im;const S0=520;CR.base=Math.max(S0/im.naturalWidth,S0/im.naturalHeight);CR.z=1;CR.x=0;CR.y=0;$('cropZoom').value=1;$('cropBox').hidden=false;crDraw()};
+  im.onerror=()=>{URL.revokeObjectURL(url);toast('ما قدرنا نفتح الصورة، جرّب صورة ثانية')};im.src=url};
+function crClamp(){const S0=520,s=CR.base*CR.z,w=CR.img.naturalWidth*s,h=CR.img.naturalHeight*s,mx=Math.max(0,(w-S0)/2),my=Math.max(0,(h-S0)/2);CR.x=Math.max(-mx,Math.min(mx,CR.x));CR.y=Math.max(-my,Math.min(my,CR.y))}
+function crPaint(cv,S0){const g=cv.getContext('2d'),k=S0/520,s=CR.base*CR.z*k,w=CR.img.naturalWidth*s,h=CR.img.naturalHeight*s;g.fillStyle='#0d2230';g.fillRect(0,0,S0,S0);g.imageSmoothingQuality='high';g.drawImage(CR.img,(S0-w)/2+CR.x*k,(S0-h)/2+CR.y*k,w,h)}
+function crDraw(){if(!CR.img)return;crClamp();crPaint($('cropCv'),520)}
+$('cropZoom').oninput=e=>{CR.z=+e.target.value||1;crDraw()};
+(()=>{const st=$('cropStage');const pts=new Map();let last=null,pinch=0,pz=1;
+  st.addEventListener('pointerdown',e=>{st.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);if(pts.size===2){const [a,b]=[...pts.values()];pinch=Math.hypot(a[0]-b[0],a[1]-b[1]);pz=CR.z}last=[e.clientX,e.clientY]});
+  st.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId)||!CR.img)return;pts.set(e.pointerId,[e.clientX,e.clientY]);const r=520/st.clientWidth;
+    if(pts.size>=2&&pinch){const [a,b]=[...pts.values()];CR.z=Math.max(1,Math.min(4,pz*Math.hypot(a[0]-b[0],a[1]-b[1])/pinch));$('cropZoom').value=CR.z}
+    else if(last){CR.x+=(e.clientX-last[0])*r;CR.y+=(e.clientY-last[1])*r}
+    last=[e.clientX,e.clientY];crDraw()});
+  const up=e=>{pts.delete(e.pointerId);if(pts.size<2)pinch=0;const v=[...pts.values()][0];last=v?[v[0],v[1]]:null};
+  st.addEventListener('pointerup',up);st.addEventListener('pointercancel',up);})();
+function crClose(){$('cropBox').hidden=true;if(CR.img){try{URL.revokeObjectURL(CR.img.src)}catch(e){}}CR.img=null}
+$('cropNo').onclick=crClose;
+$('cropOk').onclick=()=>{if(!CR.img)return;const c=document.createElement('canvas');c.width=c.height=160;crPaint(c,160);
+  let q=.82,d=c.toDataURL('image/jpeg',q);while(d.length>40000&&q>.4){q-=.1;d=c.toDataURL('image/jpeg',q)}
+  if(!okPic(d)){toast('ما قدرنا نحفظ الصورة، جرّب ثانية');return}
+  W.pic=d;save();crClose();renderProfile();renderWallet();if(!$('closet').hidden)renderCloset();toast('تم تغيير صورتك 👌');
+  if(MODE==='online'&&NET.r)NET.r.presence({pic:d}).catch(()=>{})};
 $('pfNick').addEventListener('keydown',ev=>{if(ev.key==='Enter')$('pfNickSave').click()});
 $('pfSnd').onclick=()=>{$('sndBtn').click();$('pfSndT').classList.toggle('on',!!sndOn)};
 $('pfDel').onclick=()=>{$('delErr').textContent='';$('delPass').value='';$('delPass').hidden=!AU.user;$('delGo').disabled=false;$('profBox').hidden=true;$('delBox').hidden=false};
@@ -2993,7 +3060,7 @@ function renderLobby(){
   NET.lobby.forEach((l,i)=>{
     const ci=n>=2?seats[i]:i===0?0:2;
     const r=document.createElement('div');r.className='prow';r.style.setProperty('--c',COL[ci].hex);
-    r.innerHTML=`<div class="pic">${esc(l.av||'🙂')}</div><b>${esc(safeName(l.nick))}</b><small>${i===0?'صاحب الغرفة':l.peer===NET.myPeer?'أنت':''}</small>`;
+    r.innerHTML=`<div class="pic">${avHTML(l.av||'🙂',l.peer===NET.myPeer||(i===0&&NET.host)||l.pid===W.pid?myPic():PICS[l.peer]||'')}</div><b>${esc(safeName(l.nick))}</b><small>${i===0?'صاحب الغرفة':l.peer===NET.myPeer?'أنت':''}</small>`;
     list.appendChild(r);
   });
   $('onRule').hidden=!NET.host;if(NET.host)renderRules();
@@ -3017,11 +3084,12 @@ async function createRoom(){
   let r;try{r=await roomNS.join('ludo-'+code)}catch(e){$('onErr').textContent='ما قدرنا ننشئ الغرفة، جرّب مرة ثانية.';return}
   resetNet();Object.assign(NET,{r,host:true,code});
   NET.lobby=[{peer:'',nick:W.nick,av:W.av,tok:W.tok,pid:W.pid}];
-  r.presence({role:'host',code,lobby:NET.lobby,g:null}).catch(()=>{});
+  r.presence({role:'host',code,lobby:NET.lobby,g:null,pic:myPic()}).catch(()=>{});
   r.onPeers(onHostPeers);
   $('onA').hidden=true;$('onB').hidden=false;renderLobby();
 }
 function onHostPeers(ch){
+  if(grabPics(ch)){try{if(S)renderChips()}catch(e){}}
   const me=ch.peers.find(p=>p.sameTab);if(me)NET.myPeer=me.peer;
   const guests=ch.peers.filter(p=>!p.sameTab&&p.presence&&p.presence.role==='guest');
   if(MODE!=='online'||!S){
@@ -3063,12 +3131,13 @@ async function joinRoom(){
   if(code.length!==5){$('onErr').textContent='الرمز ٥ أرقام';return}
   let r;try{r=await roomNS.join('ludo-'+code)}catch(e){$('onErr').textContent='ما قدرنا ندخل الغرفة، جرّب مرة ثانية.';return}
   resetNet();Object.assign(NET,{r,guest:true,code});
-  r.presence({role:'guest',nick:W.nick,av:W.av,tok:W.tok,pid:W.pid,act:null}).catch(()=>{});
+  r.presence({role:'guest',nick:W.nick,av:W.av,tok:W.tok,pid:W.pid,act:null,pic:myPic()}).catch(()=>{});
   r.onPeers(onGuestPeers);
   $('onA').hidden=true;$('onB').hidden=false;renderLobby();
   setTimeout(()=>{if(NET.guest&&NET.code===code&&!NET.hostPeer){$('onWait').textContent='ما لقينا غرفة بهالرمز. تأكد منه وجرّب مرة ثانية.'}},9000);
 }
 function onGuestPeers(ch){
+  if(grabPics(ch)){try{if(S)renderChips()}catch(e){}}
   const me=ch.peers.find(p=>p.sameTab);if(me)NET.myPeer=me.peer;
   const host=ch.peers.find(p=>!p.sameTab&&p.presence&&p.presence.role==='host'&&p.presence.code===NET.code);
   if(!host){if(NET.hostPeer&&ch.left.some(l=>l.peer===NET.hostPeer)){toast('صاحب الغرفة طلع');leaveOnline();show('home')}return}
