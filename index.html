@@ -884,10 +884,7 @@ svg#board{width:100%;height:100%;display:block}
         <div style="display:flex;gap:8px"><button class="btn sand" id="pfSignUp" type="button" style="font-size:1.05rem;padding:9px">حساب جديد</button><button class="btn teal" id="pfSignIn" type="button" style="font-size:1.05rem;padding:9px">تسجيل دخول</button></div>
       </div>
       <div class="err" id="pfNickErr"></div>
-      <div class="pf-lbl">صورتك</div>
-      <div class="pf-avs" id="pfAvs"></div>
       <input type="file" id="pfFile" accept="image/*" hidden>
-      <div class="pf-picrow" id="pfPicRow"><button class="btn sand" id="pfPicPick" type="button">📷 صورة من الاستديو</button><button class="btn teal" id="pfPicDel" type="button" hidden>🗑️ شيل صورتي</button></div>
       <div class="pf-lbl">رصيدك</div>
       <div class="pf-wal"><div class="stat"><b id="pfCoins">٠</b><small>🪙 عملات</small></div><div class="stat"><b id="pfGems">٠</b><small>💎 جواهر</small></div></div>
       <p class="note" id="pfCloud" style="font-weight:800;color:var(--ink)"></p>
@@ -1252,12 +1249,7 @@ function renderProfile(){const st=ST();
   $('pfAv').classList.toggle('dev-av',IS_ADMIN);if(IS_ADMIN){const t=document.createElement('span');t.className='dev-tag';t.textContent='🛡️ المطوّر';$('pfName').appendChild(t)}
   const lv=level(),inLv=W.xp%300;$('pfLv').textContent=`مستوى ${toAr(lv)}، خبرتك ${toAr(inLv)} من ${toAr(300)}`;$('pfXp').style.width=Math.round(inLv*100/300)+'%';
   $('pfCoins').textContent=toAr((+W.coins||0).toLocaleString('en-US'));$('pfGems').textContent=toAr(+W.gems||0);
-  const box=$('pfAvs');box.innerHTML='';
-  if(myPic()){const b=document.createElement('button');b.type='button';b.className='picb on';b.setAttribute('aria-label','صورتك');const i=new Image();i.alt='';i.src=W.pic;b.appendChild(i);b.onclick=()=>$('pfFile').click();box.appendChild(b)}
-  else{const b=document.createElement('button');b.type='button';b.className='camb';b.innerHTML='📷<small>الاستديو</small>';b.setAttribute('aria-label','صورة من الاستديو');b.onclick=()=>$('pfFile').click();box.appendChild(b)}
-  AVS.forEach(e=>{const b=document.createElement('button');b.type='button';b.textContent=e;b.className=!myPic()&&W.av===e?'on':'';b.setAttribute('aria-label','اختر '+e);
-    b.onclick=()=>{W.av=e;W.pic='';save();renderProfile();renderWallet();if(!$('closet').hidden)renderCloset()};box.appendChild(b)});
-  $('pfPicPick').textContent=myPic()?'📷 غيّر الصورة':'📷 صورة من الاستديو';$('pfPicDel').hidden=!myPic();
+  
   const rate=st.play?Math.round(st.win*100/st.play):0;
   $('pfStats').innerHTML=[[st.play,'لعبت'],[st.win,'فزت'],[toAr(rate)+'٪','نسبة الفوز'],[st.eat,'أكلت حجر'],[st.home,'وصّلت حجر'],[st.six,'طلع لك ٦'],[st.best,'أطول سلسلة فوز'],[st.run,'سلسلتك الحين'],[W.days||1,'أيام متتالية']]
     .map(([v,t])=>`<div class="stat"><b>${typeof v==='number'?toAr(v):v}</b><small>${t}</small></div>`).join('');
@@ -2507,11 +2499,9 @@ function safeName(n){n=String(n||'').trim();return !n||badName(n)?'لاعب':n}
 // ---------- حذف الحساب ----------
 document.querySelectorAll('#pfTabs button').forEach(b=>b.onclick=()=>pfTab(b.dataset.p));
 $('pfX').onclick=()=>$('profBox').hidden=true;
-$('pfAv').onclick=()=>{pfTab('me');$('pfAvs').scrollIntoView({behavior:'smooth',block:'center'})};
+$('pfAv').onclick=()=>$('pfFile').click();
 // ---------- صورة من الاستديو ----------
 const CR={img:null,z:1,x:0,y:0,base:1};
-$('pfPicPick').onclick=()=>$('pfFile').click();
-$('pfPicDel').onclick=()=>{W.pic='';save();renderProfile();renderWallet();if(!$('closet').hidden)renderCloset();toast('رجعت صورتك الأساسية')};
 $('pfFile').onchange=e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
   if(!/^image\//.test(f.type||'image/')){toast('اختر صورة بس');return}
   const url=URL.createObjectURL(f),im=new Image();
