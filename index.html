@@ -1920,7 +1920,7 @@ function starPts(cx,cy,r){let p=[];for(let i=0;i<10;i++){const a=Math.PI/5*i-Mat
 let UID=0;
 function grad(g,c){
   const svg=g.ownerSVGElement;svg._g=svg._g||{};
-  if(svg._g[c.hex])return svg._g[c.hex];
+  if(svg._g[c.hex]&&svg.getElementById(svg._g[c.hex][0].slice(5,-1)))return svg._g[c.hex];
   let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);
   const id='tg'+(++UID),id2='tr'+UID;
   const rg=el('radialGradient',{id,cx:'.36',cy:'.3',r:'.75'},defs);
@@ -1936,7 +1936,7 @@ function standToken(g,style,c,top,side){
   el('ellipse',{cx:.03,cy:.31,rx:.3,ry:.09,fill:'#0006'},g);
   const D=c.dark;
   if(style==='tayb'){
-    const svg=g.ownerSVGElement;svg._cg=svg._cg||{};let cid=svg._cg[c.hex];
+    const svg=g.ownerSVGElement;svg._cg=svg._cg||{};let cid=svg._cg[c.hex];if(cid&&!svg.getElementById(cid))cid=null;
     if(!cid){let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);cid='cg'+(++UID);svg._cg[c.hex]=cid;
       const lg=el('linearGradient',{id:cid,x1:0,y1:0,x2:1,y2:0},defs);[[0,c.dark],[.3,c.lite],[.55,c.hex],[1,c.dark]].forEach(([o,col])=>el('stop',{offset:o,'stop-color':col},lg));
       const rg=el('radialGradient',{id:cid+'h',cx:'.38',cy:'.32',r:'.72'},defs);[[0,'#ffffff'],[.22,c.lite],[.62,c.hex],[1,c.dark]].forEach(([o,col])=>el('stop',{offset:o,'stop-color':col},rg))}
@@ -2013,7 +2013,7 @@ function tokenBody(g,style,c){
   el('ellipse',{cx:-.12,cy:-.19,rx:.12,ry:.06,fill:'#fff',opacity:.55,transform:'rotate(-30 -.12 -.19)'},g);
   el('circle',{cx:.17,cy:.1,r:.025,fill:'#fff',opacity:.5},g);
 }
-function tokSvg(style,svg){svg.innerHTML='';svg._g={};svg.setAttribute('viewBox','-.52 -.52 1.04 1.04');const g=el('g',{},svg);tokenInner(g,style,COL[0])}
+function tokSvg(style,svg){svg.innerHTML='';svg._g={};svg._cg={};svg.setAttribute('viewBox','-.52 -.52 1.04 1.04');const g=el('g',{},svg);tokenInner(g,style,COL[0])}
 
 // ---------- المحفظة على الشاشة ----------
 function renderWallet(){
@@ -2289,7 +2289,7 @@ const SPOTS=[[1.85,1.85],[4.15,1.85],[1.85,4.15],[4.15,4.15]];
 const board=$('board');
 const TH=()=>THEMES.find(t=>t.id===W.theme)||THEMES[0];
 function drawBoard(svg,th){
-  svg.innerHTML='';svg._g={};svg.setAttribute('viewBox','0 0 15 15');
+  svg.innerHTML='';svg._g={};svg._cg={};svg.setAttribute('viewBox','0 0 15 15');
   el('rect',{x:0,y:0,width:15,height:15,fill:th.bg},svg);
   COL.forEach(c=>{
     const [bx,by]=c.base;
