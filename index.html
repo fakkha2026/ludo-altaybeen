@@ -792,6 +792,7 @@ svg#board{width:100%;height:100%;display:block}
     <div class="bet-info" id="onBetInfo" hidden></div>
     <div id="onRule" hidden style="display:flex;flex-direction:column;gap:10px"><div class="pre-lbl">نمط اللعب</div><div class="rgrid" data-rgrid="online"></div></div>
     <p class="note" id="onWait"></p>
+    <button class="btn teal" id="onInvite" type="button">👥 ادعُ صديق</button>
     <button class="btn sand" id="onStart" type="button">ابدأ اللعب</button>
     <button class="ghost" id="onLeave" type="button">اطلع من الغرفة</button>
   </div>
@@ -897,6 +898,23 @@ svg#board{width:100%;height:100%;display:block}
     <small style="color:var(--muted)">اسحب الصورة بإصبعك، وكبّرها أو صغّرها من الشريط</small>
     <input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1" aria-label="تكبير">
     <div class="row"><button class="btn sand" id="cropOk" type="button">اعتمد الصورة</button><button class="btn teal" id="cropNo" type="button">إلغاء</button></div>
+  </div>
+</div>
+<div class="overlay" id="invPick" hidden style="z-index:40">
+  <div class="card" style="position:relative;max-width:340px">
+    <button class="pf-x" id="ipX" type="button" aria-label="سكّر">✕</button>
+    <h2 style="font-size:1.5rem">ادعُ صديق</h2>
+    <div class="pf-list" id="ipList"></div>
+    <p class="note" style="margin:0">يوصل صديقك إشعار ويدخل غرفتك بضغطة وحدة.</p>
+  </div>
+</div>
+<div class="overlay" id="invBox" hidden style="z-index:60">
+  <div class="card" style="max-width:320px;text-align:center;gap:10px">
+    <div style="font-size:2.4rem" id="ibAv">🙂</div>
+    <div class="pm-nm" id="ibTxt" style="font-weight:800;font-size:1.15rem"></div>
+    <p class="note" id="ibNote" style="margin:0"></p>
+    <button class="btn teal" id="ibGo" type="button">🎲 ادخل الغرفة</button>
+    <button class="ghost" id="ibNo" type="button">مو الحين</button>
   </div>
 </div>
 <div class="overlay" id="plMenu" hidden>
@@ -2851,6 +2869,36 @@ $('pmX').onclick=()=>{$('plMenu').hidden=true};$('plMenu').addEventListener('cli
 $('pmFriend').onclick=()=>{if(!PM||!PM.uid)return;const u=PM.uid;if(isFriend(u)){frUnfriend(u);toast('انشال من أصدقائك')}else if(RQIN[u])frAnswer(u,true);else if(RQOUT[u])frCancel(u);else frSend(u,PM.nm,PM.av)};
 $('pmBlock').onclick=()=>{if(!PM||!PM.uid)return;if(isBlocked(PM.uid)){frDel('blocks',PM.uid);save();toast('انلغى الحظر');frRefresh()}else frBlock(PM.uid,PM.nm)};
 $('pmReport').onclick=()=>{if(!PM||!PM.uid)return;$('plMenu').hidden=true;reportPlayer(PM.uid,PM.nm)};
+// ---------- دعوة الأصدقاء للغرفة ----------
+const INV={},INV_TTL=10*60000;let INVCUR=null;
+function invListen(c){c.fs.collection('invites').where('to','==',MYUID).onSnapshot(sn=>{const seen=new Set;
+  sn.docs.forEach(d=>{const x=d.data()||{};const old=Date.now()-(+x.t||0)>INV_TTL;
+    if(old||!isFriend(x.from)||isBlocked(x.from)){d.ref.delete().catch(()=>{});return}
+    seen.add(d.id);INV[d.id]={ref:d.ref,from:x.from,n:x.fn,av:x.fa,code:String(x.code||''),t:+x.t||0}});
+  Object.keys(INV).forEach(k=>{if(!seen.has(k))delete INV[k]});invShow()},()=>{})}
+function invBusy(){return !!(NET.r||(S&&MODE==='online'))}
+function invShow(){if(!$('invBox').hidden||invBusy())return;const k=Object.keys(INV).sort((a,b)=>INV[b].t-INV[a].t)[0];if(!k)return;
+  const v=INV[k];if(Date.now()-v.t>INV_TTL||!/^\d{5}$/.test(v.code)){v.ref.delete().catch(()=>{});delete INV[k];return}
+  INVCUR=k;$('ibAv').textContent=v.av||'🙂';$('ibTxt').textContent=safeName(String(v.n||'صديقك'))+' يدعوك تلعب معه 🎲';
+  $('ibNote').textContent=S&&MODE?'إذا دخلت، اللعبة اللي أنت فيها الحين بتنتهي.':'غرفة رقم '+toAr(v.code);$('invBox').hidden=false;buzz&&buzz([40,30,40])}
+setInterval(()=>{try{invShow()}catch(e){}},5000);
+$('ibNo').onclick=()=>{const v=INV[INVCUR];$('invBox').hidden=true;if(v){v.ref.delete().catch(()=>{});delete INV[INVCUR]}INVCUR=null};
+$('ibGo').onclick=()=>{const v=INV[INVCUR];$('invBox').hidden=true;INVCUR=null;if(!v)return;v.ref.delete().catch(()=>{});Object.keys(INV).forEach(k=>{if(INV[k]===v)delete INV[k]});
+  if(IAMBANNED){toast('⛔ حسابك موقوف وما تقدر تلعب أونلاين');return}
+  document.querySelectorAll('.overlay').forEach(o=>{if(o.id!=='online')o.hidden=true});
+  if(S&&MODE){GEN++;S=null;MODE=null}show('home');openOnline();$('onCode').value=v.code;joinRoom()};
+function openInvPick(){if(!frOn()){toast('سجّل حساب عشان تدعو أصدقائك');return}
+  const box=$('ipList');box.innerHTML='';const L=frArr('friends');
+  if(!L.length){const e=document.createElement('div');e.className='fr-empty';e.textContent='ما عندك أصدقاء للحين. أضفهم بالضغط على أسمائهم وأنت تلعب أونلاين.';box.appendChild(e)}
+  L.forEach(f=>{const r=document.createElement('div');r.style.cursor='default';const n=document.createElement('span');n.textContent=(f.av||'🙂')+' '+safeName(f.n||'لاعب');
+    const inLobby=(NET.lobby||[]).some(l=>peerUid(l.peer)===f.u);
+    const x=document.createElement('button');x.type='button';x.className='fr-ok';x.textContent=inLobby?'معك ✔️':'دعوة';x.disabled=inLobby;
+    x.onclick=async()=>{x.disabled=true;x.textContent='…';
+      try{await FRC.fs.collection('invites').doc(rqId(MYUID,f.u)).set({from:MYUID,to:f.u,fn:String(W.nick||'لاعب').slice(0,14),fa:String(W.av||'🙂').slice(0,4),code:String(NET.code),t:Date.now()});x.textContent='انرسلت ✔️';toast('📨 انرسلت الدعوة لـ'+safeName(f.n||'صديقك'))}
+      catch(e){x.disabled=false;x.textContent='دعوة';toast('ما قدرنا نرسل الدعوة')}};
+    r.append(n,x);box.appendChild(r)});
+  $('invPick').hidden=false}
+$('onInvite').onclick=openInvPick;$('ipX').onclick=()=>{$('invPick').hidden=true};$('invPick').addEventListener('click',e=>{if(e.target.id==='invPick')$('invPick').hidden=true});
 function renderFriends(){
   const box0=$('rqList');box0.innerHTML='';const ks=Object.keys(RQIN);$('rqWrap').hidden=!ks.length;
   ks.forEach(u=>{const r=RQIN[u],row=document.createElement('div');row.style.cursor='default';const n=document.createElement('span');n.textContent=(r.av||'🙂')+' '+safeName(String(r.n||'لاعب'));
@@ -2872,7 +2920,7 @@ function banRefresh(){let bdev='';try{bdev=localStorage.getItem('ludo-bdev')||''
   if(IAMBANNED&&MODE==='online'&&NET.r){toast('⛔ انوقف حسابك');try{leaveOnline()}catch(e){}show('home')}
   try{renderBoard()}catch(e){}}
 async function devInit(){if(!window.__FB)return;let c;try{c=await window.__FB}catch(e){return}MYUID=c.auth.currentUser?c.auth.currentUser.uid:c.uid;
-  $('pfUidTxt').textContent=MYUID;giftListen(c);try{frListen(c)}catch(e){}
+  $('pfUidTxt').textContent=MYUID;giftListen(c);try{frListen(c);invListen(c)}catch(e){}
   c.fs.collection('admins').onSnapshot(sn=>{ADMINS.clear();sn.docs.forEach(d=>ADMINS.add(d.id));const was=IS_ADMIN;IS_ADMIN=ADMINS.has(MYUID);
     if(IS_ADMIN&&!was){admSub(c);c.fs.collection('leaderboard').doc(MYUID).delete().catch(()=>{})}admRefresh();banRefresh()},()=>{});
   c.fs.collection('bans').onSnapshot(sn=>{BANNED.clear();ADMBANS=[];sn.docs.forEach(d=>{BANNED.add(d.id);ADMBANS.push(Object.assign({id:d.id},d.data()))});banRefresh();admDrawBans()},()=>{});
