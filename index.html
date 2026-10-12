@@ -876,6 +876,15 @@ svg#board{width:100%;height:100%;display:block}
         <div class="pf-row"><input class="field" id="admBanName" maxlength="14" placeholder="اسم المستخدم" autocapitalize="off" spellcheck="false"><button class="ghost" id="admBanGo" type="button" style="background:var(--red);color:#fff">إيقاف</button></div>
       </div>
       <div class="adm-card">
+        <b>🎁 أرسل هدية للاعب</b>
+        <input class="field" id="admGiftName" maxlength="14" placeholder="اسم المستخدم" autocapitalize="off" spellcheck="false" style="text-align:start">
+        <div class="seg" id="admGiftKind" style="grid-template-columns:1fr 1fr"><button type="button" data-k="c" class="sel">🪙 عملات</button><button type="button" data-k="g">💎 جواهر</button></div>
+        <input class="field" id="admGiftAmt" type="number" inputmode="numeric" min="1" placeholder="الكمية" style="text-align:start">
+        <input class="field" id="admGiftMsg" maxlength="60" placeholder="رسالة مع الهدية (اختياري)" style="text-align:start">
+        <button class="btn sand" id="admGiftGo" type="button" style="font-size:1.15rem;padding:10px">أرسل الهدية 🎁</button>
+        <div class="err" id="admGiftErr"></div>
+      </div>
+      <div class="adm-card">
         <b>🧪 أدوات التجربة (لك بس)</b>
         <div class="adm-btns"><button type="button" class="gold" id="admCoins">+١٠٬٠٠٠ عملة</button><button type="button" class="gold" id="admGems">+١٠٠ جوهرة</button></div>
       </div>
@@ -904,9 +913,19 @@ svg#board{width:100%;height:100%;display:block}
     <div class="pay-pile" id="payPile"></div>
     <div class="pay-amt" id="payAmt"></div>
     <div class="pay-row"><span>السعر</span><b id="payPrice"></b></div>
-    <p class="note">🧪 وضع التجربة: ما ينخصم منك أي مبلغ الحين. الدفع الحقيقي يشتغل لما تنزل اللعبة على App Store.</p>
+    <p class="note" id="payNote">🧪 وضع التجربة: ما ينخصم منك أي مبلغ الحين. الدفع الحقيقي يشتغل لما تنزل اللعبة على App Store.</p>
     <button class="btn sand" id="payOk" type="button">ادفع</button>
     <button class="ghost" id="payNo" type="button">إلغاء</button>
+  </div>
+</div>
+<div class="overlay" id="giftBox" hidden style="z-index:45">
+  <div class="card" style="text-align:center">
+    <div style="font-size:4rem;line-height:1">🎁</div>
+    <h2>وصلتك هدية!</h2>
+    <p style="color:var(--ink);font-weight:800">من 🛡️ المطوّر</p>
+    <div class="pay-amt" id="gfWhat"></div>
+    <p class="note" id="gfMsg" style="font-size:1rem;color:var(--ink)" hidden></p>
+    <button class="btn sand" id="gfOk" type="button">شكراً 🤍</button>
   </div>
 </div>
 <div class="overlay" id="tutBox" hidden>
@@ -1411,10 +1430,10 @@ function show(id){
   renderWallet();window.scrollTo(0,0);
 }
 let SHOP_OPEN=false; // يتحكم فيه المطوّر من لوحة الإدارة (config/app.shop)
-function paintShopTab(){const b=document.querySelector('#tabs button[data-t="shop"]');if(!b)return;b.classList.toggle('off',!SHOP_OPEN);const sm=b.querySelector('small');if(sm)sm.hidden=SHOP_OPEN}
+function paintShopTab(){const b=document.querySelector('#tabs button[data-t="shop"]');if(!b)return;const open=SHOP_OPEN||IS_ADMIN;b.classList.toggle('off',!open);const sm=b.querySelector('small');if(sm){sm.hidden=SHOP_OPEN;sm.textContent=IS_ADMIN?'مقفل للاعبين':'غير متاح مؤقتاً'}}
 function shopClosed(){toast('🔒 المتجر غير متاح مؤقتاً');}
 setTimeout(paintShopTab,0);
-document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.t==='shop'&&!SHOP_OPEN){shopClosed();return}show(b.dataset.t)});
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{if(b.dataset.t==='shop'&&!SHOP_OPEN&&!IS_ADMIN){shopClosed();return}show(b.dataset.t)});
 $('playBtn').onclick=()=>{show('home');if(!W.tut)setTimeout(openTut,350)};
 $('wheelBtn').onclick=openWheel;$('spinBtn').onclick=spinWheel;$('wheelClose').onclick=()=>{if(!spinning)$('wheelBox').hidden=true};
 $('meAv').onclick=openProfile;
@@ -1435,7 +1454,7 @@ $('tutNext').onclick=()=>{if(tutI<TUT.length-1){tutI++;tutShow()}else closeTut()
 $('pfHow').onclick=()=>{$('profBox').hidden=true;openTut()};$('howBtn').onclick=openTut;
 $('pvClose').onclick=()=>$('pvBox').hidden=true;
 $('itClose').onclick=()=>$('itemBox').hidden=true;$('itTry').onclick=tryItem;$('itBuy').onclick=()=>{const [it,k]=itemCur;const K=KINDS[k];const had=W[K.own].includes(it.id);buy(it,k,true);if(!had&&W[K.own].includes(it.id))$('itemBox').hidden=true};
-$('szBanner').onclick=()=>{if(!SHOP_OPEN){shopClosed();return}show('shop');setTimeout(()=>{const e=$('seasonList');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})},50)};$('profClose').onclick=()=>$('profBox').hidden=true;
+$('szBanner').onclick=()=>{if(!SHOP_OPEN&&!IS_ADMIN){shopClosed();return}show('shop');setTimeout(()=>{const e=$('seasonList');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})},50)};$('profClose').onclick=()=>$('profBox').hidden=true;
 $('giftBtn').onclick=()=>{const [x,y]=elPt($('giftBtn'));W.coins+=500;W.gems+=5;W.gift=today();save();renderWallet();coinRain(x,y,30);SFX.coin();bump('coins');bump('gems');toast('وصلتك ٥٠٠ عملة و٥ جواهر 🎁')};
 $('swapBtn').onclick=()=>{if(W.gems<10){toast('تحتاج ١٠ جواهر');return}W.gems-=10;W.coins+=1000;save();renderWallet();const [x,y]=elPt($('swapBtn'));coinRain(x,y);SFX.coin();bump('coins');toast('+١٬٠٠٠ عملة')};
 
@@ -1495,13 +1514,15 @@ let payCur=null,paying=false;
 function payOpen(o){payCur=o;paying=false;const pile=$('payPile');pile.innerHTML='';pile.classList.toggle('item',!!o.node);
   if(o.node)pile.appendChild(o.node);else pile.innerHTML=o.html||'';
   $('payAmt').innerHTML=esc(o.amt)+(o.sub?`<small>${esc(o.sub)}</small>`:'');
-  $('payPrice').textContent=o.sar+' ر.س';$('payOk').disabled=false;$('payOk').textContent='ادفع '+o.sar+' ر.س';$('payBox').hidden=false}
+  if(IS_ADMIN){$('payPrice').innerHTML='<s style="opacity:.5;font-size:.9rem">'+o.sar+' ر.س</s> مجاني 🛡️';$('payOk').textContent='خذه مجاناً 🛡️';$('payNote').textContent='🛡️ أنت المطوّر: كل المتجر مجاني لك، وما ينخصم منك شي.'}
+  else{$('payPrice').textContent=o.sar+' ر.س';$('payOk').textContent='ادفع '+o.sar+' ر.س';$('payNote').textContent='🧪 وضع التجربة: ما ينخصم منك أي مبلغ الحين. الدفع الحقيقي يشتغل لما تنزل اللعبة على App Store.'}
+  $('payOk').disabled=false;$('payBox').hidden=false}
 function openPay(pk){const got=pk.g+(pk.x||0);
   payOpen({html:PILES[pk.pile].map(([x,y,s])=>`<span class="gem" style="width:${s*1.3}px;height:${s*1.3}px;left:calc(50% + ${(x-s/2)*1.3}px);bottom:${y}px"></span>`).join(''),
     amt:`${toAr(got)} جوهرة`,sub:pk.x?`${toAr(pk.g)} + ${toAr(pk.x)} هدية`:'',sar:pk.sar,
     done:()=>{W.gems+=got;save();renderWallet();burst(innerWidth/2,innerHeight/2,['#b9f6ff','#3fd2f0','#fff','#1aa8d0'],50,'star',9);SFX.home();bump('gems');toast(`تم الشراء! وصلتك ${toAr(got)} جوهرة 💎`)}})}
-function doPay(){if(paying||!payCur)return;paying=true;const o=payCur,ok=$('payOk');ok.disabled=true;ok.innerHTML='<span class="spin"></span> جاري الدفع…';
-  setTimeout(()=>{$('payBox').hidden=true;paying=false;buzz([40,30,40]);o.done()},1300)}
+function doPay(){if(paying||!payCur)return;paying=true;const o=payCur,ok=$('payOk');ok.disabled=true;ok.innerHTML='<span class="spin"></span> '+(IS_ADMIN?'لحظة…':'جاري الدفع…');
+  setTimeout(()=>{$('payBox').hidden=true;paying=false;buzz([40,30,40]);o.done()},IS_ADMIN?300:1300)}
 $('payOk').onclick=doPay;$('payNo').onclick=()=>{if(!paying)$('payBox').hidden=true};
 function renderShop(){renderGemPacks();fillGrid('shopTh','h',false);fillGrid('shopDice','d',false);fillGrid('shopTok','t',false);renderSeasons()}
 function seasonItems(id){const out=[];['h','t','d'].forEach(k=>KINDS[k].list.filter(it=>it.season===id).forEach(it=>out.push([it,k])));return out}
@@ -2003,7 +2024,7 @@ async function initAuth(){if(!window.__FB)return;let c;try{c=await window.__FB}c
 setTimeout(initAuth,0);
 // ---------- المطوّر: الصلاحيات، البلاغات، الإيقاف ----------
 function peerUid(peer){return (window.__PU&&window.__PU[peer])||''}
-function admRefresh(){const t=$('pfAdmTab');if(t)t.hidden=!IS_ADMIN;$('pfTabs').classList.toggle('adm4',IS_ADMIN);if(!IS_ADMIN&&!$('pf-adm').hidden)pfTab('me');
+function admRefresh(){const t=$('pfAdmTab');if(t)t.hidden=!IS_ADMIN;$('pfTabs').classList.toggle('adm4',IS_ADMIN);paintShopTab();if(!IS_ADMIN&&!$('pf-adm').hidden)pfTab('me');
   $('meAv').classList.toggle('dev-av',IS_ADMIN);if(!$('profBox').hidden)renderProfile();if(S)renderChips();try{renderBoard()}catch(e){}}
 function banRefresh(){let bdev='';try{bdev=localStorage.getItem('ludo-bdev')||''}catch(e){}
   if(BANNED.has(MYUID)){try{localStorage.setItem('ludo-bdev',MYUID)}catch(e){}bdev=MYUID}
@@ -2012,11 +2033,11 @@ function banRefresh(){let bdev='';try{bdev=localStorage.getItem('ludo-bdev')||''
   if(IAMBANNED&&MODE==='online'&&NET.r){toast('⛔ انوقف حسابك');try{leaveOnline()}catch(e){}show('home')}
   try{renderBoard()}catch(e){}}
 async function devInit(){if(!window.__FB)return;let c;try{c=await window.__FB}catch(e){return}MYUID=c.auth.currentUser?c.auth.currentUser.uid:c.uid;
-  $('pfUidTxt').textContent=MYUID;
+  $('pfUidTxt').textContent=MYUID;giftListen(c);
   c.fs.collection('admins').onSnapshot(sn=>{ADMINS.clear();sn.docs.forEach(d=>ADMINS.add(d.id));const was=IS_ADMIN;IS_ADMIN=ADMINS.has(MYUID);
     if(IS_ADMIN&&!was){admSub(c);c.fs.collection('leaderboard').doc(MYUID).delete().catch(()=>{})}admRefresh();banRefresh()},()=>{});
   c.fs.collection('bans').onSnapshot(sn=>{BANNED.clear();ADMBANS=[];sn.docs.forEach(d=>{BANNED.add(d.id);ADMBANS.push(Object.assign({id:d.id},d.data()))});banRefresh();admDrawBans()},()=>{});
-  c.fs.doc('config/app').onSnapshot(d=>{const o=d.exists?d.data():{};SHOP_OPEN=!!o.shop;paintShopTab();if(!SHOP_OPEN&&!$('shop').hidden)show('home');
+  c.fs.doc('config/app').onSnapshot(d=>{const o=d.exists?d.data():{};SHOP_OPEN=!!o.shop;paintShopTab();if(!SHOP_OPEN&&!IS_ADMIN&&!$('shop').hidden)show('home');
     const a=String(o.ann||'').trim();$('annBar').hidden=!a;$('annTxt').textContent=a;$('admShopT').classList.toggle('on',SHOP_OPEN);if(document.activeElement!==$('admAnn'))$('admAnn').value=a},()=>{})}
 setTimeout(devInit,0);
 function admSub(c){if(ADMSUB)return;
@@ -2050,6 +2071,32 @@ $('admAnnGo').onclick=async()=>{const v=$('admAnn').value.trim();if(!v){toast('�
 $('admAnnDel').onclick=async()=>{if(await admCfg({ann:''})){$('admAnn').value='';toast('انشال الإعلان')}};
 $('admBanGo').onclick=async()=>{const v=$('admBanName').value.trim();if(!v)return;try{const d=await AU.c.fs.collection('usernames').doc(unKey(v)).get();
   if(!d.exists){toast('ما لقينا لاعب بهالاسم');return}await admBan(d.data().uid,d.data().name||v);$('admBanName').value=''}catch(e){toast('صار خطأ')}};
+let giftK='c';document.querySelectorAll('#admGiftKind button').forEach(b=>b.onclick=()=>{giftK=b.dataset.k;document.querySelectorAll('#admGiftKind button').forEach(x=>x.classList.toggle('sel',x===b))});
+$('admGiftGo').onclick=async()=>{const er=$('admGiftErr'),go=$('admGiftGo');er.style.color='';er.textContent='';if(!IS_ADMIN)return;
+  const nm=$('admGiftName').value.trim(),n=Math.floor(+toEn($('admGiftAmt').value)||0),msg=$('admGiftMsg').value.trim();
+  if(!nm){er.textContent='اكتب اسم المستخدم.';return}
+  const max=giftK==='c'?1000000:10000;if(n<1||n>max){er.textContent='الكمية من ١ إلى '+toAr(max.toLocaleString('en-US'));return}
+  if(msg&&badName(msg)){er.textContent='الرسالة فيها كلمة غير لائقة.';return}
+  go.disabled=true;er.textContent='لحظة…';
+  try{const d=await AU.c.fs.collection('usernames').doc(unKey(nm)).get();if(!d.exists){er.textContent='ما لقينا لاعب بهالاسم.';go.disabled=false;return}
+    const to=d.data().uid,who=d.data().name||nm;
+    await AU.c.fs.collection('gifts').add({to,name:String(who).slice(0,20),c:giftK==='c'?n:0,g:giftK==='g'?n:0,msg:msg.slice(0,60),by:MYUID,ts:Date.now()});
+    er.style.color='var(--teal)';er.textContent='✔️ انرسلت '+toAr(n.toLocaleString('en-US'))+(giftK==='c'?' عملة':' جوهرة')+' لـ '+who+'، توصله أول ما يفتح اللعبة.';
+    $('admGiftAmt').value='';$('admGiftMsg').value=''}
+  catch(e){er.textContent='ما قدرنا نرسل الهدية. تأكد إن قواعد السيرفر محدّثة.'}go.disabled=false};
+function toEn(v){return String(v||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d))}
+// استلام هدايا المطوّر
+const GOT=new Set;
+function giftListen(c){c.fs.collection('gifts').where('to','==',MYUID).onSnapshot(sn=>{sn.docs.forEach(d=>{if(GOT.has(d.id))return;GOT.add(d.id);
+    c.fs.runTransaction(async t=>{const x=await t.get(d.ref);if(!x.exists)throw 0;t.delete(d.ref);return x.data()}).then(x=>{
+      const cn=Math.max(0,Math.min(1000000,+x.c||0)),gm=Math.max(0,Math.min(10000,+x.g||0));if(!cn&&!gm)return;
+      W.coins=(+W.coins||0)+cn;W.gems=(+W.gems||0)+gm;save();renderWallet();
+      const parts=[];if(cn)parts.push(toAr(cn.toLocaleString('en-US'))+' عملة');if(gm)parts.push(toAr(gm)+' جوهرة');
+      showGift(parts.join(' و'),String(x.msg||''));
+    }).catch(()=>{})})},()=>{})}
+function showGift(what,msg){$('gfWhat').textContent=what;$('gfMsg').textContent=msg;$('gfMsg').hidden=!msg;$('giftBox').hidden=false;
+  try{burst(innerWidth/2,innerHeight/2,['#efd29a','#ffd94a','#fff','#33c2b0'],50,'star',9);coinRain(innerWidth/2,innerHeight/3,30);SFX.home()}catch(e){}}
+$('gfOk').onclick=()=>$('giftBox').hidden=true;
 $('admCoins').onclick=()=>{if(!IS_ADMIN)return;W.coins=(+W.coins||0)+10000;save();renderWallet();renderProfile();toast('+١٠٬٠٠٠ عملة 🧪')};
 $('admGems').onclick=()=>{if(!IS_ADMIN)return;W.gems=(+W.gems||0)+100;save();renderWallet();renderProfile();toast('+١٠٠ جوهرة 🧪')};
 $('pfUid').onclick=()=>{if(!MYUID)return;try{navigator.clipboard.writeText(MYUID).then(()=>toast('انسخ معرّفك ✔️'),()=>prompt('انسخ معرّفك:',MYUID))}catch(e){prompt('انسخ معرّفك:',MYUID)}};
