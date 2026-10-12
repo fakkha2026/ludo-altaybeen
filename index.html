@@ -404,6 +404,19 @@ svg#board{width:100%;height:100%;display:block}
 .sz-h small{color:var(--muted);font-size:.82rem}
 .sz-st{font-weight:800;font-size:.85rem}
 .item.locked{opacity:.55}
+.item{position:relative}
+.vtag{position:absolute;top:4px;inset-inline-start:4px;font:800 .62rem var(--body);padding:2px 6px;border-radius:8px;background:#0006;color:var(--muted);max-width:90%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vtag.live{background:var(--teal);color:#062824}
+.vb-where{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.vb-where button{border:0;border-radius:10px;padding:8px 10px;font:800 .85rem var(--body);background:var(--panel-2);color:var(--ink);cursor:pointer;box-shadow:0 0 0 1px #ffffff14}
+.vb-where button.sel{background:var(--sand);color:#3a2408}
+.ev-d{flex:1;display:flex;flex-direction:column;gap:4px;font:800 .8rem var(--body);color:var(--muted)}
+.ev-d .field{padding:8px;text-align:start;min-width:0;width:100%;box-sizing:border-box;font-size:.9rem}
+.ev-d{min-width:0}
+.ev-row{display:flex;align-items:center;gap:8px;background:var(--panel);border-radius:10px;padding:8px 10px;font-size:.88rem}
+.ev-row span{flex:1;min-width:0}
+.ev-row small{display:block;color:var(--muted);font-size:.75rem}
+.ev-row button{border:0;border-radius:8px;padding:6px 10px;background:var(--red);color:#fff;font:800 .8rem var(--body);cursor:pointer}
 .banner.season-b{width:100%;text-align:right;cursor:pointer;font-family:inherit;color:inherit;background:linear-gradient(120deg,#5a2c1c,#2a2030)}
 .banner.season-b.live{background:linear-gradient(120deg,#8a3a1c,#3a1d14);box-shadow:0 0 0 2px var(--sand)}
 .sz-go{font-size:2rem;color:var(--sand);flex:none}
@@ -767,6 +780,21 @@ svg#board{width:100%;height:100%;display:block}
     <button class="ghost" id="pvClose" type="button">سكّر</button>
   </div>
 </div>
+<div class="overlay" id="vaultBox" hidden style="z-index:120">
+  <div class="card">
+    <h2 id="vbTitle">نرد</h2>
+    <p id="vbSub"></p>
+    <div style="display:flex;justify-content:center"><svg id="vbDice" viewBox="0 0 100 100" width="110" height="110"></svg></div>
+    <button class="btn teal" id="vbRoll" type="button" style="font-size:1rem;padding:8px">🎲 قلّبه</button>
+    <div class="pf-lbl" style="text-align:start">وين ينزل؟</div>
+    <div class="vb-where" id="vbWhere"></div>
+    <div class="pf-lbl" style="text-align:start">السعر</div>
+    <div class="vb-where" id="vbPrice"></div>
+    <button class="btn sand" id="vbGo" type="button">انشره للبيع 🛒</button>
+    <button class="ghost" id="vbHide" type="button" style="color:#ff9d8a">رجّعه للخزنة 🔒</button>
+    <button class="ghost" id="vbClose" type="button">سكّر</button>
+  </div>
+</div>
 <div class="overlay" id="itemBox" hidden>
   <div class="card">
     <h2 id="itTitle">غرض</h2>
@@ -885,6 +913,20 @@ svg#board{width:100%;height:100%;display:block}
         <div class="err" id="admGiftErr"></div>
       </div>
       <div class="adm-card">
+        <b>🎲 خزنة النرد <small style="color:var(--muted);font-weight:700">· ما يشوفها إلا أنت</small></b>
+        <p class="note" style="margin:0;text-align:start">اضغط على أي نرد، اختر الموسم أو الفعالية والسعر، وينزل في المتجر للكل.</p>
+        <div class="grid" id="vaultGrid"></div>
+      </div>
+      <div class="adm-card">
+        <b>📅 الفعاليات</b>
+        <div class="pf-row"><input class="field" id="evEmoji" maxlength="4" placeholder="🎉" style="flex:none;width:64px;text-align:center"><input class="field" id="evName" maxlength="24" placeholder="اسم الفعالية"></div>
+        <input class="field" id="evDesc" maxlength="50" placeholder="وصف قصير (اختياري)" style="text-align:start">
+        <div class="pf-row"><label class="ev-d">من<input class="field" id="evFrom" type="date"></label><label class="ev-d">إلى<input class="field" id="evTo" type="date"></label></div>
+        <button class="btn sand" id="evAdd" type="button" style="font-size:1.05rem;padding:9px">أضف الفعالية</button>
+        <div class="err" id="evErr"></div>
+        <div id="evList" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+      <div class="adm-card">
         <b>🧪 أدوات التجربة (لك بس)</b>
         <div class="pf-row"><input class="field" id="admSetC" type="number" inputmode="numeric" min="0" placeholder="عملاتي" style="text-align:start"><input class="field" id="admSetG" type="number" inputmode="numeric" min="0" placeholder="جواهري" style="text-align:start"></div>
         <button class="btn sand" id="admSetGo" type="button" style="font-size:1.05rem;padding:9px">اضبط رصيدي</button>
@@ -980,8 +1022,28 @@ const DICE=[
  {id:'dust',name:'العجاج',fx:'dust',grad:['#f6dca6','#c99a55'],bg:'#e2c07e',pip:'#6b4a1c',six:'#6b4a1c',edge:'#8a6430',price:3000},
  {id:'galaxy',name:'المجرة',fx:'galaxy',grad:['#4a3590','#0b0b24'],bg:'#1d1650',pip:'#ffffff',six:'#ffd84d',edge:'#05050f',stars:1,price:80,gem:true},
  {id:'ember',name:'جمر',bg:'#3a1d14',pip:'#ffb347',six:'#ff6a2b',edge:'#1c0c07',price:900,season:'winter'},
- {id:'nd',name:'أخضر وطني',bg:'#1c6b3a',pip:'#ffffff',six:'#ffffff',edge:'#0e3f22',price:900,season:'national'}
+ {id:'nd',name:'أخضر وطني',bg:'#1c6b3a',pip:'#ffffff',six:'#ffffff',edge:'#0e3f22',price:900,season:'national'},
+ // ---------- خزنة النرد: مخفية عن اللاعبين لين ينشرها المطوّر ----------
+ {id:'v_qahwa',vault:1,hidden:1,name:'دلّة القهوة',grad:['#c8a06a','#6e4a24'],bg:'#9a7040',pip:'#fff3d6',six:'#ffd36b',edge:'#3e2810',shine:1},
+ {id:'v_tamr',vault:1,hidden:1,name:'تمر سكري',grad:['#e7b467','#8a4f1a'],bg:'#b97a35',pip:'#3a1d08',six:'#3a1d08',edge:'#5a300c'},
+ {id:'v_oud',vault:1,hidden:1,name:'دخون العود',fx:'dust',grad:['#6a4a3a','#2a1810'],bg:'#4a3020',pip:'#f2d8a8',six:'#ffb347',edge:'#160b06'},
+ {id:'v_pearl',vault:1,hidden:1,name:'لؤلؤ الخليج',fx:'crystal',grad:['#ffffff','#e8e2f6'],bg:'#f4f1fb',pip:'#5a5378',six:'#b38bd6',edge:'#a79ec4',shine:1},
+ {id:'v_saqr',vault:1,hidden:1,name:'الصقر',fx:'royal',grad:['#d9c3a0','#5e4630'],bg:'#9a7e5a',pip:'#1e140a',six:'#d4a21e',edge:'#3a2a18',shine:1},
+ {id:'v_suhail',vault:1,hidden:1,name:'نجم سهيل',fx:'galaxy',grad:['#1e3a6e','#05081c'],bg:'#0e1a3a',pip:'#ffffff',six:'#9fe3ff',edge:'#02040e',stars:1},
+ {id:'v_zaafaran',vault:1,hidden:1,name:'زعفران',fx:'fire',grad:['#ffd25a','#e0560e'],bg:'#f08c1e',pip:'#5a1a00',six:'#b3121f',edge:'#8a3a06'},
+ {id:'v_ward',vault:1,hidden:1,name:'ورد طائفي',fx:'crystal',grad:['#ffd6e4','#e0567f'],bg:'#f28cab',pip:'#ffffff',six:'#7a0f33',edge:'#9a2c50',shine:1},
+ {id:'v_khuzama',vault:1,hidden:1,name:'خزامى',fx:'dust',grad:['#c9b2f0','#6a4ab0'],bg:'#9a7ad6',pip:'#ffffff',six:'#ffe14d',edge:'#3e2678'},
+ {id:'v_fidda',vault:1,hidden:1,name:'فضة نجدية',fx:'bolt',grad:['#ffffff','#9aa3ad'],bg:'#cfd5db',pip:'#2a3038',six:'#1f6a73',edge:'#6a737c',shine:1},
+ {id:'v_aqeeq',vault:1,hidden:1,name:'عقيق يماني',fx:'fire',grad:['#e2453a','#5e0a0f'],bg:'#a51c22',pip:'#ffe6c2',six:'#ffd36b',edge:'#3a0508',shine:1},
+ {id:'v_ghada',vault:1,hidden:1,name:'جمر الغضا',fx:'fire',grad:['#3a2018','#120806'],bg:'#24120c',pip:'#ff8a3d',six:'#ffd36b',edge:'#080302',stars:1},
+ {id:'v_bahr',vault:1,hidden:1,name:'موج البحر',fx:'bolt',grad:['#7fe0e8','#0f5e8a'],bg:'#2a98b8',pip:'#ffffff',six:'#fff3a6',edge:'#0a3a55'},
+ {id:'v_sadu',vault:1,hidden:1,name:'السدو',grad:['#c0392b','#4a0e0a'],bg:'#8a1e16',pip:'#f6ead2',six:'#f5c542',edge:'#2a0604'},
+ {id:'v_eid',vault:1,hidden:1,name:'فرحة العيد',fx:'royal',grad:['#b6ffd9','#16a06a'],bg:'#3fd29a',pip:'#ffffff',six:'#fff06b',edge:'#0a5a38',stars:1}
 ];
+const VAULT=DICE.filter(d=>d.vault);
+// السعر بالريال → قيمة داخلية (نفس جدول sarOf)
+const TIERS=[['٣٫٩٩',600],['٧٫٩٩',1500],['٩٫٩٩',3000],['١٤٫٩٩',5000],['١٩٫٩٩',6000]];
+let DROPS={},EVENTS=[];
 const TOKS=[
  {id:'tayb',name:'حجر الطيبين',price:0,stand:1},
  {id:'dot',name:'دائرة',price:0},
@@ -1486,7 +1548,7 @@ function itemCard(it,kind,own,on,onclick){
 }
 function fillGrid(id,kind,onlyOwned,after){
   const K=KINDS[kind],box=$(id);box.innerHTML='';
-  K.list.filter(it=>onlyOwned?W[K.own].includes(it.id):!it.season).forEach(it=>box.appendChild(itemCard(it,kind,W[K.own].includes(it.id),W[K.sel]===it.id,
+  K.list.filter(it=>onlyOwned?W[K.own].includes(it.id):!it.season&&!it.hidden).forEach(it=>box.appendChild(itemCard(it,kind,W[K.own].includes(it.id),W[K.sel]===it.id,
     onlyOwned?()=>{W[K.sel]=it.id;save();after()}:()=>buy(it,kind))));
 }
 let itemCur=null;
@@ -1528,9 +1590,9 @@ function doPay(){if(paying||!payCur)return;paying=true;const o=payCur,ok=$('payO
   setTimeout(()=>{$('payBox').hidden=true;paying=false;buzz([40,30,40]);o.done()},IS_ADMIN?300:1300)}
 $('payOk').onclick=doPay;$('payNo').onclick=()=>{if(!paying)$('payBox').hidden=true};
 function renderShop(){renderGemPacks();fillGrid('shopTh','h',false);fillGrid('shopDice','d',false);fillGrid('shopTok','t',false);renderSeasons()}
-function seasonItems(id){const out=[];['h','t','d'].forEach(k=>KINDS[k].list.filter(it=>it.season===id).forEach(it=>out.push([it,k])));return out}
+function seasonItems(id){const out=[];['h','t','d'].forEach(k=>KINDS[k].list.filter(it=>it.season===id&&!it.hidden).forEach(it=>out.push([it,k])));return out}
 function renderSeasons(){const box=$('seasonList');box.innerHTML='';
-  SEASONS.slice().sort((x,y)=>{const a=seasonRange(x),b=seasonRange(y);return (b&&b.on)-(a&&a.on)||(a?a.a:0)-(b?b.a:0)}).forEach(z=>{
+  SEASONS.filter(z=>!z.ev||(seasonRange(z)&&seasonItems(z.id).length)).sort((x,y)=>{const a=seasonRange(x),b=seasonRange(y);return (b&&b.on)-(a&&a.on)||(a?a.a:0)-(b?b.a:0)}).forEach(z=>{
     const on=seasonOn(z.id),card=document.createElement('div');card.className='season'+(on?' live':'');
     card.innerHTML=`<div class="sz-h"><span class="sz-e">${z.emoji}</span><div><b>${z.name}</b><small>${z.desc}</small></div></div><div class="sz-st">${seasonLine(z)}</div>`;
     const g=document.createElement('div');g.className='grid';
@@ -1539,13 +1601,13 @@ function renderSeasons(){const box=$('seasonList');box.innerHTML='';
       if(!own&&!on)b.classList.add('locked');g.appendChild(b)});
     const pv=document.createElement('button');pv.type='button';pv.className='ghost';pv.textContent='👀 شوف شكله';pv.onclick=()=>openPreview(z.id);
     card.append(g,pv);box.appendChild(card)})}
-function openPreview(id){const z=SEASONS.find(x=>x.id===id),th=THEMES.find(t=>t.season===id);
+function openPreview(id){const z=SEASONS.find(x=>x.id===id),th=THEMES.find(t=>t.season===id)||THEMES.find(t=>t.id===W.theme)||THEMES[0];
   $('pvTitle').textContent=z.emoji+' '+z.name;$('pvSub').textContent=seasonLine(z);
   const svg=$('pvBoard');drawBoard(svg,th);const toks=TOKS.filter(t=>t.season===id),tk=toks[0]?toks[0].id:'tayb';
   COL.forEach((c,ci)=>[0,3].forEach(k=>{const [sx,sy]=SPOTS[k];const g=el('g',{transform:`translate(${c.base[0]+sx},${c.base[1]+sy}) scale(1.35)`},svg);tokenInner(g,tk,c)}));
-  const dk=DICE.find(d=>d.season===id);$('pvDice').hidden=!dk;if(dk)diceSvg(dk,6,$('pvDice'));
+  const dk=DICE.find(d=>d.season===id&&!d.hidden);$('pvDice').hidden=!dk;if(dk)diceSvg(dk,6,$('pvDice'));
   $('pvBox').hidden=false}
-function renderSeasonBanner(){const list=SEASONS.map(z=>[z,seasonRange(z)]).filter(x=>x[1]);
+function renderSeasonBanner(){const list=SEASONS.filter(z=>!z.ev||seasonItems(z.id).length).map(z=>[z,seasonRange(z)]).filter(x=>x[1]);
   const live=list.find(x=>x[1].on),next=list.filter(x=>!x[1].on).sort((a,b)=>a[1].a-b[1].a)[0],pick=live||next;if(!pick)return;
   const [z,r]=pick;$('szEmoji').textContent=z.emoji;$('szTitle').textContent=r.on?z.name+' بدأ!':'قريب: '+z.name;
   $('szTxt').textContent=r.on?`ثيم وأحجار خاصة لفترة محدودة · باقي ${toAr(daysTo(r.b))} يوم`:`يبدأ بعد ${toAr(daysTo(r.a))} يوم · شوف وش بيجيك`;$('szBanner').classList.toggle('live',r.on)}
@@ -2027,7 +2089,7 @@ async function initAuth(){if(!window.__FB)return;let c;try{c=await window.__FB}c
 setTimeout(initAuth,0);
 // ---------- المطوّر: الصلاحيات، البلاغات، الإيقاف ----------
 function peerUid(peer){return (window.__PU&&window.__PU[peer])||''}
-function admRefresh(){const t=$('pfAdmTab');if(t)t.hidden=!IS_ADMIN;$('pfTabs').classList.toggle('adm4',IS_ADMIN);paintShopTab();if(!IS_ADMIN&&!$('pf-adm').hidden)pfTab('me');
+function admRefresh(){if(IS_ADMIN)setTimeout(renderVault,0);const t=$('pfAdmTab');if(t)t.hidden=!IS_ADMIN;$('pfTabs').classList.toggle('adm4',IS_ADMIN);paintShopTab();if(!IS_ADMIN&&!$('pf-adm').hidden)pfTab('me');
   $('meAv').classList.toggle('dev-av',IS_ADMIN);if(!$('profBox').hidden)renderProfile();if(S)renderChips();try{renderBoard()}catch(e){}}
 function banRefresh(){let bdev='';try{bdev=localStorage.getItem('ludo-bdev')||''}catch(e){}
   if(BANNED.has(MYUID)){try{localStorage.setItem('ludo-bdev',MYUID)}catch(e){}bdev=MYUID}
@@ -2040,9 +2102,55 @@ async function devInit(){if(!window.__FB)return;let c;try{c=await window.__FB}ca
   c.fs.collection('admins').onSnapshot(sn=>{ADMINS.clear();sn.docs.forEach(d=>ADMINS.add(d.id));const was=IS_ADMIN;IS_ADMIN=ADMINS.has(MYUID);
     if(IS_ADMIN&&!was){admSub(c);c.fs.collection('leaderboard').doc(MYUID).delete().catch(()=>{})}admRefresh();banRefresh()},()=>{});
   c.fs.collection('bans').onSnapshot(sn=>{BANNED.clear();ADMBANS=[];sn.docs.forEach(d=>{BANNED.add(d.id);ADMBANS.push(Object.assign({id:d.id},d.data()))});banRefresh();admDrawBans()},()=>{});
-  c.fs.doc('config/app').onSnapshot(d=>{const o=d.exists?d.data():{};SHOP_OPEN=!!o.shop;paintShopTab();if(!SHOP_OPEN&&!IS_ADMIN&&!$('shop').hidden)show('home');
+  c.fs.doc('config/app').onSnapshot(d=>{const o=d.exists?d.data():{};applyDrops(o);SHOP_OPEN=!!o.shop;paintShopTab();if(!SHOP_OPEN&&!IS_ADMIN&&!$('shop').hidden)show('home');
     const a=String(o.ann||'').trim();$('annBar').hidden=!a;$('annTxt').textContent=a;$('admShopT').classList.toggle('on',SHOP_OPEN);if(document.activeElement!==$('admAnn'))$('admAnn').value=a},()=>{})}
 setTimeout(devInit,0);
+// ---------- خزنة النرد والفعاليات (المطوّر) ----------
+const BASE_SEASONS=SEASONS.slice();
+function applyDrops(o){
+  DROPS=(o&&o.drops&&typeof o.drops==='object')?o.drops:{};
+  EVENTS=Array.isArray(o&&o.events)?o.events.filter(e=>e&&e.id&&e.from&&e.to):[];
+  SEASONS.length=0;BASE_SEASONS.forEach(z=>SEASONS.push(z));
+  EVENTS.forEach(e=>SEASONS.push({id:e.id,ev:1,name:String(e.name||'فعالية').slice(0,24),emoji:e.emoji||'🎉',desc:String(e.desc||'فعالية لفترة محدودة').slice(0,50),dates:[[e.from,e.to]]}));
+  VAULT.forEach(d=>{const p=DROPS[d.id],ok=p&&(p.where==='shop'||SEASONS.some(z=>z.id===p.where));
+    d.hidden=ok?0:1;d.season=ok&&p.where!=='shop'?p.where:undefined;d.price=ok?(+p.price||600):0});
+  if(!$('shop').hidden)renderShop();renderSeasonBanner();if(IS_ADMIN)renderVault()}
+function whereName(w){if(w==='shop')return 'المتجر العادي';const z=SEASONS.find(x=>x.id===w);return z?z.emoji+' '+z.name:''}
+function renderVault(){const g=$('vaultGrid');if(!g)return;g.innerHTML='';
+  VAULT.forEach(d=>{const b=itemCard(d,'d',false,false,()=>openVault(d));b.querySelector('.pr').outerHTML='';
+    const p=DROPS[d.id],t=document.createElement('span');t.className='vtag'+(d.hidden?'':' live');t.textContent=d.hidden?'🔒 مخفي':'🟢 '+whereName(p.where);b.appendChild(t);
+    if(!d.hidden)b.insertAdjacentHTML('beforeend',`<span class="pr">${sarOf(d)} ر.س</span>`);g.appendChild(b)});
+  const l=$('evList');l.innerHTML='';
+  if(!EVENTS.length){l.innerHTML='<p class="note" style="margin:0">ما فيه فعاليات للحين.</p>';return}
+  EVENTS.forEach(e=>{const z=SEASONS.find(x=>x.id===e.id),r=document.createElement('div');r.className='ev-row';
+    const n=VAULT.filter(d=>DROPS[d.id]&&DROPS[d.id].where===e.id).length;
+    r.innerHTML=`<span>${esc(e.emoji||'🎉')} <b>${esc(e.name)}</b><small>${esc(seasonLine(z))} · ${toAr(n)} نرد</small></span><button type="button">احذف</button>`;
+    r.querySelector('button').onclick=async()=>{if(!confirm('تحذف فعالية "'+e.name+'"؟ النرد اللي فيها بيرجع للخزنة.'))return;
+      const drops=Object.assign({},DROPS);Object.keys(drops).forEach(k=>{if(drops[k].where===e.id)delete drops[k]});
+      if(await admCfg({events:EVENTS.filter(x=>x.id!==e.id),drops}))toast('انحذفت الفعالية')};
+    l.appendChild(r)})}
+let vbCur=null,vbWhere='',vbPrice=600,vbT=null;
+function openVault(d){vbCur=d;const p=DROPS[d.id];vbWhere=p?p.where:'';vbPrice=p?(+p.price||600):600;
+  $('vbTitle').textContent=d.name+(d.fx?' ✨':'');$('vbSub').textContent=d.hidden?'🔒 مخفي عن اللاعبين':'🟢 معروض في: '+whereName(p.where);
+  diceSvg(d,6,$('vbDice'));$('vbHide').hidden=d.hidden;$('vbGo').textContent=d.hidden?'انشره للبيع 🛒':'احفظ التعديل ✓';paintVb();$('vaultBox').hidden=false}
+function paintVb(){const w=$('vbWhere');w.innerHTML='';
+  [['shop','🛒 المتجر العادي']].concat(SEASONS.filter(z=>{const r=seasonRange(z);return !z.ev||r}).map(z=>[z.id,z.emoji+' '+z.name])).forEach(([id,t])=>{
+    const b=document.createElement('button');b.type='button';b.textContent=t;b.className=vbWhere===id?'sel':'';b.onclick=()=>{vbWhere=id;paintVb()};w.appendChild(b)});
+  const pr=$('vbPrice');pr.innerHTML='';
+  TIERS.forEach(([s,v])=>{const b=document.createElement('button');b.type='button';b.textContent=s+' ر.س';b.className=vbPrice===v?'sel':'';b.onclick=()=>{vbPrice=v;paintVb()};pr.appendChild(b)})}
+$('vbRoll').onclick=()=>{if(!vbCur)return;clearInterval(vbT);let i=0;SFX.roll&&SFX.roll();vbT=setInterval(()=>{const n=1+Math.floor(Math.random()*6);diceSvg(vbCur,n,$('vbDice'));if(++i>9)clearInterval(vbT)},80)};
+$('vbClose').onclick=()=>{clearInterval(vbT);$('vaultBox').hidden=true};
+$('vbGo').onclick=async()=>{if(!vbCur)return;if(!vbWhere){toast('اختر وين ينزل أول');return}
+  const was=vbCur.hidden,drops=Object.assign({},DROPS);drops[vbCur.id]={where:vbWhere,price:vbPrice,ts:Date.now()};
+  if(await admCfg({drops})){$('vaultBox').hidden=true;toast(was?`🎲 نزل "${vbCur.name}" في ${whereName(vbWhere)}`:'تم حفظ التعديل ✓')}};
+$('vbHide').onclick=async()=>{if(!vbCur)return;const drops=Object.assign({},DROPS);delete drops[vbCur.id];
+  if(await admCfg({drops})){$('vaultBox').hidden=true;toast('🔒 رجع "'+vbCur.name+'" للخزنة')}};
+$('evAdd').onclick=async()=>{const e=$('evErr'),name=$('evName').value.trim(),from=$('evFrom').value,to=$('evTo').value;e.textContent='';
+  if(!name){e.textContent='اكتب اسم الفعالية';return}if(!from||!to){e.textContent='اختر تاريخ البداية والنهاية';return}
+  if(to<from){e.textContent='تاريخ النهاية لازم يكون بعد البداية';return}
+  if(new Date(to+'T23:59:59')<new Date()){e.textContent='تاريخ النهاية راح';return}
+  const ev={id:'ev_'+Date.now().toString(36),name:name.slice(0,24),emoji:($('evEmoji').value.trim()||'🎉').slice(0,4),desc:$('evDesc').value.trim().slice(0,50),from,to};
+  if(await admCfg({events:EVENTS.concat(ev)})){['evName','evEmoji','evDesc','evFrom','evTo'].forEach(k=>$(k).value='');toast('📅 انضافت الفعالية، الحين انشر فيها نرد من الخزنة')}};
 function admSub(c){if(ADMSUB)return;
   ADMSUB=c.fs.collection('reports').orderBy('ts','desc').limit(40).onSnapshot(sn=>{const now=Date.now(),list=[];
     sn.docs.forEach(d=>{const x=d.data();if((+x.ts||0)<now-REP_TTL)d.ref.delete().catch(()=>{});else list.push(Object.assign({id:d.id},x))});admDrawReports(list)},()=>{$('admReports').innerHTML='<p class="note">ما قدرنا نحمّل البلاغات. تأكد إن قواعد السيرفر محدّثة.</p>'})}
