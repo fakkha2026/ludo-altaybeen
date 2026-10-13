@@ -3135,7 +3135,7 @@ const isD=x=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x);
 function mkSz(e,bz){const z={id:e.id,ev:bz?0:1,base:!!bz,name:String(e.name||(bz&&bz.name)||'موسم').slice(0,24),emoji:String(e.emoji||(bz&&bz.emoji)||'🎉').slice(0,4),desc:String(e.desc!=null&&e.desc!==''?e.desc:(bz?bz.desc:'موسم لفترة محدودة')).slice(0,50)};
   if(isD(e.from)&&isD(e.to)){if(e.rep){const f=e.from.split('-'),t=e.to.split('-');z.md=[[+f[1],+f[2]],[+t[1],+t[2]]]}else z.dates=[[e.from,e.to]]}
   else if(bz){if(bz.md)z.md=bz.md;if(bz.dates)z.dates=bz.dates}
-  const c=Math.max(0,Math.min(1e6,+(e.gc||0)|0)),g=Math.max(0,Math.min(1e4,+(e.gg||0)|0));if(c||g)z.gift={c,g};return z}
+  const c=Math.max(0,Math.min(1e12,Math.floor(+e.gc||0))),g=Math.max(0,Math.min(1e12,Math.floor(+e.gg||0)));if(c||g)z.gift={c,g};return z}
 function whereName(w){if(w==='shop')return 'المتجر العادي';const z=SEASONS.find(x=>x.id===w);return z?z.emoji+' '+z.name:''}
 function renderVault(){const g=$('vaultGrid');if(!g)return;g.innerHTML='';
   VAULT.forEach(d=>{const b=itemCard(d,'d',false,false,()=>openVault(d));b.querySelector('.pr').outerHTML='';
@@ -3227,7 +3227,7 @@ let giftK='c';document.querySelectorAll('#admGiftKind button').forEach(b=>b.oncl
 $('admGiftGo').onclick=async()=>{const er=$('admGiftErr'),go=$('admGiftGo');er.style.color='';er.textContent='';if(!IS_ADMIN)return;
   const nm=$('admGiftName').value.trim(),n=Math.floor(+toEn($('admGiftAmt').value)||0),msg=$('admGiftMsg').value.trim();
   if(!nm){er.textContent='اكتب اسم المستخدم.';return}
-  const max=giftK==='c'?1000000:10000;if(n<1||n>max){er.textContent='الكمية من ١ إلى '+toAr(max.toLocaleString('en-US'));return}
+  if(n<1||n>1e12){er.textContent='اكتب كمية من ١ وفوق.';return}
   if(msg&&badName(msg)){er.textContent='الرسالة فيها كلمة غير لائقة.';return}
   go.disabled=true;er.textContent='لحظة…';
   try{const d=await AU.c.fs.collection('usernames').doc(unKey(nm)).get();if(!d.exists){er.textContent='ما لقينا لاعب بهالاسم.';go.disabled=false;return}
@@ -3242,15 +3242,15 @@ const GOT=new Set;
 function giftListen(c){c.fs.collection('gifts').where('to','==',MYUID).onSnapshot(sn=>{sn.docs.forEach(d=>{if(GOT.has(d.id))return;GOT.add(d.id);
     if(SV()){api('claim',{id:d.id}).then(x=>{
         if(x.dice){const dc=DICE.find(z=>z.id===x.dice);if(dc){try{if(!$('shop').hidden)renderShop()}catch(e){}showGift('نرد '+dc.name+(x.had?' (كان عندك)':''),x.msg||'',dc)}return}
-        const parts=[];if(x.c)parts.push(toAr(x.c.toLocaleString('en-US'))+' عملة');if(x.g)parts.push(toAr(x.g)+' جوهرة');if(parts.length)showGift(parts.join(' و'),x.msg||'')}).catch(()=>{GOT.delete(d.id)});return}
+        const parts=[];if(x.c)parts.push(toAr(x.c.toLocaleString('en-US'))+' عملة');if(x.g)parts.push(toAr(x.g.toLocaleString('en-US'))+' جوهرة');if(parts.length)showGift(parts.join(' و'),x.msg||'')}).catch(()=>{GOT.delete(d.id)});return}
     c.fs.runTransaction(async t=>{const x=await t.get(d.ref);if(!x.exists)throw 0;t.delete(d.ref);return x.data()}).then(x=>{
       let msg=String(x.msg||''),dc=null;
       if(msg.startsWith(DG)){const e=msg.indexOf('\u0001',DG.length);dc=DICE.find(z=>z.id===msg.slice(DG.length,e>0?e:undefined))||null;msg=e>0?msg.slice(e+1):''}
       if(dc){const had=W.ownD.includes(dc.id);if(!had)W.ownD.push(dc.id);save();try{if(!$('shop').hidden)renderShop()}catch(e){}
         showGift('نرد '+dc.name+(had?' (كان عندك)':''),msg,dc);return}
-      const cn=Math.max(0,Math.min(1000000,+x.c||0)),gm=Math.max(0,Math.min(10000,+x.g||0));if(!cn&&!gm)return;
+      const cn=Math.max(0,Math.min(1e12,Math.floor(+x.c||0))),gm=Math.max(0,Math.min(1e12,Math.floor(+x.g||0)));if(!cn&&!gm)return;
       W.coins=(+W.coins||0)+cn;W.gems=(+W.gems||0)+gm;save();renderWallet();
-      const parts=[];if(cn)parts.push(toAr(cn.toLocaleString('en-US'))+' عملة');if(gm)parts.push(toAr(gm)+' جوهرة');
+      const parts=[];if(cn)parts.push(toAr(cn.toLocaleString('en-US'))+' عملة');if(gm)parts.push(toAr(gm.toLocaleString('en-US'))+' جوهرة');
       showGift(parts.join(' و'),msg);
     }).catch(()=>{})})},()=>{})}
 // صندوق الهدية: يوصل مقفل، واللاعب يضغط ويفتحه
