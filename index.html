@@ -1304,6 +1304,34 @@ const PICS={};
 function grabPics(ch){let ch2=false;(ch.peers||[]).forEach(p=>{if(p.sameTab||!p.presence)return;const x=p.presence.pic;const v=okPic(x)?x:'';if(PICS[p.peer]!==v){PICS[p.peer]=v;ch2=true}});return ch2}
 function picOf(pl){if(!pl)return '';if(okPic(pl.pic))return pl.pic;if(pl.pid&&pl.pid===W.pid&&!(MODE!=='online'&&pl.kind==='local'&&/^لاعب/.test(pl.name||'')))return myPic();if(pl.peer&&PICS[pl.peer])return PICS[pl.peer];return ''}
 function save(){W.t=Date.now();try{localStorage.setItem('ludo-dira',JSON.stringify(W))}catch(e){}cloudPush()}
+// ---------- السيرفر الحاكم: الرصيد والمشتريات والطاولات والصدارة يقررها السيرفر مو الجوال ----------
+const SRV_URL='https://ludo-server.fakkha2026.workers.dev';
+function SV(){return !!window.__FB&&/^https:\/\//.test(SRV_URL)}
+const SRVK=['coins','gems','xp','ownD','ownT','ownH','days','lastDay','spin','gift','welcome','szg'];
+let WHOLD=0,WPEND=null,WSRV=null;
+async function api(name,body){
+  const c=await window.__FB,u=c.auth.currentUser;if(!u)throw {code:'auth'};
+  let r,j;try{const tok=await u.getIdToken();r=await fetch(SRV_URL+'/api/'+name,{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+tok},body:JSON.stringify(body||{})})}catch(e){throw {code:'net'}}
+  try{j=await r.json()}catch(e){j={ok:false,err:'server'}}
+  if(j.w)applyWallet(j.w);
+  if(!j.ok)throw {code:j.err||'server'};
+  return j}
+function apiErr(e){return ({poor:'رصيدك ما يكفي',done:'استلمتها قبل',limit:'وصلت الحد لليوم',banned:'⛔ حسابك موقوف',net:'ما فيه اتصال، تأكد من الإنترنت',
+  iap:'الشراء يفتح لما تنزل اللعبة على App Store',closed:'الموسم مو شغّال الحين',account:'سجّل دخولك أول',taken:'اسم المستخدم مستخدم، اختر اسم ثاني.',
+  rude:'الاسم فيه كلمة غير لائقة، اختر اسم ثاني.',badname:'اسم المستخدم من ٣ إلى ١٤ حرف أو رقم، بدون مسافات أو رموز.',late:'الطاولة بدأت من زمان',full:'الطاولة مليانة',
+  over:'اللعبة خلصت',bet:'مبلغ الطاولة تغيّر',nogame:'اللعبة انتهت',auth:'سجّل دخولك مرة ثانية'})[e&&e.code]||'صار خطأ في السيرفر، جرّب مرة ثانية'}
+function applyWallet(w){if(!w)return;if(WHOLD){WPEND=w;return}WSRV=w;
+  SRVK.forEach(k=>{if(w[k]!==undefined&&w[k]!==null)W[k]=Array.isArray(w[k])?w[k].slice():w[k]});
+  if(w.mis&&W.mis&&Array.isArray(W.mis.list)&&w.mis.d===today()&&Array.isArray(w.mis.ids))W.mis.list.forEach(m=>{if(w.mis.ids.includes(m.id))m.c=true});
+  try{localStorage.setItem('ludo-dira',JSON.stringify(W))}catch(e){}
+  try{renderWallet();if(!$('home').hidden){renderMissions();renderModes()}if(!$('shop').hidden)renderShop();if(!$('closet').hidden)renderCloset();if(!$('profBox').hidden)renderProfile();if(!$('wheelBox').hidden&&!spinning)renderWheel()}catch(e){}}
+function walletRelease(){WHOLD=0;if(WPEND){const w=WPEND;WPEND=null;applyWallet(w)}}
+async function initServer(){if(!SV())return;let c;try{c=await window.__FB}catch(e){return}
+  const uid=c.auth.currentUser?c.auth.currentUser.uid:c.uid;
+  try{c.fs.collection('wallets').doc(uid).onSnapshot(d=>{if(d.exists)applyWallet(d.data())},()=>{})}catch(e){}
+  walletHello()}
+async function walletHello(){try{const j=await api('wallet');if(j.welcomed)setTimeout(()=>toast('🎁 هدية الترحيب ٥٬٠٠٠ عملة'),600)}catch(e){if(e.code==='net')toast('ما قدرنا نتصل بالسيرفر، تأكد من الإنترنت')}}
+setTimeout(initServer,0);
 // ---------- حفظ الحساب في Claude: يرجع لك تقدمك ومشترياتك من أي جهاز ----------
 let CLOUD=null,cloudT=null,cloudOn=false;
 function cloudPush(){if(!CLOUD)return;clearTimeout(cloudT);cloudT=setTimeout(()=>{CLOUD.set(JSON.parse(JSON.stringify(W))).then(()=>{cloudOn=true;cloudBadge()}).catch(()=>{cloudOn=false;cloudBadge()})},1200)}
@@ -1316,7 +1344,7 @@ async function initCloud(){try{
     let pull=false;try{pull=localStorage.getItem('ludo-pull')==='1';localStorage.removeItem('ludo-pull')}catch(e){}
     const newer=pull||(+R.t||0)>(+W.t||0),base=newer?R:W,other=newer?W:R;
     const M=Object.assign({},DEF,base);['ownD','ownT','ownH'].forEach(k=>{M[k]=[...new Set([...(Array.isArray(base[k])?base[k]:[]),...(Array.isArray(other[k])?other[k]:[]),...DEF[k]])]});
-    M.pid=R.pid||W.pid;W=M;try{localStorage.setItem('ludo-dira',JSON.stringify(W))}catch(e){}
+    M.pid=R.pid||W.pid;if(SV())SRVK.forEach(k=>{M[k]=W[k]});W=M;try{localStorage.setItem('ludo-dira',JSON.stringify(W))}catch(e){}
     renderWallet();if(!$('shop').hidden)renderShop();if(!$('closet').hidden)renderCloset();if(!$('home').hidden){renderMissions();renderModes()}}
   CLOUD=ref;cloudOn=true;cloudBadge();cloudPush();
 }catch(e){cloudOn=false;cloudBadge()}}
@@ -1325,7 +1353,7 @@ function ST(){if(!W.st||typeof W.st!=='object')W.st={};const d={play:0,win:0,eat
 function statGame(won,r){const st=ST();st.run=won?st.run+1:0;st.best=Math.max(st.best,st.run);const x=st.rules[r]||(st.rules[r]=[0,0]);x[0]++;if(won)x[1]++;save()}
 // ---------- الأيام المتتالية وعجلة الحظ ----------
 function dayKey(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
-function checkIn(){const t=dayKey(new Date());if(W.lastDay===t)return;const y=new Date();y.setDate(y.getDate()-1);W.days=W.lastDay===dayKey(y)?(W.days||0)+1:1;W.lastDay=t;save()}
+function checkIn(){if(SV())return;const t=dayKey(new Date());if(W.lastDay===t)return;const y=new Date();y.setDate(y.getDate()-1);W.days=W.lastDay===dayKey(y)?(W.days||0)+1:1;W.lastDay=t;save()}
 const WHEEL=[{c:300,w:24,col:'#e2453c'},{g:10,w:10,col:'#27a35a'},{c:400,w:20,col:'#f0b81c'},{g:5,w:14,col:'#2f7fd8'},{c:500,w:16,col:'#e2453c'},{c:2000,w:3,col:'#27a35a'},{c:1000,w:8,col:'#f0b81c'},{g:30,w:5,col:'#2f7fd8'}];
 let wheelRot=0,spinning=false;
 function wheelLabel(x){return x.g?toAr(x.g)+' 💎':toAr(x.c)}
@@ -1353,19 +1381,22 @@ function renderWheel(){const got=W.spin===today();
   $('spinBtn').disabled=got||spinning;if(got&&!spinning&&!$('wheelRes').textContent)$('wheelRes').textContent='لفّيت اليوم، ارجع بكرة 👋'}
 function openWheel(){checkIn();drawWheel();$('wheelRes').textContent='';renderWheel();$('wheelBox').hidden=false}
 function spinWheel(){if(spinning||W.spin===today())return;spinning=true;
+  if(SV()){WHOLD=1;renderWheel();api('spin').then(j=>spinGo(j.i,j.bonus)).catch(e=>{spinning=false;walletRelease();renderWheel();toast(apiErr(e))});return}
   let r=Math.random()*WHEEL.reduce((a,x)=>a+x.w,0),i=0;for(;i<WHEEL.length;i++){r-=WHEEL[i].w;if(r<0)break}i=Math.min(i,WHEEL.length-1);
+  W.spin=today();save();spinGo(i,streakBonus())}
+function spinGo(i,b){
   const seg=360/WHEEL.length,jit=(Math.random()-.5)*seg*.6;wheelRot+=360*6+((360-i*seg-(wheelRot%360))+360)%360+jit;
-  W.spin=today();save();renderWheel();SFX.roll();
+  renderWheel();SFX.roll();
   $('wheelSvg').style.transform=`rotate(${wheelRot}deg)`;
   let tk=0;const tick=setInterval(()=>{if(++tk>16)clearInterval(tick);else tone(700+tk*20,.03,'square',.05)},230);
-  setTimeout(()=>{spinning=false;wheelRot-=jit;const x=WHEEL[i],b=streakBonus();W.coins+=(x.c||0)+b;W.gems+=x.g||0;save();renderWallet();renderWheel();
+  setTimeout(()=>{spinning=false;wheelRot-=jit;const x=WHEEL[i];if(SV())walletRelease();else{W.coins+=(x.c||0)+b;W.gems+=x.g||0;save()}renderWallet();renderWheel();
     $('wheelRes').textContent=`طلع لك ${x.g?toAr(x.g)+' جواهر':toAr(x.c)+' عملة'} + ${toAr(b)} عملة مكافأة الأيام 🎉`;
     const [px,py]=elPt($('wheelRes'));coinRain(px,py,26);SFX.coin();bump('coins');if(x.g)bump('gems');buzz([40,30,40])},4300)}
 // ---------- لوحة الصدارة ----------
 let DB=null,LB=[],LBRAW=[],LBUNS=null,LBMK='';
 const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-function monthKey(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-g'}
-function prevMonthKey(){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-1);return monthKey(d)}
+function monthKey(d){d=d||new Date(Date.now()+108e5);return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-g'}
+function prevMonthKey(){const d=new Date(Date.now()+108e5);d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()-1);return monthKey(d)}
 function lbSort(a,b){return (+b.c||0)-(+a.c||0)||(+b.w||0)-(+a.w||0)||(+a.p||0)-(+b.p||0)||(+a.at||0)-(+b.at||0)}
 function lbHead(){const d=new Date(),end=new Date(d.getFullYear(),d.getMonth()+1,1),left=Math.ceil((end-d)/864e5);
   $('lbTitle').textContent='صدارة شهر '+MONTHS_AR[d.getMonth()]+' 🏆';
@@ -1402,11 +1433,11 @@ async function admDelPic(uid,nm){if(!IS_ADMIN||!uid)return;try{await AU.c.fs.col
 async function lbSyncPic(){if(!window.__FB||!DB||IS_ADMIN||IAMBANNED)return;try{const c=await window.__FB,ref=DB.doc('board/'+c.uid),cur=await ref.get();
   if(cur.exists&&cur.data().m===monthKey())await ref.update({pic:myPic(),av:String(W.av||'🙂').slice(0,4),nick:String(W.nick||'لاعب').slice(0,14)})}catch(e){}}
 async function recordBoard(won,gain){
-  if(!DB||!window.__FB||!AU.user||IS_ADMIN||IAMBANNED)return;
+  if(SV()||!DB||!window.__FB||!AU.user||IS_ADMIN||IAMBANNED)return;
   try{const c=await window.__FB,ref=DB.doc('board/'+c.uid),cur=await ref.get(),mk=monthKey(),o0=cur.exists?cur.data():{},o=o0.m===mk?o0:{};
     await ref.set({pid:W.pid,nick:String(W.nick||'لاعب').slice(0,14),av:String(W.av||'🙂').slice(0,4),pic:myPic(),m:mk,c:(+o.c||0)+Math.max(0,Math.round(+gain||0)),w:(+o.w||0)+(won?1:0),p:(+o.p||0)+1,at:Date.now()})}catch(e){}}
 async function recordOnline(winCi,gain){
-  if(!DB||!S)return;
+  if(SV()||!DB||!S)return;
   if(window.__FB){if(IS_ADMIN||IAMBANNED)return;try{const c=await window.__FB,me=S.players.find(p=>p.ci===NET.myCi);if(!me)return;const won=me.ci===winCi||me.ci===mate(winCi);
     const ref=DB.doc('board/'+c.uid),cur=await ref.get(),mk=monthKey(),o0=cur.exists?cur.data():{},o=o0.m===mk?o0:{};
     await ref.set({pid:W.pid,nick:String(W.nick||'لاعب').slice(0,14),av:String(W.av||'🙂').slice(0,4),pic:myPic(),m:mk,c:(+o.c||0)+Math.max(0,Math.round(+gain||0)),w:(+o.w||0)+(won?1:0),p:(+o.p||0)+1,at:Date.now()})}catch(e){}return}let own=false;try{const u=await window.claude.use('user');own=u?await u.isOwner():false}catch(e){}
@@ -1430,7 +1461,7 @@ function renderProfile(){const st=ST();
   $('pfSndT').classList.toggle('on',!!sndOn);
   renderAcct();cloudBadge()}
 const level=()=>Math.floor(W.xp/300)+1;
-const today=()=>new Date().toDateString();
+const today=()=>new Date(Date.now()+108e5).toISOString().slice(0,10);
 let toastT;
 function toast(t){const e=$('toast');e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,2000)}
 
@@ -2219,8 +2250,9 @@ function renderMissions(){
     const b=document.createElement('button');b.type='button';b.id='mis-'+i;
     b.className='rw'+(m.c?' got':done?' ready':'');
     b.innerHTML=m.c?'استلمتها ✓':(done?'استلم ':'')+rwHtml(d.r);
-    b.onclick=()=>{if(m.c||!done)return;m.c=true;if(d.r.c)W.coins+=d.r.c;if(d.r.g)W.gems+=d.r.g;save();renderWallet();renderMissions();
-      const [x,y]=elPt(b);coinRain(x,y,24);SFX.coin();bump(d.r.g?'gems':'coins');toast('استلمت جائزة المهمة 🎉')};
+    b.onclick=()=>{if(m.c||!done||b.disabled)return;const [x,y]=elPt(b);const fx=()=>{coinRain(x,y,24);SFX.coin();bump(d.r.g?'gems':'coins');toast('استلمت جائزة المهمة 🎉')};
+      if(SV()){b.disabled=true;api('mission',{id:m.id}).then(()=>{m.c=true;save();renderWallet();renderMissions();fx()}).catch(e=>{if(e.code==='done'){m.c=true;save();renderMissions()}else b.disabled=false;toast(apiErr(e))});return}
+      m.c=true;if(d.r.c)W.coins+=d.r.c;if(d.r.g)W.gems+=d.r.g;save();renderWallet();renderMissions();fx()};
     row.appendChild(b);box.appendChild(row);
   });
 }
@@ -2304,8 +2336,13 @@ $('pfHow').onclick=()=>{$('profBox').hidden=true;openTut()};$('howBtn').onclick=
 $('pvClose').onclick=()=>$('pvBox').hidden=true;
 $('itClose').onclick=()=>$('itemBox').hidden=true;$('itTry').onclick=tryItem;$('itBuy').onclick=()=>{const [it,k]=itemCur;const K=KINDS[k];const had=W[K.own].includes(it.id);buy(it,k,true);if(!had&&W[K.own].includes(it.id))$('itemBox').hidden=true};
 $('szBanner').onclick=()=>{if(!SHOP_OPEN&&!IS_ADMIN){shopClosed();return}show('shop');setTimeout(()=>{const e=$('seasonList');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})},50)};$('profClose').onclick=()=>$('profBox').hidden=true;
-$('giftBtn').onclick=()=>{const [x,y]=elPt($('giftBtn'));W.coins+=500;W.gems+=5;W.gift=today();save();renderWallet();coinRain(x,y,30);SFX.coin();bump('coins');bump('gems');toast('وصلتك ٥٠٠ عملة و٥ جواهر 🎁')};
-$('swapBtn').onclick=()=>{if(W.gems<10){toast('تحتاج ١٠ جواهر');return}W.gems-=10;W.coins+=1000;save();renderWallet();const [x,y]=elPt($('swapBtn'));coinRain(x,y);SFX.coin();bump('coins');toast('+١٬٠٠٠ عملة')};
+let wBusy=false;
+$('giftBtn').onclick=()=>{const [x,y]=elPt($('giftBtn'));const fx=()=>{renderWallet();coinRain(x,y,30);SFX.coin();bump('coins');bump('gems');toast('وصلتك ٥٠٠ عملة و٥ جواهر 🎁')};
+  if(SV()){if(wBusy)return;wBusy=true;$('giftBtn').disabled=true;api('gift').then(fx).catch(e=>{toast(apiErr(e));renderWallet()}).finally(()=>{wBusy=false});return}
+  W.coins+=500;W.gems+=5;W.gift=today();save();fx()};
+$('swapBtn').onclick=()=>{if(W.gems<10){toast('تحتاج ١٠ جواهر');return}const fx=()=>{renderWallet();const [x,y]=elPt($('swapBtn'));coinRain(x,y);SFX.coin();bump('coins');toast('+١٬٠٠٠ عملة')};
+  if(SV()){if(wBusy)return;wBusy=true;api('swap').then(fx).catch(e=>toast(apiErr(e))).finally(()=>{wBusy=false});return}
+  W.gems-=10;W.coins+=1000;save();fx()};
 
 // ---------- المتجر والخزانة ----------
 const KINDS={d:{list:DICE,own:'ownD',sel:'dice'},t:{list:TOKS,own:'ownT',sel:'tok'},h:{list:THEMES,own:'ownH',sel:'theme'}};
@@ -2318,7 +2355,7 @@ function buy(it,kind,sure){
   if(!it.price){own.push(it.id);W[K.sel]=it.id;save();renderShop();return}
   const sv=el('svg',{viewBox:'0 0 100 100',width:90,height:90});
   if(kind==='d')diceSvg(it,6,sv);else if(kind==='t')tokSvg(it.id,sv);else{sv.setAttribute('width',150);sv.setAttribute('height',150);sv.style.borderRadius='12px';drawBoard(sv,it)}
-  payOpen({node:sv,amt:it.name,sub:{d:'شكل نرد',t:'شكل أحجار',h:'ثيم لوحة'}[kind],sar:sarOf(it),done:()=>{
+  payOpen({node:sv,amt:it.name,sub:{d:'شكل نرد',t:'شكل أحجار',h:'ثيم لوحة'}[kind],sar:sarOf(it),api:{kind,id:it.id},done:()=>{
     if(!own.includes(it.id))own.push(it.id);W[K.sel]=it.id;$('itemBox').hidden=true;
     save();renderWallet();renderShop();burst(innerWidth/2,innerHeight/2,['#efd29a','#33c2b0','#ff7b5f','#fff'],40,'star',8);SFX.home();toast('اشتريت '+it.name+' واخترته 🎉')}});
 }
@@ -2369,8 +2406,9 @@ function payOpen(o){payCur=o;paying=false;const pile=$('payPile');pile.innerHTML
 function openPay(pk){const got=pk.g+(pk.x||0);
   payOpen({html:PILES[pk.pile].map(([x,y,s])=>`<span class="gem" style="width:${s*1.3}px;height:${s*1.3}px;left:calc(50% + ${(x-s/2)*1.3}px);bottom:${y}px"></span>`).join(''),
     amt:`${toAr(got)} جوهرة`,sub:pk.x?`${toAr(pk.g)} + ${toAr(pk.x)} هدية`:'',sar:pk.sar,
-    done:()=>{W.gems+=got;save();renderWallet();burst(innerWidth/2,innerHeight/2,['#b9f6ff','#3fd2f0','#fff','#1aa8d0'],50,'star',9);SFX.home();bump('gems');toast(`تم الشراء! وصلتك ${toAr(got)} جوهرة 💎`)}})}
+    api:{pack:got},done:sv=>{if(!sv)W.gems+=got;save();renderWallet();burst(innerWidth/2,innerHeight/2,['#b9f6ff','#3fd2f0','#fff','#1aa8d0'],50,'star',9);SFX.home();bump('gems');toast(`تم الشراء! وصلتك ${toAr(got)} جوهرة 💎`)}})}
 function doPay(){if(paying||!payCur)return;paying=true;const o=payCur,ok=$('payOk');ok.disabled=true;ok.innerHTML='<span class="spin"></span> '+(IS_ADMIN?'لحظة…':'جاري الدفع…');
+  if(SV()&&o.api){api('buy',o.api).then(()=>{$('payBox').hidden=true;paying=false;buzz([40,30,40]);o.done(true)}).catch(e=>{paying=false;$('payBox').hidden=true;toast(apiErr(e))});return}
   setTimeout(()=>{$('payBox').hidden=true;paying=false;buzz([40,30,40]);o.done()},IS_ADMIN?300:1300)}
 $('payOk').onclick=doPay;$('payNo').onclick=()=>{if(!paying)$('payBox').hidden=true};
 function renderShop(){renderGemPacks();fillGrid('shopTh','h',false);fillGrid('shopDice','d',false);fillGrid('shopTok','t',false);renderSeasons()}
@@ -2383,7 +2421,9 @@ function renderSeasons(){const box=$('seasonList');box.innerHTML='';
       const txt=[z.gift.c?toAr(z.gift.c)+' 🪙':'',z.gift.g?toAr(z.gift.g)+' 💎':''].filter(Boolean).join(' و ');
       gd.innerHTML=`<span>🎁 جايزة الموسم: ${txt}</span><button type="button"></button>`;const bt=gd.querySelector('button');
       bt.textContent=got?'استلمتها ✓':on?'استلم':'🔒 وقت الموسم';bt.disabled=got||!on;
-      bt.onclick=()=>{if(!on||!key)return;if(!W.szg||typeof W.szg!=='object')W.szg={};if(W.szg[key])return;W.szg[key]=1;
+      bt.onclick=()=>{if(!on||!key)return;if(!W.szg||typeof W.szg!=='object')W.szg={};if(W.szg[key])return;
+        if(SV()){bt.disabled=true;api('season',{id:z.id}).then(()=>{renderSeasons();toast('🎁 استلمت جايزة '+z.name)}).catch(e=>{bt.disabled=false;toast(apiErr(e))});return}
+        W.szg[key]=1;
         W.coins=(+W.coins||0)+z.gift.c;W.gems=(+W.gems||0)+z.gift.g;save();renderWallet();renderSeasons();toast('🎁 استلمت جايزة '+z.name)};
       card.appendChild(gd)}
     const g=document.createElement('div');g.className='grid';const its=seasonItems(z.id);
@@ -2502,10 +2542,15 @@ const player=()=>S.players[S.cur];
 function meCi(){if(MODE==='two'||MODE==='four')return 0;if(MODE==='online')return NET.myCi;return -1}
 function localControl(p){if(NET.guest)return p.ci===NET.myCi;return p.kind==='local'}
 
+let PLAY_SID='',PLAY_PRIZE=0,stBusy=false;
 function startMode(m){
-  const fee=feeOf(m);PLAY_FEE=fee||0;PLAY_MULT=(m==='two'||m==='four')?STAKES[stk()].mult:1;
+  const fee=feeOf(m);PLAY_FEE=fee||0;PLAY_MULT=(m==='two'||m==='four')?STAKES[stk()].mult:1;PLAY_SID='';PLAY_PRIZE=0;
   if(fee&&W.coins<fee){toast('تحتاج '+fmt(fee)+' عملة، استلم هدية اليوم أو بدّل جواهر');return}
+  if(SV()&&(m==='two'||m==='four')){if(stBusy)return;stBusy=true;
+    api('gstart',{mode:m,stake:stk(),diff:W.diff}).then(j=>{PLAY_SID=j.gid;PLAY_FEE=j.fee;PLAY_PRIZE=j.prize;startMode2(m)}).catch(e=>toast(e.code==='poor'?'تحتاج '+fmt(fee)+' عملة، استلم هدية اليوم أو بدّل جواهر':apiErr(e))).finally(()=>{stBusy=false});return}
   if(fee){W.coins-=fee;save();renderWallet()}
+  startMode2(m)}
+function startMode2(m){
   MODE=m;
   const roles=m==='two'?['human','off','bot','off']:m==='four'?['human','bot','bot','bot']:cfg.slice();
   const pool=BOTS.slice().sort(()=>Math.random()-.5);
@@ -2898,7 +2943,17 @@ $('auGo').onclick=async()=>{const go=$('auGo'),er=$('auErr'),name=$('auUser').va
   go.disabled=true;const old=go.textContent;go.textContent='لحظة…';
   const c=AU.c,key=unKey(name),ref=c.fs.collection('usernames').doc(key);
   try{
-    if(auMode==='up'){const cu=c.auth.currentUser;
+    if(auMode==='up'&&SV()){const cu=c.auth.currentUser;
+      const d0=await ref.get();if(d0.exists)throw {code:'taken'};
+      await cu.linkWithCredential(firebase.auth.EmailAuthProvider.credential(mailIn,pass));
+      try{await cu.getIdToken(true)}catch(e){}
+      try{await cu.sendEmailVerification()}catch(e){}
+      AU.user=true;W.nick=name;save();try{localStorage.removeItem('ludo-guest')}catch(e){}
+      let nmOk=true;try{const j=await api('uname',{name});AU.key=j.key}catch(e){nmOk=false;setTimeout(()=>toast('⚠️ '+apiErr(e)+' غيّره من ملفك'),2500)}
+      try{await api('wallet')}catch(e){}
+      $('authBox').hidden=true;$('auPass').value=$('auPass2').value=$('auMail').value='';renderAcct();if(!$('profBox').hidden)renderProfile();
+      toast('أهلاً '+name+' 👋 🎁 هدية الترحيب ٥٬٠٠٠ عملة، وأرسلنا رابط توثيق على إيميلك 📧')}
+    else if(auMode==='up'){const cu=c.auth.currentUser;
       await c.fs.runTransaction(async t=>{const d=await t.get(ref);if(d.exists)throw {code:'taken'};t.set(ref,{uid:cu.uid,name,at:Date.now()})});
       try{await cu.linkWithCredential(firebase.auth.EmailAuthProvider.credential(mailIn,pass))}catch(e){await ref.delete().catch(()=>{});throw e}
       try{await cu.sendEmailVerification()}catch(e){}
@@ -2931,6 +2986,7 @@ $('pfNickSave').onclick=async()=>{const v=$('pfNick').value.trim(),e=$('pfNickEr
   if(badName(v)){e.textContent='الاسم فيه كلمة غير لائقة، اختر اسم ثاني.';return}
   if(v===W.nick){e.textContent='هذا اسمك الحين.';return}
   const c=AU.c,key=unKey(v),nref=c.fs.collection('usernames').doc(key),oref=AU.key?c.fs.collection('usernames').doc(AU.key):null,btn=$('pfNickSave');btn.disabled=true;e.textContent='لحظة…';
+  if(SV()){try{const j=await api('uname',{name:v});AU.key=j.key;W.nick=v;save();renderProfile();e.style.color='var(--teal)';e.textContent='تغيّر اسم المستخدم ✔️ وتدخل فيه من الحين'}catch(x){e.textContent=apiErr(x)}btn.disabled=false;return}
   try{await c.fs.runTransaction(async t=>{const n=await t.get(nref),em=c.auth.currentUser.email;let mail=isFake(em)?em:'';
       if(oref&&isFake(em)){const o=await t.get(oref);if(o.exists&&isFake(o.data().mail))mail=o.data().mail}
       if(n.exists&&n.data().uid!==c.auth.currentUser.uid)throw {code:'taken'};
@@ -3177,6 +3233,9 @@ function toEn(v){return String(v||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨�
 // استلام هدايا المطوّر
 const GOT=new Set;
 function giftListen(c){c.fs.collection('gifts').where('to','==',MYUID).onSnapshot(sn=>{sn.docs.forEach(d=>{if(GOT.has(d.id))return;GOT.add(d.id);
+    if(SV()){api('claim',{id:d.id}).then(x=>{
+        if(x.dice){const dc=DICE.find(z=>z.id===x.dice);if(dc){try{if(!$('shop').hidden)renderShop()}catch(e){}showGift('نرد '+dc.name+(x.had?' (كان عندك)':''),x.msg||'',dc)}return}
+        const parts=[];if(x.c)parts.push(toAr(x.c.toLocaleString('en-US'))+' عملة');if(x.g)parts.push(toAr(x.g)+' جوهرة');if(parts.length)showGift(parts.join(' و'),x.msg||'')}).catch(()=>{GOT.delete(d.id)});return}
     c.fs.runTransaction(async t=>{const x=await t.get(d.ref);if(!x.exists)throw 0;t.delete(d.ref);return x.data()}).then(x=>{
       let msg=String(x.msg||''),dc=null;
       if(msg.startsWith(DG)){const e=msg.indexOf('\u0001',DG.length);dc=DICE.find(z=>z.id===msg.slice(DG.length,e>0?e:undefined))||null;msg=e>0?msg.slice(e+1):''}
@@ -3221,10 +3280,11 @@ $('sdGo').onclick=async()=>{const er=$('sdErr'),go=$('sdGo');er.style.color='';e
   catch(e){er.textContent='ما قدرنا نرسل الهدية. جرّب مرة ثانية.'}go.disabled=false};
 $('admSetGo').onclick=()=>{if(!IS_ADMIN)return;const c=toEn($('admSetC').value).trim(),g=toEn($('admSetG').value).trim();
   if(!c&&!g){toast('اكتب الرقم اللي تبيه');return}const MAX=1e12;
+  if(SV()){api('admin',{set:true,c,g}).then(()=>{$('admSetC').value=$('admSetG').value='';toast('✔️ انضبط رصيدك');coinRain(innerWidth/2,innerHeight/3,30)}).catch(e=>toast(apiErr(e)));return}
   if(c)W.coins=Math.min(MAX,Math.max(0,Math.floor(+c)||0));if(g)W.gems=Math.min(MAX,Math.max(0,Math.floor(+g)||0));
   save();renderWallet();renderProfile();$('admSetC').value=$('admSetG').value='';toast('✔️ انضبط رصيدك');coinRain(innerWidth/2,innerHeight/3,30)};
-$('admCoins').onclick=()=>{if(!IS_ADMIN)return;W.coins=(+W.coins||0)+10000;save();renderWallet();renderProfile();toast('+١٠٬٠٠٠ عملة 🧪')};
-$('admGems').onclick=()=>{if(!IS_ADMIN)return;W.gems=(+W.gems||0)+100;save();renderWallet();renderProfile();toast('+١٠٠ جوهرة 🧪')};
+$('admCoins').onclick=()=>{if(!IS_ADMIN)return;if(SV()){api('admin',{c:10000}).then(()=>toast('+١٠٬٠٠٠ عملة 🧪')).catch(e=>toast(apiErr(e)));return}W.coins=(+W.coins||0)+10000;save();renderWallet();renderProfile();toast('+١٠٬٠٠٠ عملة 🧪')};
+$('admGems').onclick=()=>{if(!IS_ADMIN)return;if(SV()){api('admin',{g:100}).then(()=>toast('+١٠٠ جوهرة 🧪')).catch(e=>toast(apiErr(e)));return}W.gems=(+W.gems||0)+100;save();renderWallet();renderProfile();toast('+١٠٠ جوهرة 🧪')};
 $('pfUid').onclick=()=>{if(!MYUID)return;try{navigator.clipboard.writeText(MYUID).then(()=>toast('انسخ معرّفك ✔️'),()=>prompt('انسخ معرّفك:',MYUID))}catch(e){prompt('انسخ معرّفك:',MYUID)}};
 $('delGo').onclick=async()=>{const go=$('delGo'),er=$('delErr');
   if(AU.user&&!$('delPass').value){er.textContent='اكتب كلمة السر عشان نتأكد إنه أنت.';return}
@@ -3232,9 +3292,10 @@ $('delGo').onclick=async()=>{const go=$('delGo'),er=$('delErr');
   try{if(window.__FB){const c=await window.__FB,cu=c.auth.currentUser;
       if(AU.user){try{await cu.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(cu.email,$('delPass').value))}catch(e){go.disabled=false;er.textContent=auErrTxt(e);return}}
       CLOUD=null;clearTimeout(cloudT);
+      if(SV()){try{await api('adel')}catch(e){go.disabled=false;er.textContent=apiErr(e);return}}else{
       await c.fs.collection('leaderboard').doc(cu.uid).delete();
       await c.fs.collection('users').doc(cu.uid).delete();
-      if(AU.key)await c.fs.collection('usernames').doc(AU.key).delete();
+      if(AU.key)await c.fs.collection('usernames').doc(AU.key).delete();}
       try{await cu.delete()}catch(e){await c.auth.signOut().catch(()=>{})}}
     try{localStorage.removeItem('ludo-dira');localStorage.removeItem('ludo-snd');localStorage.removeItem('ludo-guest')}catch(e){}
     er.textContent='انحذف حسابك ✔️';setTimeout(()=>location.reload(),900)
@@ -3337,7 +3398,11 @@ function doReroll(){S.turnId++;S.dl=0;S.rollN=(S.rollN||0)+1;S.pool=[];S.phase='
 function rerollClick(){if(!rrMine())return;
   if(rrUsed>=RR_MAX){toast(`استخدمت ${toAr(RR_MAX)} محاولات، انقفلت إعادة الرمية لهاللعبة 🔒`);return}
   if(W.gems<RR_COST){toast(`تحتاج ${toAr(RR_COST)} جواهر 💎`);return}
-  W.gems-=RR_COST;rrUsed++;save();renderWallet();const b=$('rrBtn'),[x,y]=elPt(b);burst(x,y,['#b9f6ff','#3fd2f0','#fff'],26,'star',6);tone(1319,.12,'sine',.12);tone(1760,.18,'sine',.1,.08);
+  if(SV()){if(rrBusy)return;rrBusy=true;const gid=MODE==='online'?tableId(S.gid):PLAY_SID,turn=S.turnId;
+    api('reroll',{gid}).then(()=>{rrBusy=false;if(!S||S.turnId!==turn||!rrMine())return;rrUsed++;rrFx()}).catch(e=>{rrBusy=false;toast(apiErr(e))});return}
+  W.gems-=RR_COST;rrUsed++;save();rrFx()}
+let rrBusy=false;
+function rrFx(){renderWallet();const b=$('rrBtn'),[x,y]=elPt(b);burst(x,y,['#b9f6ff','#3fd2f0','#fff'],26,'star',6);tone(1319,.12,'sine',.12);tone(1760,.18,'sine',.1,.08);
   b.hidden=true;$('diceHold').appendChild(b);
   if(NET.guest){NET.wait=true;sendAct({t:'reroll'});return}
   doReroll()}
@@ -3394,11 +3459,13 @@ function showWin(ci){
   let rw='';
   if(MODE!=='friends'){
     const ob=MODE==='online'?(+S.bet||0):0,on=S.players.length,prize=MODE==='online'?(ob?(mp?ob*2:ob*on):300):prizeOf(MODE,PLAY_MULT),net=ob?prize-ob:0,xp=youWon?100:40,lv0=level();
-    W.xp+=xp;if(youWon)W.coins+=prize;
-    const up=level()>lv0;if(up)W.gems+=5;
-    save();track('play');if(youWon)track('win');statGame(youWon,rule());if(MODE==='two'||MODE==='four')recordBoard(youWon,youWon?prize-PLAY_FEE:0);if(MODE==='online'){if(NET.guest&&NET.r)NET.r.presence({cash:+W.coins||0}).catch(()=>{})}
+    let up=false;
+    if(SV())srvWin(youWon,ci,m);
+    else{W.xp+=xp;if(youWon)W.coins+=prize;up=level()>lv0;if(up)W.gems+=5}
+    save();track('play');if(youWon)track('win');statGame(youWon,rule());if(!SV()&&(MODE==='two'||MODE==='four'))recordBoard(youWon,youWon?prize-PLAY_FEE:0);if(MODE==='online'){if(NET.guest&&NET.r)NET.r.presence({cash:+W.coins||0}).catch(()=>{})}
     $('winSub').textContent=youWon?(mp?'مبروك! وصّلتوا أحجاركم كلها.':rule()==='quick'?'مبروك! وصّلت حجرين أول واحد.':'مبروك! وصّلت أحجارك الأربع.'):'المرة الجاية لك، جرّب مرة ثانية.';
     rw=(youWon?`<span><span class="coin"></span>+${fmt(prize)}</span>`:'')+`<span>⭐ +${toAr(xp)}</span>`+(up?`<span><span class="gem"></span>+٥</span>`:'');
+    if(SV()&&MODE==='online'&&youWon)rw+=`<div id="winWait" style="width:100%;text-align:center;font-size:.85rem;opacity:.8">⏳ الجايزة توصلك أول ما يأكد السيرفر النتيجة</div>`;
     if(up)rw+=`<div style="width:100%;text-align:center;font-size:1.1rem;color:var(--teal)">ارتقيت لمستوى ${toAr(level())}!</div>`;
   }else $('winSub').textContent='مبروك للفايز!';
   $('winReward').innerHTML=rw;$('winReward').style.flexWrap='wrap';
@@ -3614,7 +3681,25 @@ function applySnap(g){
   else paintStatus(S.msg[0]||'',S.msg[1]||'');
   if(S.winner>=0&&!NET.winShown){NET.winShown=true;S.phase='over';showWin(S.winner)}
 }
-function payBet(gid,bet){if(!bet||NET.paid===gid)return;NET.paid=gid;W.coins=Math.max(0,(+W.coins||0)-bet);save();renderWallet();if(NET.guest&&NET.r)NET.r.presence({cash:+W.coins||0}).catch(()=>{});toast('دفعت '+fmt(bet)+' دخول الطاولة 🎲')}
+function tableId(gid){return 'ludo-'+String(NET.code||'x').replace(/[^0-9]/g,'')+'_'+String(gid).replace(/[^0-9A-Za-z]/g,'')}
+function srvWin(youWon,ci,m){
+  if(MODE==='two'||MODE==='four'){if(!PLAY_SID)return;const sid=PLAY_SID;PLAY_SID='';
+    api('gend',{gid:sid,won:youWon,nick:String(W.nick||'لاعب').slice(0,14),av:String(W.av||'🙂').slice(0,4),pic:myPic(),pid:W.pid}).then(j=>{
+      if(j.slow)toast('⚠️ اللعبة خلصت بسرعة غير طبيعية، ما انحسبت الجايزة');
+      else if(youWon&&!j.got)toast('وصلت حد الجوائز لليوم، ارجع بكرة 👋');
+      if(j.up)toast('🎉 ارتقيت لمستوى '+toAr(level())+' وأخذت ٥ جواهر')}).catch(e=>toast(apiErr(e)));return}
+  if(MODE==='online'&&NET.code){const gid=tableId(S.gid),wins=[ci];if(m>=0)wins.push(m);
+    const uids=wins.map(c=>{const p=S.players.find(x=>x.ci===c);if(!p)return '';if(p.ci===NET.myCi)return MYUID;return peerUid(p.peer)}).filter(Boolean);
+    tableWatch(gid,uids)}}
+function tableWatch(gid,uids){let n=0;
+  const done=j=>{const e=$('winWait');if(e)e.remove();if(j.res&&j.res.refund)toast('↩️ النتيجة ما اتفقت بين اللاعبين، رجع لك مبلغ الدخول');else if(j.res&&j.res.got)toast('🏆 وصلتك الجايزة '+fmt(j.res.got));if(j.res&&j.res.up)toast('🎉 ارتقيت لمستوى '+toAr(level()))};
+  const poll=()=>{if(++n>40)return;api('tsettle',{gid}).then(j=>{if(j.done)done(j);else setTimeout(poll,8000)}).catch(e=>{if(e.code==='net')setTimeout(poll,8000)})};
+  api('treport',{gid,winners:uids}).then(j=>{if(j.done)done(j);else setTimeout(poll,5000)}).catch(e=>{if(e.code==='net')setTimeout(()=>tableWatch(gid,uids),8000)})}
+function payBet(gid,bet){
+  if(SV()){if(NET.paid===gid)return;NET.paid=gid;
+    api('tjoin',{gid:tableId(gid),bet:+bet||0}).then(j=>{if(j.paid){toast('دفعت '+fmt(j.paid)+' دخول الطاولة 🎲');if(NET.guest&&NET.r)NET.r.presence({cash:+W.coins||0}).catch(()=>{})}})
+      .catch(e=>{toast(apiErr(e)+' — ما تقدر تكمل هالطاولة');setTimeout(()=>{try{leaveOnline();show('home')}catch(x){}},1200)});return}
+  if(!bet||NET.paid===gid)return;NET.paid=gid;W.coins=Math.max(0,(+W.coins||0)-bet);save();renderWallet();if(NET.guest&&NET.r)NET.r.presence({cash:+W.coins||0}).catch(()=>{});toast('دفعت '+fmt(bet)+' دخول الطاولة 🎲')}
 function leaveOnline(){
   const r=NET.r;resetNet();if(r)r.leave().catch(()=>{});
   if(MODE==='online'){GEN++;S=null;MODE=null}
