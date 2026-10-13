@@ -564,6 +564,31 @@ svg#board{width:100%;height:100%;display:block}
 .spin{display:inline-block;width:16px;height:16px;border:3px solid #3a240855;border-top-color:#3a2408;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}
 @keyframes spin{to{transform:rotate(1turn)}}
 .mode .fee{font-size:.72rem;flex-wrap:wrap;justify-content:center;text-align:center}
+/* صندوق الهدية */
+.gbx{position:relative;width:150px;height:150px;margin:6px auto 2px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.gbx .gb-glow{position:absolute;inset:-30px;border-radius:50%;background:radial-gradient(circle,#ffd94a55,transparent 65%);animation:gbGlow 1.6s ease-in-out infinite}
+.gbx .gb-body{position:absolute;left:18px;right:18px;bottom:6px;height:84px;border-radius:10px;background:linear-gradient(160deg,#e0475f,#9c1f3a);box-shadow:inset 0 -8px 0 #0002,0 8px 18px #0006}
+.gbx .gb-body:before{content:'';position:absolute;left:50%;top:0;bottom:0;width:20px;margin-left:-10px;background:linear-gradient(90deg,#f7d97a,#d9a93a)}
+.gbx .gb-lid{position:absolute;left:10px;right:10px;top:40px;height:28px;border-radius:8px;background:linear-gradient(160deg,#f05a72,#b42746);box-shadow:0 4px 8px #0005;transform-origin:20% 100%;z-index:2}
+.gbx .gb-lid:before{content:'';position:absolute;left:50%;top:0;bottom:0;width:22px;margin-left:-11px;background:linear-gradient(90deg,#f7d97a,#d9a93a)}
+.gbx .gb-bow{position:absolute;left:50%;top:-26px;width:70px;height:30px;margin-left:-35px}
+.gbx .gb-bow i{position:absolute;top:2px;width:32px;height:26px;border:7px solid #f2c94c;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;box-sizing:border-box}
+.gbx .gb-bow i:nth-of-type(1){left:0;transform:rotate(-18deg)}.gbx .gb-bow i:nth-of-type(2){right:0;transform:rotate(18deg)}
+.gbx .gb-bow b{position:absolute;left:50%;top:12px;width:14px;height:14px;margin-left:-7px;border-radius:4px;background:#d9a93a}
+.gbx.idle .gb-body,.gbx.idle .gb-lid{animation:gbWob 1.8s ease-in-out infinite}
+.gbx.shake .gb-body,.gbx.shake .gb-lid{animation:gbShake .12s linear 6}
+.gbx.open .gb-lid{animation:gbLid .7s cubic-bezier(.2,.8,.3,1) forwards}
+.gbx.open .gb-body{animation:gbDrop .6s .25s ease-in forwards}
+.gbx.open .gb-glow{animation:none;opacity:0;transition:opacity .4s}
+.gb-tap{color:var(--sand);font-weight:800;animation:gbGlow 1.6s ease-in-out infinite}
+.gb-prize{display:flex;justify-content:center;align-items:center;min-height:110px;animation:gbPop .6s cubic-bezier(.2,1.6,.4,1) both}
+.gb-prize svg{filter:drop-shadow(0 0 14px #ffd94acc)}
+@keyframes gbGlow{0%,100%{opacity:.55;transform:scale(.95)}50%{opacity:1;transform:scale(1.05)}}
+@keyframes gbWob{0%,80%,100%{transform:rotate(0)}85%{transform:rotate(-5deg)}90%{transform:rotate(5deg)}95%{transform:rotate(-3deg)}}
+@keyframes gbShake{0%{transform:translateX(0) rotate(0)}25%{transform:translateX(-5px) rotate(-4deg)}75%{transform:translateX(5px) rotate(4deg)}100%{transform:translateX(0) rotate(0)}}
+@keyframes gbLid{to{transform:translate(70px,-120px) rotate(55deg);opacity:0}}
+@keyframes gbDrop{to{transform:translateY(40px) scale(.7);opacity:0}}
+@keyframes gbPop{from{transform:scale(0) rotate(-25deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
 </style>
 
 
@@ -848,6 +873,7 @@ svg#board{width:100%;height:100%;display:block}
     <div class="pf-lbl" style="text-align:start">السعر</div>
     <div class="vb-where" id="vbPrice"></div>
     <button class="btn sand" id="vbGo" type="button">انشره للبيع 🛒</button>
+    <button class="btn teal" id="vbGift" type="button" style="font-size:1rem;padding:8px">🎁 أرسله هدية</button>
     <button class="ghost" id="vbHide" type="button" style="color:#ff9d8a">رجّعه للخزنة 🔒</button>
     <button class="ghost" id="vbClose" type="button">سكّر</button>
   </div>
@@ -859,6 +885,7 @@ svg#board{width:100%;height:100%;display:block}
     <div id="itShow" style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;min-height:110px;align-items:center"></div>
     <button class="btn teal" id="itTry" type="button">🎲 جرّب الرمية</button>
     <button class="btn sand" id="itBuy" type="button">اشترِ</button>
+    <button class="btn teal" id="itGift" type="button" hidden>🎁 أرسله هدية</button>
     <button class="ghost" id="itClose" type="button">سكّر</button>
   </div>
 </div>
@@ -1073,14 +1100,32 @@ svg#board{width:100%;height:100%;display:block}
     <button class="ghost" id="payNo" type="button">إلغاء</button>
   </div>
 </div>
+<div class="overlay" id="sendDiceBox" hidden style="z-index:130">
+  <div class="card" style="text-align:center">
+    <h2>🎁 أرسل نرد هدية</h2>
+    <div style="display:flex;justify-content:center"><svg id="sdDice" viewBox="0 0 100 100" width="96" height="96"></svg></div>
+    <div class="pay-amt" id="sdName" style="font-size:1.4rem"></div>
+    <input class="field" id="sdUser" maxlength="14" placeholder="اسم المستخدم" autocapitalize="off" spellcheck="false" style="text-align:start">
+    <input class="field" id="sdMsg" maxlength="40" placeholder="رسالة مع الهدية (اختياري)" style="text-align:start">
+    <div class="err" id="sdErr"></div>
+    <button class="btn sand" id="sdGo" type="button">أرسل الهدية 🎁</button>
+    <button class="ghost" id="sdClose" type="button">سكّر</button>
+  </div>
+</div>
 <div class="overlay" id="giftBox" hidden style="z-index:45">
   <div class="card" style="text-align:center">
-    <div style="font-size:4rem;line-height:1">🎁</div>
     <h2>وصلتك هدية!</h2>
     <p style="color:var(--ink);font-weight:800">من 🛡️ المطوّر</p>
-    <div class="pay-amt" id="gfWhat"></div>
-    <p class="note" id="gfMsg" style="font-size:1rem;color:var(--ink)" hidden></p>
-    <button class="btn sand" id="gfOk" type="button">شكراً 🤍</button>
+    <div id="gfClosed">
+      <div class="gbx idle" id="gfBox"><div class="gb-glow"></div><div class="gb-body"></div><div class="gb-lid"><div class="gb-bow"><i></i><i></i><b></b></div></div></div>
+      <p class="gb-tap">اضغط على الصندوق وافتحه 👆</p>
+    </div>
+    <div id="gfOpen" hidden>
+      <div class="gb-prize" id="gfPrize"></div>
+      <div class="pay-amt" id="gfWhat"></div>
+      <p class="note" id="gfMsg" style="font-size:1rem;color:var(--ink)" hidden></p>
+      <button class="btn sand" id="gfOk" type="button">شكراً 🤍</button>
+    </div>
   </div>
 </div>
 <div class="overlay" id="tutBox" hidden>
@@ -2230,7 +2275,7 @@ function priceHtml(it,own){if(own)return '<span class="pr own">عندك ✓</spa
 function buy(it,kind,sure){
   const K=KINDS[kind],own=W[K.own];
   if(own.includes(it.id)){W[K.sel]=it.id;save();renderShop();toast('تم الاختيار');return}
-  if(!sure&&(it.fx||it.stand)){openItem(it,kind);return}
+  if(!sure&&(it.fx||it.stand||(IS_ADMIN&&kind==='d'))){openItem(it,kind);return}
   if(!it.price){own.push(it.id);W[K.sel]=it.id;save();renderShop();return}
   const sv=el('svg',{viewBox:'0 0 100 100',width:90,height:90});
   if(kind==='d')diceSvg(it,6,sv);else if(kind==='t')tokSvg(it.id,sv);else{sv.setAttribute('width',150);sv.setAttribute('height',150);sv.style.borderRadius='12px';drawBoard(sv,it)}
@@ -2257,7 +2302,7 @@ function openItem(it,kind){itemCur=[it,kind];$('itTitle').textContent=it.name;
   const box=$('itShow');box.innerHTML='';
   if(kind==='d'){const sv=el('svg',{viewBox:'0 0 100 100',width:96,height:96});diceSvg(it,6,sv);box.appendChild(sv)}
   else COL.forEach(c=>{const sv=el('svg',{viewBox:'-.52 -.52 1.04 1.04',width:72,height:72});const g=el('g',{},sv);tokenInner(g,it.id,c);box.appendChild(sv)});
-  $('itTry').hidden=kind!=='d';
+  $('itTry').hidden=kind!=='d';$('itGift').hidden=!(IS_ADMIN&&kind==='d');
   $('itBuy').textContent=`اشترِ بـ ${sarOf(it)} ر.س`;
   $('itemBox').hidden=false}
 function tryItem(){const [it]=itemCur,card=$('itemBox').querySelector('.card').getBoundingClientRect(),from=elPt($('itTry'));
@@ -3052,14 +3097,47 @@ function toEn(v){return String(v||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨�
 const GOT=new Set;
 function giftListen(c){c.fs.collection('gifts').where('to','==',MYUID).onSnapshot(sn=>{sn.docs.forEach(d=>{if(GOT.has(d.id))return;GOT.add(d.id);
     c.fs.runTransaction(async t=>{const x=await t.get(d.ref);if(!x.exists)throw 0;t.delete(d.ref);return x.data()}).then(x=>{
+      let msg=String(x.msg||''),dc=null;
+      if(msg.startsWith(DG)){const e=msg.indexOf('\u0001',DG.length);dc=DICE.find(z=>z.id===msg.slice(DG.length,e>0?e:undefined))||null;msg=e>0?msg.slice(e+1):''}
+      if(dc){const had=W.ownD.includes(dc.id);if(!had)W.ownD.push(dc.id);save();try{if(!$('shop').hidden)renderShop()}catch(e){}
+        showGift('نرد '+dc.name+(had?' (كان عندك)':''),msg,dc);return}
       const cn=Math.max(0,Math.min(1000000,+x.c||0)),gm=Math.max(0,Math.min(10000,+x.g||0));if(!cn&&!gm)return;
       W.coins=(+W.coins||0)+cn;W.gems=(+W.gems||0)+gm;save();renderWallet();
       const parts=[];if(cn)parts.push(toAr(cn.toLocaleString('en-US'))+' عملة');if(gm)parts.push(toAr(gm)+' جوهرة');
-      showGift(parts.join(' و'),String(x.msg||''));
+      showGift(parts.join(' و'),msg);
     }).catch(()=>{})})},()=>{})}
-function showGift(what,msg){$('gfWhat').textContent=what;$('gfMsg').textContent=msg;$('gfMsg').hidden=!msg;$('giftBox').hidden=false;
-  try{burst(innerWidth/2,innerHeight/2,['#efd29a','#ffd94a','#fff','#33c2b0'],50,'star',9);coinRain(innerWidth/2,innerHeight/3,30);SFX.home()}catch(e){}}
-$('gfOk').onclick=()=>$('giftBox').hidden=true;
+// صندوق الهدية: يوصل مقفل، واللاعب يضغط ويفتحه
+const GQ=[];let gfBusy=false,gfOpening=false;
+function showGift(what,msg,dice){GQ.push({what,msg,dice});if(!gfBusy)nextGift()}
+function nextGift(){const g=GQ.shift();if(!g){gfBusy=false;return}gfBusy=true;gfOpening=false;
+  $('gfWhat').textContent=g.what;$('gfMsg').textContent=g.msg;$('gfMsg').hidden=!g.msg;
+  const pz=$('gfPrize');pz.innerHTML='';
+  if(g.dice){const sv=el('svg',{viewBox:'0 0 100 100',width:110,height:110});diceSvg(g.dice,6,sv);pz.appendChild(sv)}
+  else pz.innerHTML='<div style="font-size:4.2rem;line-height:1">'+(/جوهرة/.test(g.what)&&!/عملة/.test(g.what)?'💎':'🪙')+'</div>';
+  $('gfBox').className='gbx idle';$('gfClosed').hidden=false;$('gfOpen').hidden=true;$('giftBox').hidden=false;
+  try{SFX.coin()}catch(e){}}
+$('gfBox').onclick=()=>{if(gfOpening)return;gfOpening=true;const b=$('gfBox');b.className='gbx shake';try{buzz([20,40,20])}catch(e){}
+  setTimeout(()=>{b.className='gbx open';
+    try{const r=b.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;burst(x,y,['#efd29a','#ffd94a','#fff','#e0475f','#33c2b0'],60,'star',10);coinRain(x,y-40,30);SFX.home()}catch(e){}
+    setTimeout(()=>{$('gfClosed').hidden=true;$('gfOpen').hidden=false},550)},720)};
+$('gfOk').onclick=()=>{$('giftBox').hidden=true;setTimeout(nextGift,250)};
+// المطوّر يرسل نرد هدية
+const DG='\u0001d:';let sdCur=null;
+function openSendDice(d){if(!IS_ADMIN||!d)return;sdCur=d;diceSvg(d,6,$('sdDice'));$('sdName').textContent=d.name;
+  $('sdErr').textContent='';$('sdErr').style.color='';$('sdGo').disabled=false;$('sendDiceBox').hidden=false;setTimeout(()=>{try{$('sdUser').focus()}catch(e){}},50)}
+$('itGift').onclick=()=>{if(itemCur&&itemCur[1]==='d')openSendDice(itemCur[0])};
+$('vbGift').onclick=()=>{if(vbCur)openSendDice(vbCur)};
+$('sdClose').onclick=()=>$('sendDiceBox').hidden=true;
+$('sdGo').onclick=async()=>{const er=$('sdErr'),go=$('sdGo');er.style.color='';er.textContent='';if(!IS_ADMIN||!sdCur)return;
+  const nm=$('sdUser').value.trim(),msg=$('sdMsg').value.trim();
+  if(!nm){er.textContent='اكتب اسم المستخدم.';return}
+  if(msg&&badName(msg)){er.textContent='الرسالة فيها كلمة غير لائقة.';return}
+  go.disabled=true;er.textContent='لحظة…';
+  try{const d=await AU.c.fs.collection('usernames').doc(unKey(nm)).get();if(!d.exists){er.textContent='ما لقينا لاعب بهالاسم.';go.disabled=false;return}
+    const to=d.data().uid,who=d.data().name||nm,tag=DG+sdCur.id+'\u0001';
+    await AU.c.fs.collection('gifts').add({to,name:String(who).slice(0,20),c:0,g:0,msg:(tag+msg).slice(0,60),by:MYUID,ts:Date.now()});
+    er.style.color='var(--teal)';er.textContent='✔️ انرسل نرد "'+sdCur.name+'" لـ '+who+'، يوصله صندوق هدية أول ما يفتح اللعبة.';$('sdUser').value='';$('sdMsg').value=''}
+  catch(e){er.textContent='ما قدرنا نرسل الهدية. جرّب مرة ثانية.'}go.disabled=false};
 $('admSetGo').onclick=()=>{if(!IS_ADMIN)return;const c=toEn($('admSetC').value).trim(),g=toEn($('admSetG').value).trim();
   if(!c&&!g){toast('اكتب الرقم اللي تبيه');return}const MAX=1e12;
   if(c)W.coins=Math.min(MAX,Math.max(0,Math.floor(+c)||0));if(g)W.gems=Math.min(MAX,Math.max(0,Math.floor(+g)||0));
