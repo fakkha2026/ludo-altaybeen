@@ -40,13 +40,15 @@
   function makeRoom(c){
     return{join:function(name){
       var me='k'+Math.random().toString(36).slice(2,10),id=name+'_'+me,ref=c.fs.collection('rooms').doc(id);
-      var state={},cbs=[],known={},list=[],unsub=null,hbT=null,chkT=null,gone=false;
+      var state={},cbs=[],known={},list=[],unsub=null,hbT=null,chkT=null,gone=false,seen={},netOk=Date.now(),grace=0;
       function self(){return{peer:me,presence:JSON.parse(JSON.stringify(state)),sameTab:true}}
       var docs={};
       function emit(){
         var now=Date.now(),peers=[self()],cur={};cur[me]=1;
+        var judge=(now-netOk<STALE)&&now>grace;
         Object.keys(docs).forEach(function(k){var d=docs[k];if(d.peer===me)return;
-          if(now-(+d.hb||0)>STALE){if(now-(+d.hb||0)>600000)c.fs.collection('rooms').doc(k).delete().catch(function(){});return}
+          var ls=seen[k]?seen[k].t:now;
+          if(now-ls>STALE){if(judge){if(now-ls>600000)c.fs.collection('rooms').doc(k).delete().catch(function(){});return}if(!known[d.peer])return}
           var pr={};try{pr=JSON.parse(d.p||'{}')}catch(e){}
           if(d.u)(window.__PU=window.__PU||{})[d.peer]=String(d.u);peers.push({peer:d.peer,presence:pr,sameTab:false});cur[d.peer]=1});
         var left=Object.keys(known).filter(function(p){return !cur[p]}).map(function(p){return{peer:p}});
@@ -61,10 +63,20 @@
         leave:function(){gone=true;if(unsub)unsub();clearInterval(hbT);clearInterval(chkT);return ref.delete().catch(function(){})}
       };
       return write().then(function(){
-        unsub=c.fs.collection('rooms').where('room','==',name).onSnapshot(function(s){docs={};s.forEach(function(d){docs[d.id]=d.data()});emit()},function(){});
+        function sub(){
+          if(unsub)try{unsub()}catch(e){}
+          unsub=c.fs.collection('rooms').where('room','==',name).onSnapshot(function(s){
+            var now=Date.now();if(!s.metadata||!s.metadata.fromCache)netOk=now;
+            docs={};s.forEach(function(d){var v=d.data();docs[d.id]=v;var o=seen[d.id];if(!o||o.hb!==v.hb)seen[d.id]={hb:v.hb,t:now}});emit()
+          },function(){if(!gone)setTimeout(sub,2000)});
+        }
+        sub();
         hbT=setInterval(function(){if(!gone)write().catch(function(){})},HB);
         chkT=setInterval(emit,10000);
-        addEventListener('pagehide',function(){if(!gone)ref.delete().catch(function(){})});
+        function back(){if(gone)return;grace=Date.now()+20000;write().catch(function(){});sub()}
+        document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')back()});
+        addEventListener('pageshow',back);addEventListener('online',back);
+        addEventListener('pagehide',function(e){if(!gone&&!(e&&e.persisted))ref.delete().catch(function(){})});
         return r;
       });
     }};
@@ -3529,9 +3541,10 @@ function onHostPeers(ch){
     NET.lobby=lob;if(changed)NET.r.presence({lobby:lob}).catch(()=>{});
     renderLobby();
   }else{
+    guests.forEach(g=>{const bp=S.players.find(p=>p.peer===g.peer&&p.kind==='bot'&&p.away);if(bp){bp.kind='remote';bp.away=false;bp.name=bp.name.replace(' 🤖','');renderChips();toast(bp.name+' رجع للعبة')}});
     guests.forEach(g=>{const a=g.presence.act;if(a&&typeof a.n==='number'&&a.n>(NET.last[g.peer]||0)){NET.last[g.peer]=a.n;handleAct(g.peer,a)}});
     ch.left.forEach(l=>{const pl=S.players.find(p=>p.peer===l.peer&&p.kind==='remote');if(!pl)return;
-      pl.kind='bot';pl.name=pl.name+' 🤖';renderChips();toast(pl.name.replace(' 🤖','')+' طلع، الكمبيوتر يكمل بداله');
+      pl.kind='bot';pl.away=true;pl.name=pl.name+' 🤖';renderChips();toast(pl.name.replace(' 🤖','')+' طلع، الكمبيوتر يكمل بداله');
       if(player()===pl){if(S.phase==='roll')later(roll,600);else if(S.phase==='move')later(()=>doMove(botPick()),600)}});
   }
   sayCheck(ch);
