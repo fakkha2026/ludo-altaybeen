@@ -1308,10 +1308,10 @@ function save(){W.t=Date.now();try{localStorage.setItem('ludo-dira',JSON.stringi
 const SRV_URL='https://ludo-server.fakkha2026.workers.dev';
 function SV(){return !!window.__FB&&/^https:\/\//.test(SRV_URL)}
 const SRVK=['coins','gems','xp','ownD','ownT','ownH','days','lastDay','spin','gift','welcome','szg'];
-let WHOLD=0,WPEND=null,WSRV=null;
+let WHOLD=0,WPEND=null,WSRV=null,API_VF=false,AV_BUSY=false;
 async function api(name,body){
   const c=await window.__FB,u=c.auth.currentUser;if(!u)throw {code:'auth'};
-  let r,j;try{const tok=await u.getIdToken();r=await fetch(SRV_URL+'/api/'+name,{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+tok},body:JSON.stringify(body||{})})}catch(e){throw {code:'net'}}
+  let r,j;try{const vf=!!(u.emailVerified&&!isFake(u.email)),tok=await u.getIdToken(vf&&!API_VF);API_VF=vf;r=await fetch(SRV_URL+'/api/'+name,{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+tok},body:JSON.stringify(body||{})})}catch(e){throw {code:'net'}}
   try{j=await r.json()}catch(e){j={ok:false,err:'server'}}
   if(j.w)applyWallet(j.w);
   if(!j.ok)throw {code:j.err||'server'};
@@ -1319,7 +1319,7 @@ async function api(name,body){
 function apiErr(e){return ({poor:'رصيدك ما يكفي',done:'استلمتها قبل',limit:'وصلت الحد لليوم',banned:'⛔ حسابك موقوف',net:'ما فيه اتصال، تأكد من الإنترنت',
   iap:'الشراء يفتح لما تنزل اللعبة على App Store',closed:'الموسم مو شغّال الحين',account:'سجّل دخولك أول',taken:'اسم المستخدم مستخدم، اختر اسم ثاني.',
   rude:'الاسم فيه كلمة غير لائقة، اختر اسم ثاني.',badname:'اسم المستخدم من ٣ إلى ١٤ حرف أو رقم، بدون مسافات أو رموز.',late:'الطاولة بدأت من زمان',full:'الطاولة مليانة',
-  over:'اللعبة خلصت',bet:'مبلغ الطاولة تغيّر',nogame:'اللعبة انتهت',auth:'سجّل دخولك مرة ثانية'})[e&&e.code]||'صار خطأ في السيرفر، جرّب مرة ثانية'}
+  over:'اللعبة خلصت',bet:'مبلغ الطاولة تغيّر',nogame:'اللعبة انتهت',auth:'سجّل دخولك مرة ثانية',verify:'وثّق إيميلك أول من ملفك 📧',newbie:'الطاولات بمبلغ تنفتح بعد ما تلعب ٥ لعبات أو يمر يوم على حسابك'})[e&&e.code]||'صار خطأ في السيرفر، جرّب مرة ثانية'}
 function applyWallet(w){if(!w)return;if(WHOLD){WPEND=w;return}WSRV=w;
   SRVK.forEach(k=>{if(w[k]!==undefined&&w[k]!==null)W[k]=Array.isArray(w[k])?w[k].slice():w[k]});
   if(w.mis&&W.mis&&Array.isArray(W.mis.list)&&w.mis.d===today()&&Array.isArray(w.mis.ids))W.mis.list.forEach(m=>{if(w.mis.ids.includes(m.id))m.c=true});
@@ -1332,6 +1332,14 @@ async function initServer(){if(!SV())return;let c;try{c=await window.__FB}catch(
   walletHello()}
 async function walletHello(){try{const j=await api('wallet');if(j.welcomed)setTimeout(()=>toast('🎁 هدية الترحيب ٥٬٠٠٠ عملة'),600)}catch(e){if(e.code==='net')toast('ما قدرنا نتصل بالسيرفر، تأكد من الإنترنت')}}
 setTimeout(initServer,0);
+function isNb(){const w=WSRV;if(!w)return false;if(w.nb!=null)return !!w.nb;return !!w.born&&Date.now()-w.born<864e5&&(+w.gp||0)<5}
+function isVer(){const u=AU.c&&AU.c.auth.currentUser;return !!(u&&!u.isAnonymous&&u.emailVerified&&!isFake(u.email))}
+async function afterVerify(){if(!SV()||!isVer()||AV_BUSY)return;AV_BUSY=true;
+  try{const j=await api('wallet');if(j.welcomed)setTimeout(()=>toast('✅ توثّق إيميلك! 🎁 وصلتك هدية الترحيب ٥٬٠٠٠ عملة'),300)}catch(e){}
+  if(!AU.key&&unValid(W.nick||'')){try{const j=await api('uname',{name:W.nick});AU.key=j.key;toast('✅ انحجز اسمك: '+W.nick)}catch(e){if(e.code==='taken')toast('⚠️ اسم '+W.nick+' أخذه أحد قبلك، اختر اسم ثاني من ملفك')}}
+  AV_BUSY=false;try{renderAcct();if(!$('profBox').hidden)renderProfile()}catch(e){}}
+document.addEventListener('visibilitychange',async()=>{if(document.visibilityState!=='visible'||!SV()||!AU.user||isVer())return;
+  const u=AU.c&&AU.c.auth.currentUser;if(!u)return;try{await u.reload()}catch(e){}if(isVer())afterVerify()});
 // ---------- حفظ الحساب في Claude: يرجع لك تقدمك ومشترياتك من أي جهاز ----------
 let CLOUD=null,cloudT=null,cloudOn=false;
 function cloudPush(){if(!CLOUD)return;clearTimeout(cloudT);cloudT=setTimeout(()=>{CLOUD.set(JSON.parse(JSON.stringify(W))).then(()=>{cloudOn=true;cloudBadge()}).catch(()=>{cloudOn=false;cloudBadge()})},1200)}
@@ -2917,7 +2925,7 @@ $('pfMailGo').onclick=async()=>{if(mailBusy)return;const er=$('pfMailErr'),cu=AU
     try{await cu.sendEmailVerification();er.style.color='var(--teal)';er.textContent='أرسلناه ✔️ شيّك على البريد وغير المرغوب.'}
     catch(e){er.textContent=auErrTxt(e)}mailBusy=false}};
 $('pfMailChk').onclick=async()=>{const er=$('pfMailErr');try{await AU.c.auth.currentUser.reload()}catch(e){}
-  if(AU.c.auth.currentUser.emailVerified){renderMail();toast('✅ توثّق إيميلك')}else{er.style.color='';er.textContent='ما توثّق للحين. اضغط الرابط اللي في الرسالة وبعدين جرّب.'}};
+  if(AU.c.auth.currentUser.emailVerified){renderMail();toast('✅ توثّق إيميلك');afterVerify()}else{er.style.color='';er.textContent='ما توثّق للحين. اضغط الرابط اللي في الرسالة وبعدين جرّب.'}};
 let auMode='in';
 function auSet(m){auMode=m;document.querySelectorAll('#auTabs button').forEach(b=>b.classList.toggle('sel',b.dataset.a===m));
   $('auPass2').hidden=$('auMail').hidden=m!=='up';$('auHint').hidden=m!=='up';$('auForgot').hidden=m==='up';$('auGo').textContent=m==='up'?'سوّ حسابي':'دخول';
@@ -2949,10 +2957,8 @@ $('auGo').onclick=async()=>{const go=$('auGo'),er=$('auErr'),name=$('auUser').va
       try{await cu.getIdToken(true)}catch(e){}
       try{await cu.sendEmailVerification()}catch(e){}
       AU.user=true;W.nick=name;save();try{localStorage.removeItem('ludo-guest')}catch(e){}
-      let nmOk=true;try{const j=await api('uname',{name});AU.key=j.key}catch(e){nmOk=false;setTimeout(()=>toast('⚠️ '+apiErr(e)+' غيّره من ملفك'),2500)}
-      try{await api('wallet')}catch(e){}
       $('authBox').hidden=true;$('auPass').value=$('auPass2').value=$('auMail').value='';renderAcct();if(!$('profBox').hidden)renderProfile();
-      toast('أهلاً '+name+' 👋 🎁 هدية الترحيب ٥٬٠٠٠ عملة، وأرسلنا رابط توثيق على إيميلك 📧')}
+      toast('أهلاً '+name+' 👋 أرسلنا رابط توثيق على إيميلك 📧 وثّقه عشان ينحجز اسمك وتاخذ هدية الترحيب ٥٬٠٠٠ عملة 🎁')}
     else if(auMode==='up'){const cu=c.auth.currentUser;
       await c.fs.runTransaction(async t=>{const d=await t.get(ref);if(d.exists)throw {code:'taken'};t.set(ref,{uid:cu.uid,name,at:Date.now()})});
       try{await cu.linkWithCredential(firebase.auth.EmailAuthProvider.credential(mailIn,pass))}catch(e){await ref.delete().catch(()=>{});throw e}
@@ -3000,7 +3006,8 @@ async function initAuth(){if(!window.__FB)return;let c;try{c=await window.__FB}c
   if(AU.user){try{await u.reload()}catch(e){}
     try{const q=await c.fs.collection('usernames').where('uid','==',u.uid).limit(1).get();
       if(!q.empty){const d=q.docs[0];AU.key=d.id;const nm=d.data().name;if(nm&&W.nick!==nm){W.nick=nm;save()}
-        if(d.data().mail&&!isFake(u.email)){const o=Object.assign({},d.data());delete o.mail;d.ref.set(o).catch(()=>{})}}}catch(e){}
+        if(d.data().mail&&!isFake(u.email)&&!SV()){const o=Object.assign({},d.data());delete o.mail;d.ref.set(o).catch(()=>{})}}}catch(e){}
+    if(isVer())setTimeout(afterVerify,0);
     if(isFake(u.email)||!u.emailVerified){let sh=null;try{sh=sessionStorage.getItem('ludo-mailnag')}catch(e){}
       if(!sh){try{sessionStorage.setItem('ludo-mailnag','1')}catch(e){}setTimeout(()=>toast(isFake(u.email)?'⚠️ اربط إيميلك من ملفك عشان ما يضيع حسابك':'📧 وثّق إيميلك من الرابط اللي وصلك'),1500)}}}
   else{let g=null;try{g=localStorage.getItem('ludo-guest')}catch(e){}if(!g)openAuth('in')}
@@ -3589,7 +3596,8 @@ const BETS=[0,500,1000,5000,10000,50000,100000,500000,1000000];
 const coinI='<span class="coin" style="width:14px;height:14px;display:inline-block;vertical-align:-2px"></span>';
 function betOf(){return Math.max(0,+NET.bet||0)}
 function renderBets(){const box=$('onBets');if(!box)return;box.innerHTML='';
-  BETS.forEach(v=>{const b=document.createElement('button');b.type='button';b.className=betOf()===v?'sel':'';b.disabled=v>(+W.coins||0);
+  const nb=SV()&&isNb()&&!IS_ADMIN;
+  BETS.forEach(v=>{const b=document.createElement('button');b.type='button';b.className=betOf()===v?'sel':'';b.disabled=v>(+W.coins||0)||(nb&&v>0);
     b.innerHTML=v?`<span>${fmtS(v)}</span><small>الفايز ياخذ الكل</small>`:'<span>ودّية</span><small>بدون مبلغ</small>';
     b.onclick=()=>{NET.bet=v;NET.r&&NET.r.presence({bet:v}).catch(()=>{});SFX.tap();renderLobby()};box.appendChild(b)})}
 function betInfoTxt(){const v=betOf(),n=Math.max(2,NET.lobby.length);return v?`مبلغ الدخول: ${fmt(v)} ${coinI}<br>الجايزة للفايز: ${fmt(v*n)} ${coinI}`:'طاولة ودّية بدون مبلغ'}
@@ -3597,7 +3605,7 @@ async function createRoom(){
   if(!onlineGuard())return;
   const code=String(10000+Math.floor(Math.random()*90000));
   let r;try{r=await roomNS.join('ludo-'+code)}catch(e){$('onErr').textContent='ما قدرنا ننشئ الغرفة، جرّب مرة ثانية.';return}
-  resetNet();const b0=[...BETS].reverse().find(v=>v&&v<=Math.min(1000,+W.coins||0))||0;Object.assign(NET,{r,host:true,code,bet:b0});
+  resetNet();const b0=SV()&&isNb()&&!IS_ADMIN?0:[...BETS].reverse().find(v=>v&&v<=Math.min(1000,+W.coins||0))||0;Object.assign(NET,{r,host:true,code,bet:b0});
   NET.lobby=[{peer:'',nick:W.nick,av:W.av,tok:W.tok,pid:W.pid}];
   r.presence({role:'host',code,lobby:NET.lobby,g:null,pic:myPic(),bet:b0}).catch(()=>{});
   r.onPeers(onHostPeers);
@@ -3660,6 +3668,7 @@ function onGuestPeers(ch){
   const host=ch.peers.find(p=>!p.sameTab&&p.presence&&p.presence.role==='host'&&p.presence.code===NET.code);
   if(!host){if(NET.hostPeer&&ch.left.some(l=>l.peer===NET.hostPeer)){toast('صاحب الغرفة طلع');leaveOnline();show('home')}return}
   NET.hostPeer=host.peer;NET.bet=Math.max(0,+host.presence.bet||0);
+  if(NET.bet>0&&!S&&SV()&&isNb()&&!IS_ADMIN){toast(apiErr({code:'newbie'}));leaveOnline();show('home');return}
   NET.lobby=Array.isArray(host.presence.lobby)?host.presence.lobby.slice(0,4):[];
   if(!S||MODE!=='online')renderLobby();
   const g=host.presence.g;
@@ -3702,7 +3711,7 @@ function srvWin(youWon,ci,m){
     const uids=wins.map(c=>{const p=S.players.find(x=>x.ci===c);if(!p)return '';if(p.ci===NET.myCi)return MYUID;return peerUid(p.peer)}).filter(Boolean);
     tableWatch(gid,NET.cheat?[]:uids)}}
 function tableWatch(gid,uids){let n=0;
-  const done=j=>{const e=$('winWait');if(e)e.remove();if(j.res&&j.res.refund)toast('↩️ النتيجة ما اتفقت بين اللاعبين، رجع لك مبلغ الدخول');else if(j.res&&j.res.got)toast('🏆 وصلتك الجايزة '+fmt(j.res.got));if(j.res&&j.res.up)toast('🎉 ارتقيت لمستوى '+toAr(level()))};
+  const done=j=>{const e=$('winWait');if(e)e.remove();if(j.res&&j.res.refund)toast('↩️ النتيجة ما اتفقت بين اللاعبين، رجع لك مبلغ الدخول');else if(j.res&&j.res.got)toast('🏆 وصلتك الجايزة '+fmt(j.res.got)+(j.res.cap?' (وصلت حد ٥٠ ألف من نفس اللاعب اليوم)':''));if(j.res&&j.res.back)toast('↩️ رجع لك '+fmt(j.res.back)+' — الفايز وصل حد الكسب منك اليوم');if(j.res&&j.res.up)toast('🎉 ارتقيت لمستوى '+toAr(level()))};
   const poll=()=>{if(++n>40)return;api('tsettle',{gid}).then(j=>{if(j.done)done(j);else setTimeout(poll,8000)}).catch(e=>{if(e.code==='net')setTimeout(poll,8000)})};
   api('treport',{gid,winners:uids}).then(j=>{if(j.done)done(j);else setTimeout(poll,5000)}).catch(e=>{if(e.code==='net')setTimeout(()=>tableWatch(gid,uids),8000)})}
 async function rrPaid(peer){const gid=S.gid,turn=S.turnId;
@@ -3740,7 +3749,7 @@ function leaveOnline(){
   if(MODE==='online'){GEN++;S=null;MODE=null}
   $('online').hidden=true;
 }
-$('modeO').onclick=()=>{if(IAMBANNED){toast('⛔ حسابك موقوف وما تقدر تلعب أونلاين');return}if(window.__FB&&!AU.user){openAuth('up','اللعب أونلاين يحتاج حساب. سوّ حسابك أو سجّل دخول.');return}openOnline()};
+$('modeO').onclick=()=>{if(SV()&&AU.user&&!isVer()&&!IS_ADMIN){toast('📧 وثّق إيميلك أول عشان تلعب أونلاين');openProfile();return}if(IAMBANNED){toast('⛔ حسابك موقوف وما تقدر تلعب أونلاين');return}if(window.__FB&&!AU.user){openAuth('up','اللعب أونلاين يحتاج حساب. سوّ حسابك أو سجّل دخول.');return}openOnline()};
 $('onBack').onclick=()=>$('online').hidden=true;
 $('onCreate').onclick=createRoom;
 $('onJoin').onclick=joinRoom;
