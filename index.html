@@ -1443,7 +1443,7 @@ function lbAct(r){const nm=safeName(String(r.nick||'لاعب').slice(0,14));
   reportPlayer(r.id,nm,okPic(r.pic)?'صورة غير لائقة':'اسم غير لائق')}
 async function admDelPic(uid,nm){if(!IS_ADMIN||!uid)return;try{await AU.c.fs.collection('leaderboard').doc(uid).update({pic:''});toast('🗑️ انحذفت صورة '+(nm||'اللاعب'))}catch(e){toast('ما قدرنا نحذف الصورة. تأكد إن قواعد السيرفر محدّثة.')}}
 async function lbSyncPic(){if(!window.__FB||!DB||IS_ADMIN||IAMBANNED)return;try{const c=await window.__FB,ref=DB.doc('board/'+c.uid),cur=await ref.get();
-  if(cur.exists&&cur.data().m===monthKey())await ref.update({pic:myPic(),av:String(W.av||'🙂').slice(0,4),nick:String(W.nick||'لاعب').slice(0,14)})}catch(e){}}
+  if(cur.exists&&cur.data().m===monthKey())await ref.update({pic:myPic(),av:String(W.av||'🙂').slice(0,4)})}catch(e){}}
 async function recordBoard(won,gain){
   if(SV()||!DB||!window.__FB||!AU.user||IS_ADMIN||IAMBANNED)return;
   try{const c=await window.__FB,ref=DB.doc('board/'+c.uid),cur=await ref.get(),mk=monthKey(),o0=cur.exists?cur.data():{},o=o0.m===mk?o0:{};
