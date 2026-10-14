@@ -1307,6 +1307,10 @@ function save(){W.t=Date.now();try{localStorage.setItem('ludo-dira',JSON.stringi
 // ---------- السيرفر الحاكم: الرصيد والمشتريات والطاولات والصدارة يقررها السيرفر مو الجوال ----------
 const SRV_URL='https://ludo-server.fakkha2026.workers.dev';
 function SV(){return !!window.__FB&&/^https:\/\//.test(SRV_URL)}
+// نرد اللعب ضد الكمبيوتر: يطلع من رقم يعطيه السيرفر، عشان السيرفر يعيد اللعبة ويتأكد منها (نفس الدالة في السيرفر)
+function mkRng(hex){const s=String(hex||'').padEnd(32,'0');let a=parseInt(s.slice(0,8),16)>>>0,b=parseInt(s.slice(8,16),16)>>>0,c=parseInt(s.slice(16,24),16)>>>0,d=parseInt(s.slice(24,32),16)>>>0;
+  const next=()=>{a>>>=0;b>>>=0;c>>>=0;d>>>=0;let t=(a+b)|0;a=b^b>>>9;b=c+(c<<3)|0;c=(c<<21|c>>>11);d=d+1|0;t=t+d|0;c=c+t|0;return (t>>>0)/4294967296};
+  for(let i=0;i<12;i++)next();return ()=>1+Math.floor(next()*6)}
 const SRVK=['coins','gems','xp','ownD','ownT','ownH','days','lastDay','spin','gift','welcome','szg'];
 let WHOLD=0,WPEND=null,WSRV=null,API_VF=false,AV_BUSY=false;
 async function api(name,body){
@@ -1319,7 +1323,7 @@ async function api(name,body){
 function apiErr(e){return ({poor:'رصيدك ما يكفي',done:'استلمتها قبل',limit:'وصلت الحد لليوم',banned:'⛔ حسابك موقوف',net:'ما فيه اتصال، تأكد من الإنترنت',
   iap:'الشراء يفتح لما تنزل اللعبة على App Store',closed:'الموسم مو شغّال الحين',account:'سجّل دخولك أول',taken:'اسم المستخدم مستخدم، اختر اسم ثاني.',
   rude:'الاسم فيه كلمة غير لائقة، اختر اسم ثاني.',badname:'اسم المستخدم من ٣ إلى ١٤ حرف أو رقم، بدون مسافات أو رموز.',late:'الطاولة بدأت من زمان',full:'الطاولة مليانة',
-  over:'اللعبة خلصت',bet:'مبلغ الطاولة تغيّر',nogame:'اللعبة انتهت',auth:'سجّل دخولك مرة ثانية',verify:'وثّق إيميلك أول من ملفك 📧',newbie:'الطاولات بمبلغ تنفتح بعد ما تلعب ٥ لعبات أو يمر يوم على حسابك'})[e&&e.code]||'صار خطأ في السيرفر، جرّب مرة ثانية'}
+  over:'اللعبة خلصت',bet:'مبلغ الطاولة تغيّر',nogame:'اللعبة انتهت',auth:'سجّل دخولك مرة ثانية',verify:'وثّق إيميلك أول من ملفك 📧',slow:'طلبات كثير ورا بعض، انتظر شوي وجرّب',newbie:'الطاولات بمبلغ تنفتح بعد ما تلعب ٥ لعبات أو يمر يوم على حسابك'})[e&&e.code]||'صار خطأ في السيرفر، جرّب مرة ثانية'}
 function applyWallet(w){if(!w)return;if(WHOLD){WPEND=w;return}WSRV=w;
   SRVK.forEach(k=>{if(w[k]!==undefined&&w[k]!==null)W[k]=Array.isArray(w[k])?w[k].slice():w[k]});
   if(w.mis&&W.mis&&Array.isArray(W.mis.list)&&w.mis.d===today()&&Array.isArray(w.mis.ids))W.mis.list.forEach(m=>{if(w.mis.ids.includes(m.id))m.c=true});
@@ -2550,12 +2554,13 @@ const player=()=>S.players[S.cur];
 function meCi(){if(MODE==='two'||MODE==='four')return 0;if(MODE==='online')return NET.myCi;return -1}
 function localControl(p){if(NET.guest)return p.ci===NET.myCi;return p.kind==='local'}
 
-let PLAY_SID='',PLAY_PRIZE=0,stBusy=false;
+let PLAY_SID='',PLAY_PRIZE=0,PLAY_SEED='',stBusy=false;
 function startMode(m){
-  const fee=feeOf(m);PLAY_FEE=fee||0;PLAY_MULT=(m==='two'||m==='four')?STAKES[stk()].mult:1;PLAY_SID='';PLAY_PRIZE=0;
+  const fee=feeOf(m);PLAY_FEE=fee||0;PLAY_MULT=(m==='two'||m==='four')?STAKES[stk()].mult:1;PLAY_SID='';PLAY_PRIZE=0;PLAY_SEED='';
   if(fee&&W.coins<fee){toast('تحتاج '+fmt(fee)+' عملة، استلم هدية اليوم أو بدّل جواهر');return}
   if(SV()&&(m==='two'||m==='four')){if(stBusy)return;stBusy=true;
-    api('gstart',{mode:m,stake:stk(),diff:W.diff}).then(j=>{PLAY_SID=j.gid;PLAY_FEE=j.fee;PLAY_PRIZE=j.prize;startMode2(m)}).catch(e=>toast(e.code==='poor'?'تحتاج '+fmt(fee)+' عملة، استلم هدية اليوم أو بدّل جواهر':apiErr(e))).finally(()=>{stBusy=false});return}
+    const rl=W.rule==='teams'&&m!=='four'?'classic':(W.rule||'classic');
+    api('gstart',{mode:m,stake:stk(),diff:W.diff,rule:rl}).then(j=>{PLAY_SID=j.gid;PLAY_SEED=j.seed||'';PLAY_FEE=j.fee;PLAY_PRIZE=j.prize;startMode2(m)}).catch(e=>toast(e.code==='poor'?'تحتاج '+fmt(fee)+' عملة، استلم هدية اليوم أو بدّل جواهر':apiErr(e))).finally(()=>{stBusy=false});return}
   if(fee){W.coins-=fee;save();renderWallet()}
   startMode2(m)}
 function startMode2(m){
@@ -2597,6 +2602,7 @@ function newGame(players){
   if(r==='teams'&&players.length!==4){r='classic';setTimeout(()=>toast('الفرق يحتاج ٤ لاعبين، بنلعب كلاسيك'),300)}
   rrUsed=0;
   S={players,cur:0,dice:0,phase:'roll',tok:{},moves:[],ev:null,evN:0,hop:null,msg:['',''],winner:-1,gid:Date.now(),turnId:0,rule:r,kills:{}};
+  if((MODE==='two'||MODE==='four')&&PLAY_SEED){S.rng=mkRng(PLAY_SEED);S.log=[];PLAY_SEED=''}
   players.forEach(p=>S.tok[p.ci]=r==='quick'?[0,-1,-1,-1]:[-1,-1,-1,-1]);
   if(r!=='classic'&&!(r==='teams'&&players.length!==4))setTimeout(()=>toast('نمط '+RULES[r].name+' 🎲'),300);
   buildPieces(players);
@@ -3327,7 +3333,7 @@ function roll(){
   if(!S||S.phase!=='roll')return;
   S.phase='rolling';S.dl=0;$('dice').disabled=true;
   if(MODE==='online'&&SV()&&NET.host){srvRoll(S.gid,S.turnId,0);return}
-  roll2(1+Math.floor(Math.random()*6),-1)}
+  roll2(S.rng?S.rng():1+Math.floor(Math.random()*6),-1)}
 function srvRoll(gid,turn,tries){
   api('roll',{gid:tableId(gid)}).then(j=>{if(!S||S.gid!==gid||S.turnId!==turn||S.phase!=='rolling')return;roll2(j.v,j.n)})
     .catch(e=>{if(!S||S.gid!==gid||S.turnId!==turn||S.phase!=='rolling')return;
@@ -3410,7 +3416,7 @@ function rrMine(){return S&&(MODE==='two'||MODE==='four'||MODE==='online')&&play
 function showRR(){const b=$('rrBtn');if(!b)return;const on=rrMine();b.hidden=!on;if(!on){$('diceHold').appendChild(b);return}
   const seat=$('dslot-'+player().ci);if(seat&&b.parentNode!==seat.parentNode)seat.parentNode.appendChild(b);const left=RR_MAX-rrUsed;b.classList.toggle('poor',W.gems<RR_COST||left<=0);b.classList.toggle('lock',left<=0);
   $('rrLeft').textContent=left>0?`باقي ${toAr(left)}`:'🔒 انتهت'}
-function doReroll(){S.turnId++;S.dl=0;S.rollN=(S.rollN||0)+1;S.pool=[];S.phase='roll';S.moves=[];renderTokens();roll()}
+function doReroll(){if(S.log)S.log.push(['r',S.tn||0]);S.turnId++;S.dl=0;S.rollN=(S.rollN||0)+1;S.pool=[];S.phase='roll';S.moves=[];renderTokens();roll()}
 function rerollClick(){if(!rrMine())return;
   if(rrUsed>=RR_MAX){toast(`استخدمت ${toAr(RR_MAX)} محاولات، انقفلت إعادة الرمية لهاللعبة 🔒`);return}
   if(W.gems<RR_COST){toast(`تحتاج ${toAr(RR_COST)} جواهر 💎`);return}
@@ -3432,6 +3438,7 @@ function doMove(k){
   if(S.phase!=='move')return;
   if(S.hid>=0){revealRoll(()=>doMove(k));return}
   S.phase='anim';S.dl=0;
+  if(S.log)S.log.push([S.tn||0,S.sel||0,k]);
   const ci=player().ci,d=S.dice;if(S.pool&&S.pool.length){S.pool.splice(S.sel,1);S.sel=0}S.moved=(S.moved||0)+1;renderTokens();
   if(S.tok[ci][k]===-1){S.tok[ci][k]=0;renderTokens();emitEv({t:'out',ci,k});later(()=>land(ci,k),250);return}
   let steps=d;
@@ -3649,7 +3656,7 @@ function startOnline(){
   const bet=betOf();if(bet>(+W.coins||0)){toast('رصيدك ما يكفي لهالطاولة، اختر مبلغ أقل');return false}
   MODE='online';NET.myCi=seats[0];
   $('online').hidden=true;
-  newGame(players);S.bet=bet;payBet(S.gid,bet);sync();show('game');return true;
+  newGame(players);S.log=[];S.bet=bet;payBet(S.gid,bet);sync();show('game');return true;
 }
 async function joinRoom(){
   if(!onlineGuard())return;
@@ -3703,17 +3710,19 @@ function applySnap(g){
 function tableId(gid){return 'ludo-'+String(NET.code||'x').replace(/[^0-9]/g,'')+'_'+String(gid).replace(/[^0-9A-Za-z]/g,'')}
 function srvWin(youWon,ci,m){
   if(MODE==='two'||MODE==='four'){if(!PLAY_SID)return;const sid=PLAY_SID;PLAY_SID='';
-    api('gend',{gid:sid,won:youWon,nick:String(W.nick||'لاعب').slice(0,14),av:String(W.av||'🙂').slice(0,4),pic:myPic(),pid:W.pid}).then(j=>{
-      if(j.slow)toast('⚠️ اللعبة خلصت بسرعة غير طبيعية، ما انحسبت الجايزة');
+    api('gend',{gid:sid,won:youWon,log:S&&S.log||null,rule:S&&S.rule||'classic',nick:String(W.nick||'لاعب').slice(0,14),av:String(W.av||'🙂').slice(0,4),pic:myPic(),pid:W.pid}).then(j=>{
+      if(j.bad)toast('⚠️ ما قدر السيرفر يتأكد من اللعبة، فما انحسبت الجايزة. حدّث اللعبة وجرّب مرة ثانية');
+      else if(j.slow)toast('⚠️ اللعبة خلصت بسرعة غير طبيعية، ما انحسبت الجايزة');
       else if(youWon&&!j.got)toast('وصلت حد الجوائز لليوم، ارجع بكرة 👋');
       if(j.up)toast('🎉 ارتقيت لمستوى '+toAr(level())+' وأخذت ٥ جواهر')}).catch(e=>toast(apiErr(e)));return}
   if(MODE==='online'&&NET.code){const gid=tableId(S.gid),wins=[ci];if(m>=0)wins.push(m);
     const uids=wins.map(c=>{const p=S.players.find(x=>x.ci===c);if(!p)return '';if(p.ci===NET.myCi)return MYUID;return peerUid(p.peer)}).filter(Boolean);
-    tableWatch(gid,NET.cheat?[]:uids)}}
-function tableWatch(gid,uids){let n=0;
-  const done=j=>{const e=$('winWait');if(e)e.remove();if(j.res&&j.res.refund)toast('↩️ النتيجة ما اتفقت بين اللاعبين، رجع لك مبلغ الدخول');else if(j.res&&j.res.got)toast('🏆 وصلتك الجايزة '+fmt(j.res.got)+(j.res.cap?' (وصلت حد ٥٠ ألف من نفس اللاعب اليوم)':''));if(j.res&&j.res.back)toast('↩️ رجع لك '+fmt(j.res.back)+' — الفايز وصل حد الكسب منك اليوم');if(j.res&&j.res.up)toast('🎉 ارتقيت لمستوى '+toAr(level()))};
+    const lg=NET.host&&S.log?{log:S.log,rule:S.rule,seats:S.players.map(p=>[p.ci,p.ci===NET.myCi?MYUID:peerUid(p.peer)])}:null;
+    tableWatch(gid,NET.cheat?[]:uids,lg)}}
+function tableWatch(gid,uids,lg){let n=0;
+  const done=j=>{const e=$('winWait');if(e)e.remove();if(j.res&&j.res.refund)toast('↩️ ما قدر السيرفر يتأكد من النتيجة، رجع لك مبلغ الدخول');else if(j.res&&j.res.got)toast('🏆 وصلتك الجايزة '+fmt(j.res.got)+(j.res.cap?' (وصلت حد ٥٠ ألف من نفس اللاعب اليوم)':''));if(j.res&&j.res.back)toast('↩️ رجع لك '+fmt(j.res.back)+' — الفايز وصل حد الكسب منك اليوم');if(j.res&&j.res.up)toast('🎉 ارتقيت لمستوى '+toAr(level()))};
   const poll=()=>{if(++n>40)return;api('tsettle',{gid}).then(j=>{if(j.done)done(j);else setTimeout(poll,8000)}).catch(e=>{if(e.code==='net')setTimeout(poll,8000)})};
-  api('treport',{gid,winners:uids}).then(j=>{if(j.done)done(j);else setTimeout(poll,5000)}).catch(e=>{if(e.code==='net')setTimeout(()=>tableWatch(gid,uids),8000)})}
+  api('treport',Object.assign({gid,winners:uids},lg||{})).then(j=>{if(j.done)done(j);else setTimeout(poll,5000)}).catch(e=>{if(e.code==='net')setTimeout(()=>tableWatch(gid,uids,lg),8000)})}
 async function rrPaid(peer){const gid=S.gid,turn=S.turnId;
   for(let i=0;i<4;i++){try{const c=await window.__FB,d=await c.fs.collection('tables').doc(tableId(gid)).get(),r=(d.exists&&d.data().rolls)||[],last=r[r.length-1];
       if(!S||S.gid!==gid||S.turnId!==turn||!(S.phase==='move'||S.phase==='nomove')||player().peer!==peer)return;
