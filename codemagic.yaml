@@ -51,3 +51,77 @@ workflows:
           cd ios/App
           xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build | tail -40
           exit ${PIPESTATUS[0]}
+
+  ios-release:
+    name: لودو الطيبين - نسخة النشر (TestFlight)
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: fakkha
+    environment:
+      node: 20
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.fakkha.ludo
+    scripts:
+      - name: تثبيت الأدوات
+        script: npm install
+
+      - name: تجهيز ملفات اللعبة
+        script: |
+          set -e
+          mkdir -p www assets
+          cp index.html privacy.html icon.png www/
+          cp icon.png assets/icon-only.png
+          cp icon.png assets/icon.png
+          echo "import {CdvPurchase} from 'capacitor-plugin-cdv-purchase'; window.CdvPurchase=CdvPurchase;" > iap-entry.mjs
+          npx esbuild iap-entry.mjs --bundle --format=iife --platform=browser --outfile=www/store.js
+          test -s www/store.js
+
+      - name: إضافة الآيفون
+        script: npx cap add ios
+
+      - name: الأيقونة
+        script: npx capacitor-assets generate --ios --iconBackgroundColor '#0d2230' --splashBackgroundColor '#0d2230'
+
+      - name: إعدادات التطبيق (الاسم والأذونات والآيفون بس)
+        script: |
+          set -e
+          PL=ios/App/App/Info.plist
+          plutil -replace CFBundleDisplayName -string "لودو الطيبين" $PL
+          plutil -replace NSCameraUsageDescription -string "نحتاج الكاميرا إذا حبيت تصوّر صورة لملفك" $PL
+          plutil -replace NSPhotoLibraryUsageDescription -string "نحتاج الصور عشان تختار صورة لملفك" $PL
+          plutil -replace ITSAppUsesNonExemptEncryption -bool NO $PL
+          plutil -replace CFBundleDevelopmentRegion -string "ar" $PL
+          plutil -remove UISupportedInterfaceOrientations~ipad $PL || true
+          plutil -lint $PL
+          # اللعبة للآيفون بس (بدون آيباد) عشان ما تطلب أبل صور آيباد
+          sed -i '' 's/TARGETED_DEVICE_FAMILY = "1,2";/TARGETED_DEVICE_FAMILY = 1;/g' ios/App/App.xcodeproj/project.pbxproj
+          grep 'TARGETED_DEVICE_FAMILY' ios/App/App.xcodeproj/project.pbxproj || true
+
+      - name: مزامنة
+        script: npx cap sync ios
+
+      - name: شهادات التوقيع
+        script: xcode-project use-profiles
+
+      - name: رقم البناء
+        script: |
+          set -e
+          echo "رقم البناء: $BUILD_NUMBER"
+          cd ios/App && agvtool new-version -all $BUILD_NUMBER && agvtool new-marketing-version 1.0
+
+      - name: بناء ملف التطبيق
+        script: |
+          xcode-project build-ipa --workspace ios/App/App.xcworkspace --scheme App
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
