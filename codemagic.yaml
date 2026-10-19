@@ -8,21 +8,44 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
-      - name: تجهيز ملفات اللعبة
-        script: |
-          mkdir -p www assets
-          cp index.html www/
-          cp icon.png www/
-          cp icon.png assets/icon-only.png
-          cp icon.png assets/icon.png
       - name: تثبيت الأدوات
         script: npm install
+
+      - name: تجهيز ملفات اللعبة
+        script: |
+          set -e
+          mkdir -p www assets
+          cp index.html privacy.html icon.png www/
+          cp icon.png assets/icon-only.png
+          cp icon.png assets/icon.png
+          # الشراء عن طريق أبل: نجمع الإضافة في ملف واحد (store.js) تقراه اللعبة
+          echo "import {CdvPurchase} from 'capacitor-plugin-cdv-purchase'; window.CdvPurchase=CdvPurchase;" > iap-entry.mjs
+          npx esbuild iap-entry.mjs --bundle --format=iife --platform=browser --outfile=www/store.js
+          test -s www/store.js
+          echo "✅ ملفات اللعبة والشراء جاهزة"
+
       - name: إضافة الآيفون
         script: npx cap add ios
+
       - name: الأيقونة
         script: npx capacitor-assets generate --ios --iconBackgroundColor '#0d2230' --splashBackgroundColor '#0d2230'
+
+      - name: إعدادات التطبيق (الاسم والأذونات)
+        script: |
+          set -e
+          PL=ios/App/App/Info.plist
+          plutil -replace CFBundleDisplayName -string "لودو الطيبين" $PL
+          plutil -replace NSCameraUsageDescription -string "نحتاج الكاميرا إذا حبيت تصوّر صورة لملفك" $PL
+          plutil -replace NSPhotoLibraryUsageDescription -string "نحتاج الصور عشان تختار صورة لملفك" $PL
+          plutil -replace ITSAppUsesNonExemptEncryption -bool NO $PL
+          plutil -replace CFBundleDevelopmentRegion -string "ar" $PL
+          plutil -lint $PL
+          echo "----- Info.plist -----"
+          cat $PL
+
       - name: مزامنة
         script: npx cap sync ios
+
       - name: بناء تجريبي
         script: |
           cd ios/App
