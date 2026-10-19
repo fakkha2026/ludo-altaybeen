@@ -2550,6 +2550,14 @@ function drawBoard(svg,th){
 // ---------- حالة اللعبة ----------
 // أنواع اللاعبين: local (على هذا الجوال) / bot (كمبيوتر) / remote (من جوال ثاني أونلاين)
 let S=null,tokLayer=null,tokEls={},GEN=0,MODE=null;
+let lockLayer=null,lockKey='';
+// قفل ماستر على مدخل البيت: ينفتح لما اللاعب ياكل حجر
+function renderLocks(){if(!lockLayer||!S)return;const on=rule()==='master'?S.players.filter(p=>locked(p.ci)).map(p=>p.ci):[];const key=on.join(',')+'|'+(window.ROT||0);if(key===lockKey)return;lockKey=key;lockLayer.innerHTML='';
+  on.forEach(ci=>{const [x,y]=COL[ci].home[0];const g=el('g',{transform:`translate(${x+.5} ${y+.5}) rotate(${-(window.ROT||0)*90})`},lockLayer);
+    el('rect',{x:-.46,y:-.46,width:.92,height:.92,rx:.16,fill:'#1d1622',opacity:.55},g);
+    el('path',{d:'M-.17 -.04 V-.2 A.17 .17 0 0 1 .17 -.2 V-.04',fill:'none',stroke:'#e9c46a','stroke-width':.08,'stroke-linecap':'round'},g);
+    el('rect',{x:-.27,y:-.06,width:.54,height:.4,rx:.08,fill:'#e9c46a',stroke:'#8a6414','stroke-width':.03},g);
+    el('circle',{cx:0,cy:.1,r:.055,fill:'#5a3d08'},g);el('rect',{x:-.02,y:.1,width:.04,height:.13,fill:'#5a3d08'},g)})}
 // ---------- أنماط اللعب ----------
 const RULES={
   classic:{name:'كلاسيك',note:'القواعد العادية: وصّل أحجارك الأربع للبيت.'},
@@ -2625,6 +2633,7 @@ function buildPieces(players){
   setRot(players);
   drawBoard(board,TH());
   const th=TH();$('boardBox').style.boxShadow=`0 18px 40px -12px #000c,0 0 0 6px ${th.frame[0]},0 0 0 10px ${th.frame[1]}`;
+  lockLayer=el('g',{},board);lockKey='';
   tokLayer=el('g',{},board);tokEls={};
   players.forEach(p=>{
     tokEls[p.ci]=[0,1,2,3].map(k=>{
@@ -2659,6 +2668,7 @@ function hopTok(g){if(RM||!g._b||!g._b.animate)return;const D=205;
   if(g._sh)g._sh.animate([{opacity:.3,transform:'scale(1)'},{opacity:.14,transform:'scale(.7)',offset:.45},{opacity:.32,transform:'scale(1.05)',offset:.82},{opacity:0,transform:'scale(1)'}],{duration:D+40})}
 function renderTokens(){
   if(!S)return;
+  renderLocks();
   const groups={};
   S.players.forEach(p=>S.tok[p.ci].forEach((pp,k)=>{
     const [x,y]=posOf(p.ci,pp,k);
