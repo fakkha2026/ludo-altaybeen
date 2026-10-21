@@ -100,6 +100,11 @@ workflows:
           # اللعبة للآيفون بس (بدون آيباد) عشان ما تطلب أبل صور آيباد
           sed -i '' 's/TARGETED_DEVICE_FAMILY = "1,2";/TARGETED_DEVICE_FAMILY = 1;/g' ios/App/App.xcodeproj/project.pbxproj
           grep 'TARGETED_DEVICE_FAMILY' ios/App/App.xcodeproj/project.pbxproj || true
+          # أقل نسخة iOS تشتغل عليها اللعبة: 15 (أبل تشترطها من أبريل ٢٠٢٧)
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' ios/App/App.xcodeproj/project.pbxproj
+          sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '15.0'/" ios/App/Podfile
+          grep 'IPHONEOS_DEPLOYMENT_TARGET' ios/App/App.xcodeproj/project.pbxproj | sort -u
+          grep 'platform :ios' ios/App/Podfile
 
       - name: مزامنة
         script: npx cap sync ios
