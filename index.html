@@ -476,7 +476,10 @@ svg#board{width:100%;height:100%;display:block}
 .d3{position:fixed;left:0;top:0;width:0;height:0;z-index:44;pointer-events:none;perspective:600px}
 .d3.back{transition:transform .26s ease-in,opacity .26s ease-in}
 .d3 .cube{position:absolute;left:calc(var(--s)/-2);top:calc(var(--s)/-2);width:var(--s);height:var(--s);transform-style:preserve-3d}
-.d3 .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:18%;overflow:hidden}
+.d3 .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:11%;overflow:hidden}
+.d3 .face i{position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 calc(var(--s)*.09) rgba(0,0,0,.45),inset calc(var(--s)*.03) calc(var(--s)*.03) calc(var(--s)*.05) rgba(255,255,255,.28)}
+.d3 .face b{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none}
+.d3 .core{position:absolute;inset:1px;border-radius:6%}
 .d3 .face svg{width:100%;height:100%;display:block}
 .d3sh{position:absolute;left:calc(var(--s)/-2);top:calc(var(--s)*.25);width:var(--s);height:calc(var(--s)*.35);border-radius:50%;background:radial-gradient(#000a,transparent 70%)}
 .flash{position:fixed;inset:0;z-index:49;pointer-events:none;background:radial-gradient(#bfe9ff99,#5cc2ff22 60%,transparent);animation:flash .4s ease-out forwards}
@@ -2039,22 +2042,23 @@ Object.assign(HQ,{
    ['M60,90 C70,70 56,58 72,44 C86,32 78,18 92,6','M80,90 C88,74 80,62 94,50','M40,14 C50,20 62,12 70,4'].forEach((d,i)=>el('path',{d,stroke:'#7ac4ff','stroke-width':6-i*1.5,fill:'none',opacity:.35,filter:blur(g,3),'stroke-linecap':'round'},g));
    el('path',{d:'M12,12 L48,10 C30,16 18,26 12,44 Z',fill:'#dff2ff',opacity:.22},g)}
 });
-function diceSvg(d,n,svg,accent){
+function diceSvg(d,n,svg,accent,flat){
+  const FH=flat?92:86,OF=flat?0:-3,RX=flat?11:20;
   svg.innerHTML='';
-  el('rect',{x:4,y:4,width:92,height:92,rx:20,fill:d.edge},svg);
+  el('rect',{x:4,y:4,width:92,height:92,rx:RX,fill:d.edge},svg);
   let face=d.bg;if(d.grad){let defs=svg.querySelector('defs')||el('defs',{},svg);const id='dg'+(++UID);const lg=el('linearGradient',{id,x1:0,y1:0,x2:1,y2:1},defs);el('stop',{offset:0,'stop-color':d.grad[0]},lg);el('stop',{offset:1,'stop-color':d.grad[1]},lg);face=`url(#${id})`}
-  el('rect',{x:4,y:4,width:92,height:86,rx:20,fill:face},svg);
-  if(d.art&&(HQ[d.art]||ART[d.art])){let defs=svg.querySelector('defs')||el('defs',{},svg);const cid='da'+(++UID);el('rect',{x:4,y:4,width:92,height:86,rx:20},el('clipPath',{id:cid},defs));(HQ[d.art]||ART[d.art])(el('g',{'clip-path':`url(#${cid})`},svg))}
+  el('rect',{x:4,y:4,width:92,height:FH,rx:RX,fill:face},svg);
+  if(d.art&&(HQ[d.art]||ART[d.art])){let defs=svg.querySelector('defs')||el('defs',{},svg);const cid='da'+(++UID);el('rect',{x:4,y:4,width:92,height:FH,rx:RX},el('clipPath',{id:cid},defs));(HQ[d.art]||ART[d.art])(el('g',{'clip-path':`url(#${cid})`},svg))}
   if(d.stars)[[18,20,1.6],[80,16,1.2],[66,40,1],[22,62,1.3],[84,74,1.6],[40,82,1],[50,14,.9],[12,40,1]].forEach(([x,y,r])=>el('circle',{cx:x,cy:y,r,fill:'#fff',opacity:.75},svg));
   if(d.shine)el('path',{d:'M14,10 L44,10 L14,44 Z',fill:'#fff',opacity:.35},svg);
   if(!n){const t=el('text',{x:50,y:60,'text-anchor':'middle','font-size':30,fill:d.pip,'font-family':'Lalezar, sans-serif'},svg);t.textContent='ارمِ';return}
   PIPS[n].forEach(([x,y])=>{const f=n===6?(d.six||accent||'#c0392b'):d.pip;
-    if(d.pp&&PIPSTY[d.pp]){PIPSTY[d.pp](svg,x,y-3,7.6,n===6);return}
-    const R=d.ps?7.2:9;if(d.ps)el('circle',{cx:x,cy:y-3,r:R+2,fill:d.ps,opacity:.95},svg);
-    el('circle',{cx:x,cy:y-3,r:R,fill:f},svg);
-    if(d.art==='hole')el('ellipse',{cx:x,cy:y-5,rx:6,ry:3.5,fill:'#fff',opacity:.35},svg);
-    if(d.art==='tri')el('circle',{cx:x-2.5,cy:y-6,r:2.4,fill:'#fff',opacity:.5},svg)});
-  if(d.art==='tri')el('rect',{x:5.5,y:5.5,width:89,height:83,rx:19,fill:'none',stroke:'#151515','stroke-width':3},svg);
+    if(d.pp&&PIPSTY[d.pp]){PIPSTY[d.pp](svg,x,y+OF,7.6,n===6);return}
+    const R=d.ps?7.2:9;if(d.ps)el('circle',{cx:x,cy:y+OF,r:R+2,fill:d.ps,opacity:.95},svg);
+    el('circle',{cx:x,cy:y+OF,r:R,fill:f},svg);
+    if(d.art==='hole')el('ellipse',{cx:x,cy:y+OF-2,rx:6,ry:3.5,fill:'#fff',opacity:.35},svg);
+    if(d.art==='tri')el('circle',{cx:x-2.5,cy:y+OF-3,r:2.4,fill:'#fff',opacity:.5},svg)});
+  if(d.art==='tri')el('rect',{x:5.5,y:5.5,width:89,height:FH-3,rx:RX-1,fill:'none',stroke:'#151515','stroke-width':3},svg);
   diceIdle(d,svg);
 }
 // ---------- تأثيرات النرد الثابتة: لمعة تمر + جزيئات حسب النوع ----------
@@ -2752,9 +2756,19 @@ function throwDice(ci,v,col,o={}){
   const ex=bb.left+bb.width/2+(Math.random()-.5)*bb.width*.22,ey=bb.top+bb.height/2+(Math.random()-.5)*bb.height*.22;
   const wrap=document.createElement('div');wrap.className='d3';wrap.style.setProperty('--s',size+'px');
   const sh=document.createElement('div');sh.className='d3sh';const cube=document.createElement('div');cube.className='cube';
-  [[1,'rotateY(0deg)'],[6,'rotateY(180deg)'],[3,'rotateY(90deg)'],[4,'rotateY(-90deg)'],[5,'rotateX(90deg)'],[2,'rotateX(-90deg)']].forEach(([n,t])=>{
+  const FR=[[1,'rotateY(0deg)'],[6,'rotateY(180deg)'],[3,'rotateY(90deg)'],[4,'rotateY(-90deg)'],[5,'rotateX(90deg)'],[2,'rotateX(-90deg)']];
+  // جسم داخلي مصمت يسد الفراغات عند الزوايا والحواف عشان النرد يبان قطعة وحدة
+  FR.forEach(([n,t])=>{const c=document.createElement('div');c.className='core';c.style.background=skin.edge||'#222';c.style.transform=`${t} translateZ(calc(var(--s)/2 - 1.5px))`;cube.appendChild(c)});
+  const shades=[],FM=FR.map(([n,t])=>new DOMMatrix(t));
+  FR.forEach(([n,t])=>{
     const f=document.createElement('div');f.className='face';f.style.transform=`${t} translateZ(calc(var(--s)/2))`;
-    const svg=el('svg',{viewBox:'4 4 92 92'});diceSvg(skin,n,svg,col);f.appendChild(svg);cube.appendChild(f)});
+    const svg=el('svg',{viewBox:'4 4 92 92'});diceSvg(skin,n,svg,col,true);f.appendChild(svg);
+    const b=document.createElement('b'),i=document.createElement('i');f.append(b,i);shades.push(b);cube.appendChild(f)});
+  // إضاءة حقيقية: كل وجه يغمق أو يفتح حسب اتجاهه من الضوء وهو يتقلب
+  const LX=-.3,LY=-.55,LZ=.78;
+  function light(tr){try{const M=new DOMMatrix(tr);FM.forEach((F,k)=>{const m=M.multiply(F),o=m.transformPoint(new DOMPoint(0,0,0)),p=m.transformPoint(new DOMPoint(0,0,1));
+    let nx=p.x-o.x,ny=p.y-o.y,nz=p.z-o.z;const L=Math.hypot(nx,ny,nz)||1;const d=Math.max(0,(nx*LX+ny*LY+nz*LZ)/L);
+    shades[k].style.opacity=String((1-d)*.62)})}catch(e){}}
   wrap.append(sh,cube);document.body.appendChild(wrap);dice.style.opacity='0';
   // رمية واقعية: يطير قوس قصير، يلمس اللوحة، ثم يتدحرج على حوافه وجه بعد وجه ويبطّئ لين يثبت
   const [fx,fy]=FACE_ROT[v],R=Math.random;
@@ -2784,7 +2798,7 @@ function throwDice(ci,v,col,o={}){
   function frame(now){const ms=Math.min(T,now-t0),t=ms/T,P=pose(ms);
     if(!landed&&ms>=TF){landed=true;thud(0)}
     wrap.style.transform=`translate(${P.x}px,${P.y}px)`;
-    cube.style.transform=`translateY(${-P.h}px) scale(${1+P.h/H*.3}) rotateZ(${P.yaw}deg) rotateY(${P.A}deg) rotateX(${P.wx}deg) rotateX(${fx}deg) rotateY(${fy}deg)`;
+    const CT=`rotateZ(${P.yaw}deg) rotateY(${P.A}deg) rotateX(${P.wx}deg) rotateX(${fx}deg) rotateY(${fy}deg)`;cube.style.transform=`translateY(${-P.h}px) scale(${1+P.h/H*.3}) ${CT}`;light(CT);
     const hh=Math.min(1,P.h/H);sh.style.transform=`translateY(${P.h*.15}px) scale(${1-hh*.45})`;sh.style.opacity=String(.55-hh*.35);
     if(ms<TF+TR){if(skin.fx)trail(skin.fx,P.x,P.y-P.h);
       else if(skin.id&&skin.id!=='classic'&&!RM&&Math.random()<.6)emit([{x:P.x+(Math.random()-.5)*16,y:P.y-P.h+(Math.random()-.5)*16,vx:0,vy:.2,g:0,s:2+Math.random()*3,c:[skin.bg,skin.pip,'#fff'][Math.floor(Math.random()*3)],life:22,rot:Math.random()*6,vr:.2,k:'star'}])}
