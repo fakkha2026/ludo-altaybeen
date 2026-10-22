@@ -1249,7 +1249,7 @@ const THEMES=[
  {id:'sand',name:'صحراوي',price:1000,bg:'#ecd3a0',line:'#9a6b33',safeBg:'#d6b072',safe:'#7a4f1c',frame:['#b07a3c','#6e4520']},
  {id:'sea',name:'بحري',price:1500,bg:'#cdeefa',line:'#1f6f9a',safeBg:'#8fd3ef',safe:'#0e4f7a',frame:['#1f8fc4','#0b4a73'],waves:'#7cc6e8',deco:['🐚','🐠','⚓','⛵'],mid:'🌊'},
  {id:'night',name:'ليلي',price:25,gem:true,bg:'#0f1638',line:'#c9a24a',safeBg:'#25306a',safe:'#f5d36b',frame:['#c9a24a','#0a0f28'],sky:1,deco:['🌙','🦉','⭐','🐪'],mid:'🌙'},
- {id:'kashta',name:'الكشتة',price:2000,season:'winter',bg:'#9b1f1f',line:'#1a1210',safeBg:'#f3e6cf',safe:'#9b1f1f',frame:['#f3e6cf','#1a1210'],sadu:1,embers:1,deco:['⛺','☕','🪵','🐪'],mid:'🔥'},
+ {id:'kashta',name:'الكشتة',price:2000,season:'winter',bg:'#f3e6cf',line:'#1a1210',safeBg:'#1a1210',safe:'#e8a33a',frame:['#9b1f1f','#1a1210'],sadu:1,embers:1,deco:['⛺','☕','🪵','🐪'],mid:'🔥'},
  {id:'ramadan',name:'ليالي رمضان',price:2000,season:'ramadan',bg:'#1c2647',line:'#c9a24a',safeBg:'#2b3866',safe:'#f5d36b',frame:['#c9a24a','#6e521a'],deco:['🌙','✨','🕌','⭐'],mid:'🌙'},
  {id:'national',name:'اليوم الوطني',price:2000,season:'national',bg:'#eef6ef',line:'#1c6b3a',safeBg:'#cfe6d6',safe:'#1c6b3a',frame:['#1c6b3a','#0e3f22'],deco:['🌴','💚','🌴','💚'],mid:'💚'}
 ];
@@ -2608,12 +2608,12 @@ function drawBoard(svg,th){
   if(th.sadu){// نقشة السدو: أحمر وأسود وأبيض، أضراس ومعيّنات مثل فرشة بيت الشعر
     const pid='sd'+(++UID);let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);
     const pt=el('pattern',{id:pid,width:1,height:1,patternUnits:'userSpaceOnUse'},defs);
-    el('rect',{x:0,y:0,width:1,height:1,fill:'#9b1f1f'},pt);
-    el('rect',{x:0,y:0,width:1,height:.2,fill:'#1a1210'},pt);el('rect',{x:0,y:.8,width:1,height:.2,fill:'#1a1210'},pt);
-    let up='',dn='';for(let i=0;i<4;i++){const a=i*.25;up+=`M${a},.2 L${a+.125},.06 L${a+.25},.2 Z `;dn+=`M${a},.8 L${a+.125},.94 L${a+.25},.8 Z `}
-    el('path',{d:up,fill:'#f3e6cf'},pt);el('path',{d:dn,fill:'#f3e6cf'},pt);
-    el('polygon',{points:'.5,.27 .73,.5 .5,.73 .27,.5',fill:'#f3e6cf'},pt);
-    el('polygon',{points:'.5,.36 .64,.5 .5,.64 .36,.5',fill:'#1a1210'},pt);
+    el('rect',{x:0,y:0,width:1,height:1,fill:'#f3e6cf'},pt);
+    el('rect',{x:0,y:0,width:1,height:.16,fill:'#1a1210'},pt);el('rect',{x:0,y:.84,width:1,height:.16,fill:'#1a1210'},pt);
+    let up='',dn='';for(let i=0;i<4;i++){const a=i*.25;up+=`M${a},.16 L${a+.125},.27 L${a+.25},.16 Z `;dn+=`M${a},.84 L${a+.125},.73 L${a+.25},.84 Z `}
+    el('path',{d:up,fill:'#9b1f1f'},pt);el('path',{d:dn,fill:'#9b1f1f'},pt);
+    el('polygon',{points:'.5,.32 .68,.5 .5,.68 .32,.5',fill:'#1a1210'},pt);
+    el('polygon',{points:'.5,.39 .61,.5 .5,.61 .39,.5',fill:'#f3e6cf'},pt);
     el('polygon',{points:'.5,.44 .56,.5 .5,.56 .44,.5',fill:'#e8a33a'},pt);
     [[.1,.5],[.9,.5]].forEach(([x,y])=>el('polygon',{points:`${x},${y-.07} ${x+.06},${y} ${x},${y+.07} ${x-.06},${y}`,fill:'#e8a33a'},pt));
     el('rect',{x:0,y:0,width:15,height:15,fill:'url(#'+pid+')'},svg)}
