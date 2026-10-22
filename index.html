@@ -1248,7 +1248,7 @@ const TOKS=[
 const THEMES=[
  {id:'classic',name:'كلاسيك',price:0,bg:'#f6ead2',line:'#7a5a36',safeBg:'#e2cfa8',safe:'#a07a46',frame:['#8a6a3e','#5a4026']},
  {id:'sand',name:'صحراوي',price:1000,bg:'#ecd3a0',line:'#9a6b33',safeBg:'#d6b072',safe:'#7a4f1c',frame:['#b07a3c','#6e4520']},
- {id:'sea',name:'بحري',price:1500,bg:'#cdeefa',line:'#ffffff',safeBg:'#8fd3ef',safe:'#0e4f7a',frame:['#1f8fc4','#0b4a73'],waves:'#7cc6e8',mid:'🏝️'},
+ {id:'sea',name:'بحري',price:1500,bg:'#cdeefa',line:'#ffffff',safeBg:'#8fd3ef',safe:'#0e4f7a',frame:['#1f8fc4','#0b4a73'],waves:'#7cc6e8',mid:'🌊'},
  {id:'night',name:'ليلي',price:25,gem:true,bg:'#0f1638',line:'#c9a24a',safeBg:'#25306a',safe:'#f5d36b',frame:['#c9a24a','#0a0f28'],sky:1,mid:'🌙'},
  {id:'kashta',name:'الكشتة',price:2000,season:'winter',bg:'#f3e6cf',line:'#1a1210',safeBg:'#1a1210',safe:'#e8a33a',frame:['#9b1f1f','#1a1210'],sadu:1,embers:1,mid:'🔥'},
  {id:'ramadan',name:'ليالي رمضان',price:2000,season:'ramadan',bg:'#121a3a',line:'#d4ad52',safeBg:'#2a2f6a',safe:'#ffd76a',frame:['#d4ad52','#0b1030'],sky:1,rmd:1,mid:'🌙'},
@@ -2672,11 +2672,7 @@ function drawBoard(svg,th){
   COL.forEach(c=>{const [x,y]=TRACK[c.start];el('polygon',{points:starPts(x+.5,y+.5,.3),fill:'#ffffffcc'},svg)});
   const tri=[[[6,6],[6,9]],[[6,6],[9,6]],[[9,6],[9,9]],[[6,9],[9,9]]];
   tri.forEach((t,i)=>el('polygon',{points:`${t[0]} ${t[1]} 7.5,7.5`,fill:COL[i].hex,opacity:th.waves?.6:1,stroke:th.line,'stroke-width':.04},svg));
-  if(th.waves){// جزيرة رمل صغيرة في النص
-    el('ellipse',{cx:7.5,cy:7.55,rx:1.02,ry:.98,fill:'#ffffff',opacity:.7},svg);
-    el('ellipse',{cx:7.5,cy:7.5,rx:.9,ry:.86,fill:'#efd49b',stroke:'#d9b46c','stroke-width':.05},svg);
-    el('ellipse',{cx:7.38,cy:7.38,rx:.55,ry:.42,fill:'#f7e4b8',opacity:.8},svg)}
-  else el('circle',{cx:7.5,cy:7.5,r:.55,fill:th.bg,stroke:th.line,'stroke-width':.05},svg);
+  el('circle',{cx:7.5,cy:7.5,r:.55,fill:th.bg,stroke:th.line,'stroke-width':.05},svg);
   if(th.mid){const r=svg.closest&&svg.closest('#board')?(window.ROT||0):0;const t=el('text',{class:'midTxt',x:7.5,y:7.53,'text-anchor':'middle','dominant-baseline':'central','font-size':.62,transform:`rotate(${-r*90} 7.5 7.5)`},svg);t.textContent=th.mid}
   else{el('circle',{cx:7.5,cy:7.5,r:.3,fill:'#c98a4a'},svg);el('circle',{cx:7.62,cy:7.42,r:.25,fill:th.bg},svg)}
   if(th.embers){// نار الكشتة في النص: وهج يتنفس وشرار يطلع
