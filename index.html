@@ -2656,7 +2656,6 @@ function drawBoard(svg,th){
     if(th.waves){// البحري: البيت نفس ماء المسار وموجه، ولونه في إطار وحواف خفيفة
       el('rect',{x:bx,y:by,width:6,height:6,fill:c.hex,opacity:.14},svg);
       el('rect',{x:bx+.09,y:by+.09,width:5.82,height:5.82,rx:.3,fill:'none',stroke:c.hex,'stroke-width':.18},svg);
-      el('rect',{x:bx+.7,y:by+.7,width:4.6,height:4.6,rx:.9,fill:c.hex,opacity:.16,stroke:c.hex,'stroke-width':.08,'stroke-opacity':.9},svg);
       SPOTS.forEach(([sx,sy])=>{el('circle',{cx:bx+sx,cy:by+sy,r:.56,fill:'#ffffff',opacity:.55},svg);el('circle',{cx:bx+sx,cy:by+sy,r:.56,fill:'none',stroke:c.hex,'stroke-width':.09},svg)});
       c.home.forEach(([x,y])=>el('rect',{x,y,width:1,height:1,fill:c.hex},svg));
       const [sx,sy]=TRACK[c.start];el('rect',{x:sx,y:sy,width:1,height:1,fill:c.hex},svg);
