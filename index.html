@@ -2641,14 +2641,12 @@ function drawBoard(svg,th){
     el('polygon',{points:'.5,.44 .56,.5 .5,.56 .44,.5',fill:'#e8a33a'},pt);
     [[.1,.5],[.9,.5]].forEach(([x,y])=>el('polygon',{points:`${x},${y-.07} ${x+.06},${y} ${x},${y+.07} ${x-.06},${y}`,fill:'#e8a33a'},pt));
     el('rect',{x:0,y:0,width:15,height:15,fill:'url(#'+pid+')'},svg)}
-  if(th.waves){// نفس خطوط الموج، تمشي بهدوء من اليمين لليسار على الشاشة (مثل الشاطئ) مهما كان دوران اللوحة
+  if(th.waves){// نفس خطوط الموج بنفس رسمتها، بس تتحرك بهدوء مثل موج الشاطئ
     let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);const pid='wv'+(++UID);
     const pt=el('pattern',{id:pid,width:1,height:.5,patternUnits:'userSpaceOnUse'},defs);
     el('path',{d:'M0,.3 Q.25,.12 .5,.3 T1,.3',fill:'none',stroke:th.waves,'stroke-width':.05,'stroke-linecap':'round'},pt);
     if(!RM)anim(pt,{tag:'animateTransform',attributeName:'patternTransform',type:'translate',values:'0 0;-.5 .03;-1 0',dur:'4.5s'});
-    const r=svg.closest&&svg.closest('#board')?(window.ROT||0):0;
-    const g=el('g',{class:'seaRot',transform:`rotate(${-r*90} 7.5 7.5)`},svg);
-    el('rect',{x:0,y:0,width:15,height:15,fill:'url(#'+pid+')'},g)}
+    el('rect',{x:0,y:0,width:15,height:15,fill:'url(#'+pid+')'},svg)}
   COL.forEach(c=>{
     const [bx,by]=c.base;
     el('rect',{x:bx,y:by,width:6,height:6,fill:th.homeFill||c.hex},svg);
@@ -2789,7 +2787,7 @@ function startMode2(m){
 // تدوير اللوحة: لون صاحب الجوال يكون دايم تحت يسار
 window.ROT=0;
 function viewCi(players){const m=meCi();if(m>=0)return m;const h=players.find(p=>p.kind==='local');return h?h.ci:players[0].ci}
-function setRot(players){window.ROT=(3-viewCi(players)+4)%4;$('board').style.transform=`rotate(${window.ROT*90}deg)`;$('board').querySelectorAll('.seaRot').forEach(g=>g.setAttribute('transform',`rotate(${-window.ROT*90} 7.5 7.5)`))}
+function setRot(players){window.ROT=(3-viewCi(players)+4)%4;$('board').style.transform=`rotate(${window.ROT*90}deg)`}
 function buildPieces(players){
   setRot(players);
   drawBoard(board,TH());
