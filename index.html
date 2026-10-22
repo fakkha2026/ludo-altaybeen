@@ -1251,7 +1251,7 @@ const THEMES=[
  {id:'night',name:'ليلي',price:25,gem:true,bg:'#0f1638',line:'#c9a24a',safeBg:'#25306a',safe:'#f5d36b',frame:['#c9a24a','#0a0f28'],sky:1,deco:['🌙','🦉','⭐','🐪'],mid:'🌙'},
  {id:'kashta',name:'الكشتة',price:2000,season:'winter',bg:'#f3e6cf',line:'#1a1210',safeBg:'#1a1210',safe:'#e8a33a',frame:['#9b1f1f','#1a1210'],sadu:1,embers:1,deco:['⛺','☕','🪵','🐪'],mid:'🔥'},
  {id:'ramadan',name:'ليالي رمضان',price:2000,season:'ramadan',bg:'#121a3a',line:'#d4ad52',safeBg:'#2a2f6a',safe:'#ffd76a',frame:['#d4ad52','#0b1030'],sky:1,rmd:1,mid:'🌙'},
- {id:'national',name:'اليوم الوطني',price:2000,season:'national',bg:'#eef6ef',line:'#1c6b3a',safeBg:'#cfe6d6',safe:'#1c6b3a',frame:['#1c6b3a','#0e3f22'],deco:['🌴','💚','🌴','💚'],mid:'💚'}
+ {id:'national',name:'اليوم الوطني',price:2000,season:'national',bg:'#ffffff',line:'#0f6b3a',safeBg:'#0f6b3a',safe:'#ffffff',frame:['#d4ad52','#0b4f2a'],natl:1,mid:'💚'}
 ];
 // ---------- مواسم الديرة ----------
 const SEASONS=[
@@ -2605,6 +2605,13 @@ function drawBoard(svg,th){
     el('circle',{cx:.5,cy:.5,r:.07,fill:'#d4ad52',opacity:.5},pt);
     [[0,0],[1,0],[0,1],[1,1]].forEach(([x,y])=>el('circle',{cx:x,cy:y,r:.06,fill:'#d4ad52',opacity:.35},pt));
     el('rect',{x:0,y:0,width:15,height:15,fill:'url(#'+pid+')'},svg)}
+  if(th.natl){// نقش نجدي: أضراس خضراء مثل شرفات البيوت الطينية، ونقطة ذهبية
+    const pid='nj'+(++UID);let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);
+    const pt=el('pattern',{id:pid,width:1,height:1,patternUnits:'userSpaceOnUse'},defs);
+    let d='';for(let i=0;i<4;i++){const a=i*.25;d+=`M${a+.02},0 L${a+.23},0 L${a+.23},.09 L${a+.18},.09 L${a+.125},.19 L${a+.07},.09 L${a+.02},.09 Z `}
+    el('path',{d,fill:'#0f6b3a',opacity:.5},pt);
+    el('polygon',{points:'.5,.42 .58,.5 .5,.58 .42,.5',fill:'#d4ad52',opacity:.55},pt);
+    el('rect',{x:0,y:0,width:15,height:15,fill:'url(#'+pid+')'},svg)}
   if(th.sky){// سماء ليل: نجوم صغيرة ثابتة، ونجوم تلمع، وشهاب يمر كل شوي
     const sg=el('g',{},svg),rnd=(a,b)=>a+Math.random()*(b-a);
     TRACK.forEach(([x,y])=>{for(let j=0;j<2;j++)el('circle',{cx:(x+rnd(.15,.85)).toFixed(2),cy:(y+rnd(.15,.85)).toFixed(2),r:rnd(.015,.035).toFixed(3),fill:'#fff',opacity:rnd(.35,.8).toFixed(2)},sg)});
@@ -2670,6 +2677,24 @@ function drawBoard(svg,th){
       const lg=el('g',{transform:'translate(0,1.45) scale(1.5)'},sw);const [top,side]=grad(lg,gold);standToken(lg,'lantern',gold,top,side);
       if(!RM){anim(sw,{tag:'animateTransform',attributeName:'transform',type:'rotate',values:'-7;7;-7',dur:(3+i*.4).toFixed(1)+'s',calcMode:'spline',keyTimes:'0;.5;1',keySplines:'.45 0 .55 1;.45 0 .55 1'});
         anim(gl,{attributeName:'opacity',values:'.5;.95;.6;.9;.5',dur:'1.3s'})}})}
+  if(th.natl){// نخلة تتمايل في كل بيت، وألعاب نارية خضراء وبيضاء وذهبية، وقلب أخضر ينبض
+    const gid='ng'+(++UID);let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);const rg=el('radialGradient',{id:gid},defs);[[0,'#7dffb0',.8],[.55,'#1fb35a',.3],[1,'#1fb35a',0]].forEach(([o,col,op])=>el('stop',{offset:o,'stop-color':col,'stop-opacity':op},rg));
+    const hg=el('circle',{cx:7.5,cy:7.5,r:1.3,fill:'url(#'+gid+')'},svg);if(!RM){anim(hg,{attributeName:'r',values:'1.1;1.5;1.1',dur:'1.2s'});anim(hg,{attributeName:'opacity',values:'.6;1;.6',dur:'1.2s'})}
+    COL.forEach((c,i)=>{const [bx,by]=c.base,cx=bx+3,cy=by+3;
+      // نخلة
+      const pb=el('g',{transform:`translate(${cx},${cy+.95})`},svg);const sw=el('g',{},pb);
+      el('path',{d:'M-.11,0 Q-.04,-.8 .01,-1.5 L.12,-1.5 Q.09,-.8 .13,0 Z',fill:'#a0682f',stroke:'#fff','stroke-width':.05},sw);
+      [-.6,-.95,-1.25].forEach(y=>el('path',{d:`M-.06,${y} L.1,${y-.05}`,stroke:'#5e3b18','stroke-width':.03},sw));
+      const fr=el('g',{transform:'translate(.06,-1.52)'},sw);
+      [[-1,.15],[-.6,-.35],[0,-.55],[.6,-.35],[1,.15],[-.85,.5],[.85,.5]].forEach(([x,y])=>{el('path',{d:`M0,0 Q${(x*.5).toFixed(2)},${(y-.35).toFixed(2)} ${x},${y}`,fill:'none',stroke:'#fff','stroke-width':.26,'stroke-linecap':'round'},fr);el('path',{d:`M0,0 Q${(x*.5).toFixed(2)},${(y-.35).toFixed(2)} ${x},${y}`,fill:'none',stroke:'#0b5a2c','stroke-width':.17,'stroke-linecap':'round'},fr)});
+      [[-.1,.12],[.12,.14],[0,.22]].forEach(([x,y])=>el('circle',{cx:x,cy:y,r:.07,fill:'#d4a017'},fr));
+      if(!RM)anim(sw,{tag:'animateTransform',attributeName:'transform',type:'rotate',values:'-4;4;-4',dur:(3.2+i*.5).toFixed(1)+'s',calcMode:'spline',keyTimes:'0;.5;1',keySplines:'.45 0 .55 1;.45 0 .55 1'});
+      // ألعاب نارية فوق البيت
+      if(!RM)[0,1].forEach(k=>{const fx=bx+1.3+k*3.4,fy=by+1.2,col=['#1fb35a','#ffffff','#f5c542'][(i+k)%3],dur=(2.6+k*.7+i*.3).toFixed(1),beg=(i*.6+k*1.1).toFixed(1);
+        const fw=el('g',{transform:`translate(${fx},${fy})`,opacity:0},svg);const sc=el('g',{},fw);
+        for(let r=0;r<10;r++){const a=r*Math.PI/5;el('line',{x1:(Math.cos(a)*.25).toFixed(3),y1:(Math.sin(a)*.25).toFixed(3),x2:(Math.cos(a)*.78).toFixed(3),y2:(Math.sin(a)*.78).toFixed(3),stroke:col,'stroke-width':.08,'stroke-linecap':'round'},sc);el('circle',{cx:(Math.cos(a)*.88).toFixed(3),cy:(Math.sin(a)*.88).toFixed(3),r:.065,fill:col},sc)}
+        anim(sc,{tag:'animateTransform',attributeName:'transform',type:'scale',values:'.1;1;1.15',keyTimes:'0;.35;1',dur:dur+'s',begin:beg+'s'});
+        anim(fw,{attributeName:'opacity',values:'0;1;0;0',keyTimes:'0;.1;.55;1',dur:dur+'s',begin:beg+'s'})})})}
   if(th.deco)COL.forEach((c,i)=>{const [bx,by]=c.base;const t=el('text',{x:bx+3,y:by+3.05,'text-anchor':'middle','dominant-baseline':'central','font-size':.85,opacity:.9},svg);t.textContent=th.deco[i];
     // تتمشى داخل البيت بشكل عشوائي وبهدوء
     if(!RM){const R=()=>((Math.random()*2-1)*1.75).toFixed(2),n=6,v=['0 0'];for(let j=1;j<n;j++)v.push(R()+' '+R());v.push('0 0');
