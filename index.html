@@ -1315,7 +1315,7 @@ const SRVK=['coins','gems','xp','ownD','ownT','ownH','days','lastDay','spin','gi
 let WHOLD=0,WPEND=null,WSRV=null,API_VF=false,AV_BUSY=false;
 async function api(name,body){
   const c=await window.__FB,u=c.auth.currentUser;if(!u)throw {code:'auth'};
-  let r,j;try{const vf=!!(u.emailVerified&&!isFake(u.email)),tok=await u.getIdToken(vf&&!API_VF);API_VF=vf;r=await fetch(SRV_URL+'/api/'+name,{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+tok},body:JSON.stringify(body||{})})}catch(e){throw {code:'net'}}
+  let r,j;try{const vf=!!(u.emailVerified&&!isFake(u.email)),tok=await u.getIdToken(vf&&!API_VF);API_VF=vf;const ac=new AbortController(),to=setTimeout(()=>ac.abort(),15000);try{r=await fetch(SRV_URL+'/api/'+name,{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+tok},body:JSON.stringify(body||{}),signal:ac.signal})}finally{clearTimeout(to)}}catch(e){throw {code:'net'}}
   try{j=await r.json()}catch(e){j={ok:false,err:'server'}}
   if(j.w)applyWallet(j.w);
   if(!j.ok)throw {code:j.err||'server'};
@@ -2771,7 +2771,7 @@ let PLAY_SID='',PLAY_PRIZE=0,PLAY_SEED='',stBusy=false;
 function startMode(m){
   const fee=feeOf(m);PLAY_FEE=fee||0;PLAY_MULT=(m==='two'||m==='four')?STAKES[stk()].mult:1;PLAY_SID='';PLAY_PRIZE=0;PLAY_SEED='';
   if(fee&&W.coins<fee){toast('تحتاج '+fmt(fee)+' عملة، استلم هدية اليوم أو دوّر عجلة الحظ');return}
-  if(SV()&&(m==='two'||m==='four')){if(stBusy)return;stBusy=true;
+  if(SV()&&(m==='two'||m==='four')){if(stBusy){toast('لحظة، نجهّز اللعبة…');return}stBusy=true;
     const rl=W.rule==='teams'&&m!=='four'?'classic':(W.rule||'classic');
     api('gstart',{mode:m,stake:stk(),diff:W.diff,rule:rl}).then(j=>{PLAY_SID=j.gid;PLAY_SEED=j.seed||'';PLAY_FEE=j.fee;PLAY_PRIZE=j.prize;startMode2(m)}).catch(e=>toast(e.code==='poor'?'تحتاج '+fmt(fee)+' عملة، استلم هدية اليوم أو دوّر عجلة الحظ':apiErr(e))).finally(()=>{stBusy=false});return}
   if(fee){W.coins-=fee;save();renderWallet()}
