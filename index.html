@@ -2645,8 +2645,9 @@ function drawBoard(svg,th){
     let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);const pid='wv'+(++UID);
     const pt=el('pattern',{id:pid,width:1,height:.5,patternUnits:'userSpaceOnUse'},defs);
     el('path',{d:'M0,.3 Q.25,.12 .5,.3 T1,.3',fill:'none',stroke:th.waves,'stroke-width':.05,'stroke-linecap':'round'},pt);
-    if(!RM)anim(pt,{tag:'animateTransform',attributeName:'patternTransform',type:'translate',values:'0 0;-.5 .03;-1 0',dur:'4.5s'});
-    el('rect',{x:0,y:0,width:15,height:15,fill:'url(#'+pid+')'},svg)}
+    // الحركة على مجموعة (تشتغل في آيفون)، والمستطيل أعرض بخانة عشان الحركة تكون متصلة بدون قفزة
+    const wg=el('g',{},svg);el('rect',{x:0,y:-.25,width:16,height:15.5,fill:'url(#'+pid+')'},wg);
+    if(!RM)anim(wg,{tag:'animateTransform',attributeName:'transform',type:'translate',values:'0 0;-.5 .04;-1 0',dur:'4s'})}
   COL.forEach(c=>{
     const [bx,by]=c.base;
     el('rect',{x:bx,y:by,width:6,height:6,fill:th.homeFill||c.hex},svg);
