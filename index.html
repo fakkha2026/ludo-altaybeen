@@ -166,7 +166,7 @@ button:focus-visible{outline:3px solid var(--sand);outline-offset:2px}
 .gem::after{content:"";position:absolute;width:55%;height:55%;top:-14%;right:-16%;background:radial-gradient(circle,#fff 0 12%,transparent 13%),linear-gradient(#fff,#fff) center/12% 100% no-repeat,linear-gradient(#fff,#fff) center/100% 12% no-repeat;clip-path:polygon(50% 0,56% 44%,100% 50%,56% 56%,50% 100%,44% 56%,0 50%,44% 44%);animation:twinkle 2.6s ease-in-out infinite}
 @keyframes twinkle{0%,55%,100%{transform:scale(0) rotate(0);opacity:0}70%{transform:scale(1) rotate(45deg);opacity:1}85%{transform:scale(.3) rotate(90deg);opacity:.4}}
 @keyframes gemGlow{0%,100%{filter:drop-shadow(0 1px 2px #0009) drop-shadow(0 0 4px #5ee8ff66)}50%{filter:drop-shadow(0 1px 2px #0009) drop-shadow(0 0 9px #8ff3ffcc)}}
-@keyframes seaFlow{0%{transform:translate(0px,0px)}50%{transform:translate(-.5px,.05px)}100%{transform:translate(-1px,0px)}}.seaFlow{animation:seaFlow 3s linear infinite;will-change:transform}
+@keyframes sf0{to{transform:translate(-1px,0px)}}@keyframes sf1{to{transform:translate(0px,.5px)}}@keyframes sf2{to{transform:translate(1px,0px)}}@keyframes sf3{to{transform:translate(0px,-.5px)}}.seaFlow{will-change:transform;animation:sf0 3s linear infinite}.sf1{animation-name:sf1;animation-duration:1.5s}.sf2{animation-name:sf2}.sf3{animation-name:sf3;animation-duration:1.5s}
 @media (prefers-reduced-motion:reduce){.coin::after,.gem,.gem::after{animation:none!important}}
 
 /* ---------- home ---------- */
@@ -2647,8 +2647,9 @@ function drawBoard(svg,th){
     const pt=el('pattern',{id:pid,width:1,height:.5,patternUnits:'userSpaceOnUse'},defs);
     el('path',{d:'M0,.3 Q.25,.12 .5,.3 T1,.3',fill:'none',stroke:th.waves,'stroke-width':.05,'stroke-linecap':'round'},pt);
     // الحركة على مجموعة (تشتغل في آيفون)، والمستطيل أعرض بخانة عشان الحركة تكون متصلة بدون قفزة
-    const cp=el('clipPath',{id:pid+'c'},defs);el('rect',{x:0,y:0,width:15,height:15},cp);const wg=el('g',{},el('g',{'clip-path':'url(#'+pid+'c)'},svg));el('rect',{x:0,y:-.25,width:16,height:15.5,fill:'url(#'+pid+')'},wg);
-    if(!RM)wg.setAttribute('class','seaFlow')}
+    const cp=el('clipPath',{id:pid+'c'},defs);el('rect',{x:0,y:0,width:15,height:15},cp);const wg=el('g',{},el('g',{'clip-path':'url(#'+pid+'c)'},svg));el('rect',{x:-1,y:-1,width:17,height:17,fill:'url(#'+pid+')'},wg);
+    // الموج يمشي دايم من يمين الشاشة لليسار (كأنك على طرف الشاطئ)، والرسمة نفسها ما تتغير
+    if(!RM){const r=svg.closest&&svg.closest('#board')?(window.ROT||0):0;wg.setAttribute('class','seaFlow sf'+r)}}
   COL.forEach(c=>{
     const [bx,by]=c.base;
     el('rect',{x:bx,y:by,width:6,height:6,fill:th.homeFill||c.hex},svg);
@@ -2789,7 +2790,7 @@ function startMode2(m){
 // تدوير اللوحة: لون صاحب الجوال يكون دايم تحت يسار
 window.ROT=0;
 function viewCi(players){const m=meCi();if(m>=0)return m;const h=players.find(p=>p.kind==='local');return h?h.ci:players[0].ci}
-function setRot(players){window.ROT=(3-viewCi(players)+4)%4;$('board').style.transform=`rotate(${window.ROT*90}deg)`;$('board').querySelectorAll('.midTxt').forEach(t=>t.setAttribute('transform',`rotate(${-window.ROT*90} 7.5 7.5)`))}
+function setRot(players){window.ROT=(3-viewCi(players)+4)%4;$('board').style.transform=`rotate(${window.ROT*90}deg)`;$('board').querySelectorAll('.midTxt').forEach(t=>t.setAttribute('transform',`rotate(${-window.ROT*90} 7.5 7.5)`));$('board').querySelectorAll('.seaFlow').forEach(g=>g.setAttribute('class','seaFlow sf'+window.ROT))}
 function buildPieces(players){
   setRot(players);
   drawBoard(board,TH());
