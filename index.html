@@ -2665,7 +2665,7 @@ function drawBoard(svg,th){
   const tri=[[[6,6],[6,9]],[[6,6],[9,6]],[[9,6],[9,9]],[[6,9],[9,9]]];
   tri.forEach((t,i)=>el('polygon',{points:`${t[0]} ${t[1]} 7.5,7.5`,fill:COL[i].hex,stroke:th.line,'stroke-width':.04},svg));
   el('circle',{cx:7.5,cy:7.5,r:.55,fill:th.bg,stroke:th.line,'stroke-width':.05},svg);
-  if(th.mid){const t=el('text',{x:7.5,y:7.53,'text-anchor':'middle','dominant-baseline':'central','font-size':.62},svg);t.textContent=th.mid}
+  if(th.mid){const r=svg.closest&&svg.closest('#board')?(window.ROT||0):0;const t=el('text',{class:'midTxt',x:7.5,y:7.53,'text-anchor':'middle','dominant-baseline':'central','font-size':.62,transform:`rotate(${-r*90} 7.5 7.5)`},svg);t.textContent=th.mid}
   else{el('circle',{cx:7.5,cy:7.5,r:.3,fill:'#c98a4a'},svg);el('circle',{cx:7.62,cy:7.42,r:.25,fill:th.bg},svg)}
   if(th.embers){// نار الكشتة في النص: وهج يتنفس وشرار يطلع
     const gid='eg'+(++UID);let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);const rg=el('radialGradient',{id:gid},defs);[[0,'#ffb347',.75],[.55,'#ff6a2b',.25],[1,'#ff6a2b',0]].forEach(([o,col,op])=>el('stop',{offset:o,'stop-color':col,'stop-opacity':op},rg));
@@ -2789,7 +2789,7 @@ function startMode2(m){
 // تدوير اللوحة: لون صاحب الجوال يكون دايم تحت يسار
 window.ROT=0;
 function viewCi(players){const m=meCi();if(m>=0)return m;const h=players.find(p=>p.kind==='local');return h?h.ci:players[0].ci}
-function setRot(players){window.ROT=(3-viewCi(players)+4)%4;$('board').style.transform=`rotate(${window.ROT*90}deg)`}
+function setRot(players){window.ROT=(3-viewCi(players)+4)%4;$('board').style.transform=`rotate(${window.ROT*90}deg)`;$('board').querySelectorAll('.midTxt').forEach(t=>t.setAttribute('transform',`rotate(${-window.ROT*90} 7.5 7.5)`))}
 function buildPieces(players){
   setRot(players);
   drawBoard(board,TH());
