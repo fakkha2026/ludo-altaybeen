@@ -2646,7 +2646,7 @@ function drawBoard(svg,th){
     const pt=el('pattern',{id:pid,width:1,height:.5,patternUnits:'userSpaceOnUse'},defs);
     el('path',{d:'M0,.3 Q.25,.12 .5,.3 T1,.3',fill:'none',stroke:th.waves,'stroke-width':.05,'stroke-linecap':'round'},pt);
     // الحركة على مجموعة (تشتغل في آيفون)، والمستطيل أعرض بخانة عشان الحركة تكون متصلة بدون قفزة
-    const wg=el('g',{},svg);el('rect',{x:0,y:-.25,width:16,height:15.5,fill:'url(#'+pid+')'},wg);
+    const cp=el('clipPath',{id:pid+'c'},defs);el('rect',{x:0,y:0,width:15,height:15},cp);const wg=el('g',{},el('g',{'clip-path':'url(#'+pid+'c)'},svg));el('rect',{x:0,y:-.25,width:16,height:15.5,fill:'url(#'+pid+')'},wg);
     if(!RM)anim(wg,{tag:'animateTransform',attributeName:'transform',type:'translate',values:'0 0;-.5 .04;-1 0',dur:'4s'})}
   COL.forEach(c=>{
     const [bx,by]=c.base;
