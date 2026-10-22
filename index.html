@@ -1230,7 +1230,7 @@ const DICE=[
 ];
 const VAULT=DICE.filter(d=>d.vault&&!d.draft);
 // السعر بالريال → قيمة داخلية (نفس جدول sarOf)
-const TIERS=[['٣٫٩٩',600],['٧٫٩٩',1500],['٩٫٩٩',3000],['١٤٫٩٩',5000],['١٩٫٩٩',6000]];
+const TIERS=[['٤٫٩٩',600],['٧٫٩٩',1500],['٩٫٩٩',3000],['١٤٫٩٩',5000],['١٩٫٩٩',6000]];
 let DROPS={},EVENTS=[];
 const TOKS=[
  {id:'tayb',name:'حجر الطيبين',price:0,stand:1},
@@ -2469,7 +2469,7 @@ setTimeout(iapBoot,0);
 // ---------- المتجر والخزانة ----------
 const KINDS={d:{list:DICE,own:'ownD',sel:'dice'},t:{list:TOKS,own:'ownT',sel:'tok'},h:{list:THEMES,own:'ownH',sel:'theme'}};
 function prTxt(pid,sar){const p=pid&&IAP.price[pid];return p||sar+' ر.س'}
-function sarOf(it){if(!it.price)return '';const v=it.gem?it.price*100:it.price;return v<=600?'٣٫٩٩':v<=1500?'٧٫٩٩':v<=3000?'٩٫٩٩':v<=5000?'١٤٫٩٩':'١٩٫٩٩'}
+function sarOf(it){if(!it.price)return '';const v=it.gem?it.price*100:it.price;return v<=600?'٤٫٩٩':v<=1500?'٧٫٩٩':v<=3000?'٩٫٩٩':v<=5000?'١٤٫٩٩':'١٩٫٩٩'}
 function priceHtml(it,own,kind){if(own)return '<span class="pr own">عندك ✓</span>';if(!it.price)return '<span class="pr own">مجاني</span>';return `<span class="pr">${prTxt(itemPid(kind,it.id),sarOf(it))}</span>`}
 function buy(it,kind,sure){
   const K=KINDS[kind],own=W[K.own];
@@ -2507,7 +2507,7 @@ function openItem(it,kind){itemCur=[it,kind];$('itTitle').textContent=it.name;
 function tryItem(){const [it]=itemCur,card=$('itemBox').querySelector('.card').getBoundingClientRect(),from=elPt($('itTry'));
   throwDice(-1,1+Math.floor(Math.random()*6),'#c0392b',{skin:it,from,area:{left:card.left,top:card.top+card.height*.05,width:card.width,height:card.height*.45},back:$('itTry'),hold:700});SFX.roll()}
 const GPACKS=[
- {g:110,sar:'٣٫٩٩',pile:1},
+ {g:110,sar:'٤٫٩٩',pile:1},
  {g:500,sar:'٩٫٩٩',pile:2,bonus:'+٤٠ هدية',x:40},
  {g:980,sar:'١٩٫٩٩',pile:3,bonus:'+٢٠ هدية',x:20,tag:'الأكثر طلب'},
  {g:4500,sar:'٤٩٫٩٩',pile:5,bonus:'+٨٠ هدية',x:80,tag:'أفضل قيمة',best:1}
