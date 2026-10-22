@@ -166,7 +166,7 @@ button:focus-visible{outline:3px solid var(--sand);outline-offset:2px}
 .gem::after{content:"";position:absolute;width:55%;height:55%;top:-14%;right:-16%;background:radial-gradient(circle,#fff 0 12%,transparent 13%),linear-gradient(#fff,#fff) center/12% 100% no-repeat,linear-gradient(#fff,#fff) center/100% 12% no-repeat;clip-path:polygon(50% 0,56% 44%,100% 50%,56% 56%,50% 100%,44% 56%,0 50%,44% 44%);animation:twinkle 2.6s ease-in-out infinite}
 @keyframes twinkle{0%,55%,100%{transform:scale(0) rotate(0);opacity:0}70%{transform:scale(1) rotate(45deg);opacity:1}85%{transform:scale(.3) rotate(90deg);opacity:.4}}
 @keyframes gemGlow{0%,100%{filter:drop-shadow(0 1px 2px #0009) drop-shadow(0 0 4px #5ee8ff66)}50%{filter:drop-shadow(0 1px 2px #0009) drop-shadow(0 0 9px #8ff3ffcc)}}
-@keyframes sf0{to{transform:translate(-1px,0px)}}@keyframes sf1{to{transform:translate(0px,.5px)}}@keyframes sf2{to{transform:translate(1px,0px)}}@keyframes sf3{to{transform:translate(0px,-.5px)}}.seaFlow{will-change:transform;animation:sf0 3s linear infinite}.sf1{animation-name:sf1;animation-duration:1.5s}.sf2{animation-name:sf2}.sf3{animation-name:sf3;animation-duration:1.5s}
+@keyframes sf0{50%{transform:translate(-.35px,0px)}}@keyframes sf1{50%{transform:translate(0px,.35px)}}@keyframes sf2{50%{transform:translate(.35px,0px)}}@keyframes sf3{50%{transform:translate(0px,-.35px)}}.seaFlow{will-change:transform;animation:sf0 5.5s cubic-bezier(.45,0,.55,1) infinite}.sf1{animation-name:sf1}.sf2{animation-name:sf2}.sf3{animation-name:sf3}
 @media (prefers-reduced-motion:reduce){.coin::after,.gem,.gem::after{animation:none!important}}
 
 /* ---------- home ---------- */
@@ -2648,7 +2648,7 @@ function drawBoard(svg,th){
     el('path',{d:'M0,.3 Q.25,.12 .5,.3 T1,.3',fill:'none',stroke:th.waves,'stroke-width':.05,'stroke-linecap':'round'},pt);
     // الحركة على مجموعة (تشتغل في آيفون)، والمستطيل أعرض بخانة عشان الحركة تكون متصلة بدون قفزة
     const cp=el('clipPath',{id:pid+'c'},defs);el('rect',{x:0,y:0,width:15,height:15},cp);const wg=el('g',{},el('g',{'clip-path':'url(#'+pid+'c)'},svg));el('rect',{x:-1,y:-1,width:17,height:17,fill:'url(#'+pid+')'},wg);
-    // الموج يمشي دايم من يمين الشاشة لليسار (كأنك على طرف الشاطئ)، والرسمة نفسها ما تتغير
+    // الموج يتقدم ويرجع بهدوء (يمين ويسار الشاشة) كأنك على طرف الشاطئ، والرسمة نفسها ما تتغير
     if(!RM){const r=svg.closest&&svg.closest('#board')?(window.ROT||0):0;wg.setAttribute('class','seaFlow sf'+r)}}
   COL.forEach(c=>{
     const [bx,by]=c.base;
