@@ -1250,7 +1250,7 @@ const THEMES=[
  {id:'sea',name:'بحري',price:1500,bg:'#cdeefa',line:'#1f6f9a',safeBg:'#8fd3ef',safe:'#0e4f7a',frame:['#1f8fc4','#0b4a73'],waves:'#7cc6e8',deco:['🐚','🐠','⚓','⛵'],mid:'🌊'},
  {id:'night',name:'ليلي',price:25,gem:true,bg:'#0f1638',line:'#c9a24a',safeBg:'#25306a',safe:'#f5d36b',frame:['#c9a24a','#0a0f28'],sky:1,deco:['🌙','🦉','⭐','🐪'],mid:'🌙'},
  {id:'kashta',name:'الكشتة',price:2000,season:'winter',bg:'#f3e6cf',line:'#1a1210',safeBg:'#1a1210',safe:'#e8a33a',frame:['#9b1f1f','#1a1210'],sadu:1,embers:1,deco:['⛺','☕','🪵','🐪'],mid:'🔥'},
- {id:'ramadan',name:'ليالي رمضان',price:2000,season:'ramadan',bg:'#1c2647',line:'#c9a24a',safeBg:'#2b3866',safe:'#f5d36b',frame:['#c9a24a','#6e521a'],deco:['🌙','✨','🕌','⭐'],mid:'🌙'},
+ {id:'ramadan',name:'ليالي رمضان',price:2000,season:'ramadan',bg:'#121a3a',line:'#d4ad52',safeBg:'#2a2f6a',safe:'#ffd76a',frame:['#d4ad52','#0b1030'],sky:1,rmd:1,mid:'🌙'},
  {id:'national',name:'اليوم الوطني',price:2000,season:'national',bg:'#eef6ef',line:'#1c6b3a',safeBg:'#cfe6d6',safe:'#1c6b3a',frame:['#1c6b3a','#0e3f22'],deco:['🌴','💚','🌴','💚'],mid:'💚'}
 ];
 // ---------- مواسم الديرة ----------
@@ -2597,6 +2597,14 @@ const TH=()=>THEMES.find(t=>t.id===W.theme)||THEMES[0];
 function drawBoard(svg,th){
   svg.innerHTML='';svg._g={};svg._cg={};svg.setAttribute('viewBox','0 0 15 15');
   el('rect',{x:0,y:0,width:15,height:15,fill:th.bg},svg);
+  if(th.rmd){// زخرفة إسلامية: نجمة ثمانية ذهبية في كل مربع
+    const pid='rz'+(++UID);let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);
+    const pt=el('pattern',{id:pid,width:1,height:1,patternUnits:'userSpaceOnUse'},defs);
+    el('rect',{x:.22,y:.22,width:.56,height:.56,fill:'none',stroke:'#d4ad52','stroke-width':.025,opacity:.55},pt);
+    el('rect',{x:.22,y:.22,width:.56,height:.56,fill:'none',stroke:'#d4ad52','stroke-width':.025,opacity:.55,transform:'rotate(45 .5 .5)'},pt);
+    el('circle',{cx:.5,cy:.5,r:.07,fill:'#d4ad52',opacity:.5},pt);
+    [[0,0],[1,0],[0,1],[1,1]].forEach(([x,y])=>el('circle',{cx:x,cy:y,r:.06,fill:'#d4ad52',opacity:.35},pt));
+    el('rect',{x:0,y:0,width:15,height:15,fill:'url(#'+pid+')'},svg)}
   if(th.sky){// سماء ليل: نجوم صغيرة ثابتة، ونجوم تلمع، وشهاب يمر كل شوي
     const sg=el('g',{},svg),rnd=(a,b)=>a+Math.random()*(b-a);
     TRACK.forEach(([x,y])=>{for(let j=0;j<2;j++)el('circle',{cx:(x+rnd(.15,.85)).toFixed(2),cy:(y+rnd(.15,.85)).toFixed(2),r:rnd(.015,.035).toFixed(3),fill:'#fff',opacity:rnd(.35,.8).toFixed(2)},sg)});
@@ -2645,6 +2653,23 @@ function drawBoard(svg,th){
       for(let j=0;j<8;j++){const x=(7.5+(Math.random()-.5)*.5).toFixed(2),dx=((Math.random()-.5)*1.2).toFixed(2),d=(1.6+Math.random()*1.2).toFixed(1),b=(-Math.random()*2.5).toFixed(1);
         const sp=el('circle',{cx:x,cy:7.3,r:(.04+Math.random()*.04).toFixed(3),fill:j%2?'#ffd27a':'#ff8a3d',opacity:0},svg);
         anim(sp,{tag:'animateTransform',attributeName:'transform',type:'translate',values:'0 0;'+dx+' -2.6',dur:d+'s',begin:b+'s'});anim(sp,{attributeName:'opacity',values:'0;1;0',dur:d+'s',begin:b+'s'})}}}
+  if(th.rmd){// فوانيس ذهبية معلّقة تتمايل في كل بيت، وحبل زينة يضوي، ووهج حول الهلال
+    const gold={hex:'#f0b81c',lite:'#fff0c2',dark:'#8a5c06'};
+    const gid='rg'+(++UID);let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);const rg=el('radialGradient',{id:gid},defs);[[0,'#fff3b0',.8],[.5,'#ffd76a',.3],[1,'#ffd76a',0]].forEach(([o,col,op])=>el('stop',{offset:o,'stop-color':col,'stop-opacity':op},rg));
+    const mg=el('circle',{cx:7.5,cy:7.5,r:1.3,fill:'url(#'+gid+')'},svg);if(!RM)anim(mg,{attributeName:'opacity',values:'.55;1;.55',dur:'2.4s'});
+    COL.forEach((c,i)=>{const [bx,by]=c.base;
+      // حبل زينة فوق البيت
+      const y0=by+.95;el('path',{d:`M${bx+.9},${y0} Q${bx+3},${y0+.55} ${bx+5.1},${y0}`,fill:'none',stroke:'#d4ad52','stroke-width':.035,opacity:.8},svg);
+      for(let j=0;j<7;j++){const t=j/6,x=bx+.9+4.2*t,y=y0+2*.55*t*(1-t);const bl=el('circle',{cx:x.toFixed(2),cy:(y+.07).toFixed(2),r:.075,fill:['#ffd76a','#7fe0ff','#ff8fb0'][j%3]},svg);
+        if(!RM)anim(bl,{attributeName:'opacity',values:j%2?'1;.25;1':'.25;1;.25',dur:'1.6s'})}
+      // فانوس معلّق في النص يتمايل
+      const pv=el('g',{transform:`translate(${bx+3},${by+1.55})`},svg);
+      const sw=el('g',{},pv);
+      el('line',{x1:0,y1:0,x2:0,y2:.55,stroke:'#d4ad52','stroke-width':.04},sw);
+      const gl=el('circle',{cx:0,cy:1.45,r:.9,fill:'url(#'+gid+')',opacity:.8},sw);
+      const lg=el('g',{transform:'translate(0,1.45) scale(1.5)'},sw);const [top,side]=grad(lg,gold);standToken(lg,'lantern',gold,top,side);
+      if(!RM){anim(sw,{tag:'animateTransform',attributeName:'transform',type:'rotate',values:'-7;7;-7',dur:(3+i*.4).toFixed(1)+'s',calcMode:'spline',keyTimes:'0;.5;1',keySplines:'.45 0 .55 1;.45 0 .55 1'});
+        anim(gl,{attributeName:'opacity',values:'.5;.95;.6;.9;.5',dur:'1.3s'})}})}
   if(th.deco)COL.forEach((c,i)=>{const [bx,by]=c.base;const t=el('text',{x:bx+3,y:by+3.05,'text-anchor':'middle','dominant-baseline':'central','font-size':.85,opacity:.9},svg);t.textContent=th.deco[i];
     // تتمشى داخل البيت بشكل عشوائي وبهدوء
     if(!RM){const R=()=>((Math.random()*2-1)*1.75).toFixed(2),n=6,v=['0 0'];for(let j=1;j<n;j++)v.push(R()+' '+R());v.push('0 0');
