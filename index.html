@@ -122,6 +122,27 @@ button:focus-visible{outline:3px solid var(--sand);outline-offset:2px}
 .land svg{width:100%;height:100%;display:block}
 .screen{min-height:100%;box-sizing:border-box;padding-inline:16px;padding-block:12px 96px;max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 
+/* خلفية الثيم تاخذ الشاشة كاملة وقت اللعب */
+.scene{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.scene svg{width:100%;height:100%;display:block}
+.scene .fb{transform-box:fill-box;transform-origin:center}
+@keyframes scDrift{to{transform:translateX(-400px)}}
+@keyframes scDriftR{from{transform:translateX(-400px)}to{transform:translateX(0)}}
+@keyframes scTide{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes scTw{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes scShim{0%,100%{opacity:.35;transform:scaleX(.8)}50%{opacity:.9;transform:scaleX(1.15)}}
+@keyframes scSway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+@keyframes scShoot{0%{transform:translate(0,0);opacity:0}3%{opacity:1}12%{transform:translate(-260px,130px);opacity:0}100%{transform:translate(-260px,130px);opacity:0}}
+@keyframes scGlow{0%,100%{opacity:.55}50%{opacity:1}}
+.sc-w1{animation:scDrift 14s linear infinite}.sc-w2{animation:scDriftR 19s linear infinite}.sc-w3{animation:scDrift 10s linear infinite}
+.sc-tide{animation:scTide 7s cubic-bezier(.45,0,.55,1) infinite}
+.sc-tw{animation:scTw 3s ease-in-out infinite}
+.sc-shim{animation:scShim 3.5s ease-in-out infinite}
+.sc-sway{transform-origin:50% 0;transform-box:fill-box;animation:scSway 5s cubic-bezier(.45,0,.55,1) infinite}
+.sc-shoot{animation:scShoot 11s linear infinite}
+.sc-glow{animation:scGlow 2.4s ease-in-out infinite}
+@keyframes scHalo{0%,100%{opacity:.12}50%{opacity:.3}}.sc-halo{opacity:.2;animation:scHalo 2.4s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.scene *{animation:none!important}}
 /* ---------- splash ---------- */
 #splash{justify-content:center;align-items:center;padding-bottom:40px;text-align:center}
 .logo{display:flex;flex-direction:column;align-items:center;gap:0}
@@ -673,6 +694,7 @@ svg#board{width:100%;height:100%;display:block}
 </g>
 <rect x="0" y="0" width="400" height="40" fill="url(#haze)"/>
 </svg></div>
+<div class="scene" id="scene" hidden aria-hidden="true"></div>
 
 <!-- شاشة البداية -->
 <section class="screen" id="splash">
@@ -2379,7 +2401,48 @@ const StarFx=(()=>{
   document.addEventListener('visibilitychange',()=>{if(!on||calm)return;if(document.hidden)cancelAnimationFrame(raf);else{last=0;raf=requestAnimationFrame(frame)}});
   return{start,stop};
 })();
+// ---------- خلفيات الثيمات (الشاشة كاملة وقت اللعب) ----------
+const SCENES=(()=>{const R=Math.random,f=n=>n.toFixed(1);
+  const stars=(n,y1,y2,tw)=>{let o='';for(let i=0;i<n;i++){const x=f(R()*400),y=f(y1+R()*(y2-y1)),r=f(.6+R()*1.3),t=tw&&R()<.45;o+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" opacity="${t?.6:f(.3+R()*.5)}"${t?` class="sc-tw" style="animation-delay:-${f(R()*3)}s;animation-duration:${f(2+R()*2.5)}s"`:''}/>`}return o};
+  const wave=(y,amp,col,op,cls)=>{let d=`M-400,${y}`;for(let x=-400;x<800;x+=100)d+=` q25,${-amp} 50,0 t50,0`;d+=` V900 H-400Z`;return `<path class="${cls}" d="${d}" fill="${col}" opacity="${op}"/>`};
+  const shoot=`<g class="sc-shoot"><line x1="330" y1="600" x2="370" y2="580" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".9"/><circle cx="330" cy="600" r="2.2" fill="#fff"/></g>`;
+  return {
+  sea:()=>`<svg viewBox="0 0 400 860" preserveAspectRatio="xMidYMid slice"><defs>
+    <linearGradient id="scSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#04142b"/><stop offset=".55" stop-color="#0b3156"/><stop offset="1" stop-color="#1a5a7e"/></linearGradient>
+    <linearGradient id="scSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d4f78"/><stop offset="1" stop-color="#062844"/></linearGradient>
+    <radialGradient id="scMoon"><stop offset="0" stop-color="#fff6d8" stop-opacity=".55"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></radialGradient>
+    <linearGradient id="scSand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9b77a"/><stop offset="1" stop-color="#9a7444"/></linearGradient></defs>
+    <rect width="400" height="860" fill="url(#scSky)"/>${stars(55,10,670,1)}
+    <circle cx="310" cy="640" r="90" fill="url(#scMoon)"/><circle cx="310" cy="640" r="26" fill="#fff4d2"/><circle cx="302" cy="634" r="5" fill="#efe1b4" opacity=".6"/>
+    <rect y="680" width="400" height="180" fill="url(#scSea)"/>
+    ${[0,1,2,3,4,5,6].map(i=>`<ellipse class="sc-shim fb" style="animation-delay:-${f(i*.5)}s" cx="310" cy="${690+i*16}" rx="${f(34-i*3)}" ry="2.2" fill="#fff4d2" opacity=".6"/>`).join('')}
+    ${wave(712,6,'#3f9ccc',.45,'sc-w2')}${wave(742,8,'#2a83b4',.6,'sc-w1')}${wave(772,9,'#1b6c9c',.8,'sc-w3')}
+    <g class="sc-tide"><path d="M0,805 C80,790 150,815 220,802 C290,790 340,812 400,800 V880 H0Z" fill="#e9f7fb" opacity=".85"/><path d="M0,815 C80,800 150,824 220,812 C290,800 340,820 400,810 V880 H0Z" fill="url(#scSand)"/></g></svg>`,
+  night:()=>`<svg viewBox="0 0 400 860" preserveAspectRatio="xMidYMid slice"><defs>
+    <linearGradient id="scN" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#030620"/><stop offset=".6" stop-color="#121a4a"/><stop offset="1" stop-color="#2a2356"/></linearGradient>
+    <radialGradient id="scNm"><stop offset="0" stop-color="#fff1c2" stop-opacity=".45"/><stop offset="1" stop-color="#fff1c2" stop-opacity="0"/></radialGradient></defs>
+    <rect width="400" height="860" fill="url(#scN)"/>
+    <ellipse cx="200" cy="330" rx="260" ry="60" fill="#8a8adf" opacity=".08" transform="rotate(-25 200 330)"/>${stars(110,0,760,1)}${shoot}
+    <circle cx="300" cy="680" r="95" fill="url(#scNm)"/><mask id="scNk"><rect width="400" height="860" fill="#fff"/><circle cx="314" cy="669" r="28" fill="#000"/></mask><circle cx="300" cy="680" r="32" fill="#ffe9a8" mask="url(#scNk)"/>
+    <path d="M0,760 C70,720 140,735 210,750 C280,765 340,725 400,740 V860 H0Z" fill="#141033"/><path d="M0,800 C90,775 170,795 250,790 C320,785 360,770 400,780 V860 H0Z" fill="#0a0820"/></svg>`,
+  ramadan:()=>{const lan=(x,len,d,sc)=>`<g transform="translate(${x},0)"><g class="sc-sway" style="animation-delay:-${d}s"><line x1="0" y1="0" x2="0" y2="${len}" stroke="#d4ad52" stroke-width="1.5"/><g transform="translate(0,${len}) scale(${sc})"><circle cx="0" cy="22" r="26" fill="#ffd76a" class="sc-halo"/><path d="M-8,0 H8 L12,6 H-12Z" fill="#d4ad52"/><path d="M-12,6 H12 L15,36 H-15Z" fill="#8a5c06"/><path d="M-9,9 H9 L11,33 H-11Z" fill="#ffd76a" class="sc-glow"/><path d="M-15,36 H15 L8,44 H-8Z" fill="#d4ad52"/><circle cx="0" cy="-4" r="3" fill="none" stroke="#d4ad52" stroke-width="1.5"/></g></g></g>`;
+    let bulbs='';for(let i=0;i<14;i++){const t=i/13,x=190+210*t,y=615+65*t*(1-t)*2;bulbs+=`<circle cx="${f(x)}" cy="${f(y+4)}" r="3.2" fill="${['#ffd76a','#7fe0ff','#ff8fb0'][i%3]}" class="sc-glow" style="animation-delay:-${f(i*.37)}s"/>`}
+    return `<svg viewBox="0 0 400 860" preserveAspectRatio="xMidYMid slice"><defs>
+    <linearGradient id="scR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070b26"/><stop offset=".65" stop-color="#1b1d58"/><stop offset="1" stop-color="#3b2a5c"/></linearGradient>
+    <radialGradient id="scRm"><stop offset="0" stop-color="#ffd76a" stop-opacity=".4"/><stop offset="1" stop-color="#ffd76a" stop-opacity="0"/></radialGradient></defs>
+    <rect width="400" height="860" fill="url(#scR)"/>${stars(70,0,600,1)}
+    <circle cx="150" cy="650" r="70" fill="url(#scRm)"/><mask id="scRk"><rect width="400" height="860" fill="#fff"/><circle cx="160" cy="642" r="21" fill="#000"/></mask><circle cx="150" cy="650" r="24" fill="#ffd76a" mask="url(#scRk)"/>
+    <path d="M190,615 Q295,680 400,615" fill="none" stroke="#d4ad52" stroke-width="1.2" opacity=".8"/>${bulbs}
+    <g transform="translate(0,615)">${lan(235,22,0,.75)}${lan(295,38,1.6,.85)}${lan(355,22,.8,.75)}</g>
+    <g fill="#0a0b24" transform="translate(0,40)"><rect x="40" y="640" width="14" height="140"/><path d="M40,640 L47,612 L54,640Z"/><rect x="346" y="640" width="14" height="140"/><path d="M346,640 L353,612 L360,640Z"/>
+    <path d="M120,760 V705 A80,70 0 0 1 280,705 V760Z"/><path d="M70,770 V735 A40,36 0 0 1 150,735 V770Z"/><path d="M250,770 V735 A40,36 0 0 1 330,735 V770Z"/><rect x="0" y="760" width="400" height="100"/></g>
+    <g fill="#ffd76a" opacity=".85" class="sc-glow" transform="translate(0,40)"><rect x="186" y="725" width="8" height="14" rx="4"/><rect x="206" y="725" width="8" height="14" rx="4"/><rect x="104" y="748" width="6" height="10" rx="3"/><rect x="290" y="748" width="6" height="10" rx="3"/><rect x="44" y="670" width="6" height="10" rx="3"/><rect x="350" y="670" width="6" height="10" rx="3"/></g></svg>`}
+  }})();
+function applyScene(id){const sc=$('scene');if(!sc)return;let t='';try{t=id==='game'?TH().id:''}catch(e){}
+  if(!SCENES[t]){sc.hidden=true;return}
+  if(sc._t!==t){sc._t=t;sc.innerHTML=SCENES[t]()}sc.hidden=false}
 function show(id){
+  try{applyScene(id)}catch(e){}
   try{id==='splash'?StarFx.start():StarFx.stop()}catch(e){}
   SCREENS.forEach(s=>$(s).hidden=s!==id);
   if(id!=='game'&&$('choice'))$('choice').hidden=true;
