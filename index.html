@@ -2357,7 +2357,7 @@ $('giftBtn').onclick=()=>{const [x,y]=elPt($('giftBtn'));const fx=()=>{renderWal
 // ---------- الشراء عن طريق أبل (داخل تطبيق الآيفون بس) ----------
 const IAP={on:false,ready:false,price:{},pend:null,q:[],busy:false};
 const IAP_PFX='com.fakkha.ludo.';
-const IAP_GEMS={10:'gems10',30:'gems30',160:'gems160',400:'gems400'};
+const IAP_GEMS={110:'gems10',130:'gems30',260:'gems160',500:'gems400'};
 function packPid(pk){return IAP_PFX+(IAP_GEMS[pk.g]||'gems'+pk.g)}
 function itemPid(kind,id){return kind?IAP_PFX+kind+'_'+id:''}
 function iapNative(){const C=window.Capacitor;return !!(C&&C.isNativePlatform&&C.isNativePlatform()&&C.getPlatform&&C.getPlatform()==='ios')}
@@ -2441,10 +2441,10 @@ function openItem(it,kind){itemCur=[it,kind];$('itTitle').textContent=it.name;
 function tryItem(){const [it]=itemCur,card=$('itemBox').querySelector('.card').getBoundingClientRect(),from=elPt($('itTry'));
   throwDice(-1,1+Math.floor(Math.random()*6),'#c0392b',{skin:it,from,area:{left:card.left,top:card.top+card.height*.05,width:card.width,height:card.height*.45},back:$('itTry'),hold:700});SFX.roll()}
 const GPACKS=[
- {g:10,sar:'٣٫٩٩',pile:1},
- {g:30,sar:'٩٫٩٩',pile:2,bonus:'+٢ هدية',x:2},
- {g:160,sar:'١٩٫٩٩',pile:3,bonus:'+٢٠ هدية',x:20,tag:'الأكثر طلب'},
- {g:400,sar:'٤٩٫٩٩',pile:5,bonus:'+٨٠ هدية',x:80,tag:'أفضل قيمة',best:1}
+ {g:110,sar:'٣٫٩٩',pile:1},
+ {g:130,sar:'٩٫٩٩',pile:2,bonus:'+٢ هدية',x:2},
+ {g:260,sar:'١٩٫٩٩',pile:3,bonus:'+٢٠ هدية',x:20,tag:'الأكثر طلب'},
+ {g:500,sar:'٤٩٫٩٩',pile:5,bonus:'+٨٠ هدية',x:80,tag:'أفضل قيمة',best:1}
 ];
 const PILES={1:[[0,0,40]],2:[[-14,4,32],[14,0,36]],3:[[-20,6,28],[20,6,28],[0,0,40]],5:[[-30,10,22],[30,10,22],[-14,4,30],[14,4,30],[0,-2,40]]};
 function renderGemPacks(){const box=$('gemPacks');box.innerHTML='';
