@@ -2644,10 +2644,10 @@ function drawBoard(svg,th){
     el('rect',{x:0,y:0,width:15,height:15,fill:'url(#'+pid+')'},svg)}
   if(th.waves){// نفس خطوط الموج بنفس رسمتها، بس تتحرك بهدوء مثل موج الشاطئ
     let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);const pid='wv'+(++UID);
-    // نفس الخطوط بالضبط، بس مقسومة على طبقتين (سطر وسطر): طبقة تتقدم والثانية ترجع بنفس اللحظة، مثل المد والجزر
+    // خط موج واحد في كل خانة، يتقدم ويرجع بهدوء مثل المد والجزر
     const cp=el('clipPath',{id:pid+'c'},defs);el('rect',{x:0,y:0,width:15,height:15},cp);const clip=el('g',{'clip-path':'url(#'+pid+'c)'},svg);
     const r=svg.closest&&svg.closest('#board')?(window.ROT||0):0;
-    [.3,.8].forEach((y,k)=>{const pt=el('pattern',{id:pid+'p'+k,width:1,height:1,patternUnits:'userSpaceOnUse'},defs);
+    [.5].forEach((y,k)=>{const pt=el('pattern',{id:pid+'p'+k,width:1,height:1,patternUnits:'userSpaceOnUse'},defs);
       el('path',{d:`M0,${y} Q.25,${y-.18} .5,${y} T1,${y}`,fill:'none',stroke:th.waves,'stroke-width':.05,'stroke-linecap':'round'},pt);
       const wg=el('g',{},clip);el('rect',{x:-1,y:-1,width:17,height:17,fill:'url(#'+pid+'p'+k+')'},wg);
       if(!RM)wg.setAttribute('class','seaFlow sf'+r+(k?' sfb':''))})}
