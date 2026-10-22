@@ -2088,7 +2088,7 @@ function grad(g,c){
   [[0,c.hex],[1,c.dark]].forEach(([o,col])=>el('stop',{offset:o,'stop-color':col},lg));
   return svg._g[c.hex]=[`url(#${id})`,`url(#${id2})`];
 }
-const STAND=new Set(['tayb','pawn','shield','falcon','dallah','camel','crown']);
+const STAND=new Set(['tayb','pawn','shield','falcon','dallah','camel','crown','lantern']);
 function twin(g,d,fill,dark){el('path',{d,fill:'none',stroke:'#fff','stroke-width':.075,'stroke-linejoin':'round'},g);return el('path',{d,fill,stroke:dark,'stroke-width':.025,'stroke-linejoin':'round'},g)}
 function standToken(g,style,c,top,side){
   g=el('g',{transform:'translate(0,-.03) scale(1.32)'},g);
@@ -2163,6 +2163,35 @@ function standToken(g,style,c,top,side){
     el('rect',{x:-.06,y:-.21,width:.12,height:.14,fill:side,stroke:D,'stroke-width':.02},g);
     twin(g,'M-.11,-.2 L.11,-.2 L0,-.35 Z',top,D);el('circle',{cx:0,cy:-.37,r:.035,fill:'#fff',stroke:D,'stroke-width':.015},g);
     el('path',{d:'M-.2,.1 L.2,.1',stroke:'#fff','stroke-width':.035,opacity:.85},g);el('path',{d:'M-.11,.18 C-.13,.06 -.09,-.02 -.05,-.05',stroke:'#fff',opacity:.45,'stroke-width':.03,fill:'none','stroke-linecap':'round'},g)}
+  if(style==='lantern'){
+    // فانوس رمضان واقف بلون اللاعب، وداخله شمعة تتراقص
+    const lid='lg'+(++UID),svg=g.ownerSVGElement;let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);
+    const rg=el('radialGradient',{id:lid,cx:'.5',cy:'.55',r:'.6'},defs);[[0,'#fffbe0'],[.45,'#ffd75e'],[1,'#e8902a']].forEach(([o,col])=>el('stop',{offset:o,'stop-color':col},rg));
+    el('circle',{cx:0,cy:-.43,r:.045,fill:'none',stroke:'#fff','stroke-width':.055},g);
+    el('circle',{cx:0,cy:-.43,r:.045,fill:'none',stroke:D,'stroke-width':.022},g);
+    twin(g,'M-.12,-.25 Q-.11,-.35 0,-.39 Q.11,-.35 .12,-.25 Z',top,D);
+    el('circle',{cx:0,cy:-.31,r:.022,fill:'#f5c542',stroke:'#9a6a00','stroke-width':.01},g);
+    twin(g,'M-.18,-.26 L.18,-.26 L.16,-.2 L-.16,-.2 Z',side,D);
+    const glass=twin(g,'M-.16,-.2 L.16,-.2 L.21,-.05 L.18,.14 L-.18,.14 L-.21,-.05 Z','url(#'+lid+')',D);
+    const lit=el('path',{d:'M-.16,-.2 L.16,-.2 L.21,-.05 L.18,.14 L-.18,.14 L-.21,-.05 Z',fill:'#fff6c8',opacity:.25},g);
+    // شمعة ولهب
+    el('rect',{x:-.028,y:.02,width:.056,height:.1,rx:.012,fill:'#fff',stroke:'#d9b98a','stroke-width':.008},g);
+    const fl=el('path',{d:'M0,-.13 C.045,-.07 .045,-.01 0,.02 C-.045,-.01 -.045,-.07 0,-.13 Z',fill:'#ff9a2b'},g);
+    const fi=el('path',{d:'M0,-.085 C.022,-.05 .022,-.015 0,.005 C-.022,-.015 -.022,-.05 0,-.085 Z',fill:'#fff7c2'},g);
+    // إطار الفانوس (أعمدة وزخرفة)
+    [[-.07,-.2,-.09,.14],[.07,-.2,.09,.14]].forEach(([x1,y1,x2,y2])=>el('line',{x1,y1,x2,y2,stroke:D,'stroke-width':.022,'stroke-linecap':'round'},g));
+    el('path',{d:'M-.21,-.05 L.21,-.05',stroke:D,'stroke-width':.02},g);
+    [-.14,0,.14].forEach(x=>el('path',{d:`M${x-.035},-.2 Q${x},-.15 ${x+.035},-.2`,fill:'none',stroke:D,'stroke-width':.014},g));
+    twin(g,'M-.18,.14 L.18,.14 L.14,.2 L-.14,.2 Z',side,D);
+    twin(g,'M-.21,.2 L.21,.2 L.23,.27 L-.23,.27 Z',top,D);
+    el('path',{d:'M-.15,.11 L-.18,-.04 L-.14,-.17',stroke:'#fff',opacity:.55,'stroke-width':.025,fill:'none','stroke-linecap':'round'},g);
+    if(!RM){
+      anim(fl,{tag:'animateTransform',attributeName:'transform',type:'scale',values:'1 1;.88 1.12;1.08 .92;.94 1.06;1 1',dur:'.9s',additive:'sum'});
+      anim(fl,{attributeName:'fill',values:'#ff9a2b;#ffb84a;#ff7a1f;#ff9a2b',dur:'1.3s'});
+      anim(fi,{attributeName:'opacity',values:'1;.7;1;.85;1',dur:'.7s'});
+      anim(lit,{attributeName:'opacity',values:'.15;.45;.25;.4;.15',dur:'1.1s'});
+    }
+  }
   if(style==='camel'){
     [-.22,-.13,.07,.16].forEach(x=>{el('line',{x1:x,y1:.06,x2:x,y2:.28,stroke:'#fff','stroke-width':.09,'stroke-linecap':'round'},g);el('line',{x1:x,y1:.06,x2:x,y2:.28,stroke:side,'stroke-width':.05,'stroke-linecap':'round'},g)});
     twin(g,'M-.3,.08 C-.31,-.06 -.22,-.12 -.14,-.12 C-.1,-.27 .05,-.27 .08,-.12 C.12,-.1 .16,-.13 .18,-.19 L.2,-.3 C.22,-.37 .32,-.37 .34,-.31 L.37,-.26 L.28,-.25 L.27,-.04 C.27,.05 .22,.11 .15,.11 L-.22,.11 C-.27,.11 -.3,.1 -.3,.08 Z',top,D);
@@ -2172,7 +2201,12 @@ const TOKFX={star:['#fff','#ffe58a'],gemt:['#b9f6ff','#fff'],palm:['#7be08a','#2
 function tokenFx(g,style,c){const cols=TOKFX[style];if(!cols||RM)return;
   const aura=el('circle',{cx:0,cy:0,r:.42,fill:'none',stroke:cols[0],'stroke-width':.06,opacity:0},null);g.insertBefore(aura,g.firstChild);
   anim(aura,{attributeName:'r',values:'.36;.54',dur:'1.8s'});anim(aura,{attributeName:'opacity',values:'.85;0',dur:'1.8s'});
-  if(style==='fire'||style==='lantern'){const gl=el('circle',{cx:0,cy:0,r:.5,fill:cols[0],opacity:.25},null);g.insertBefore(gl,g.firstChild);anim(gl,{attributeName:'opacity',values:'.15;.45;.2;.38;.15',dur:'1.1s'})}
+  if(style==='lantern'){const svg=g.ownerSVGElement,gid='lgl'+(++UID);let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);const rg=el('radialGradient',{id:gid},defs);[[0,'#ffe08a',.9],[.5,'#ffc04a',.35],[1,'#ffc04a',0]].forEach(([o,col,op])=>el('stop',{offset:o,'stop-color':col,'stop-opacity':op},rg));const gl=el('circle',{cx:0,cy:-.04,r:.55,fill:'url(#'+gid+')',opacity:.6},null);g.insertBefore(gl,g.firstChild);anim(gl,{attributeName:'opacity',values:'.4;.85;.5;.75;.4',dur:'1.1s'})}
+  if(style==='fire'){const gl=el('circle',{cx:0,cy:0,r:.5,fill:cols[0],opacity:.25},null);g.insertBefore(gl,g.firstChild);anim(gl,{attributeName:'opacity',values:'.15;.45;.2;.38;.15',dur:'1.1s'})}
+  if(style==='lantern'){const rays=el('g',{opacity:.55},null);g.insertBefore(rays,g.firstChild);
+    for(let i=0;i<8;i++){const a=i*Math.PI/4;el('line',{x1:(Math.cos(a)*.34).toFixed(3),y1:(Math.sin(a)*.34-.05).toFixed(3),x2:(Math.cos(a)*.5).toFixed(3),y2:(Math.sin(a)*.5-.05).toFixed(3),stroke:'#ffe08a','stroke-width':.03,'stroke-linecap':'round'},rays)}
+    anim(rays,{tag:'animateTransform',attributeName:'transform',type:'rotate',values:'0 0 -.05;45 0 -.05',dur:'4s'});anim(rays,{attributeName:'opacity',values:'.2;.6;.2',dur:'2s'});
+    [[-.12,0],[.1,.8],[0,1.6]].forEach(([x,b])=>{const m=el('circle',{cx:x,cy:.05,r:.025,fill:'#ffe9a0',opacity:0},g);anim(m,{attributeName:'cy',values:'.05;-.55',dur:'2.4s',begin:b+'s'});anim(m,{attributeName:'opacity',values:'0;1;0',dur:'2.4s',begin:b+'s'})})}
   [[.34,-.34,0],[-.36,.12,.7],[.3,.3,1.3]].forEach(([x,y,b],i)=>{const sp=el('polygon',{points:'0,-.09 .02,-.02 .09,0 .02,.02 0,.09 -.02,.02 -.09,0 -.02,-.02',fill:cols[i%cols.length],opacity:0,transform:`translate(${x},${y})`},g);anim(sp,{attributeName:'opacity',values:'0;1;0;0',keyTimes:'0;.2;.45;1',dur:'2s',begin:b+'s'})})}
 function tokenInner(g,style,c){tokenBody(g,style,c);tokenFx(g,style,c)}
 function tokenBody(g,style,c){
