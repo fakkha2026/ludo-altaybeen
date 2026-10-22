@@ -1247,7 +1247,7 @@ const TOKS=[
 const THEMES=[
  {id:'classic',name:'كلاسيك',price:0,bg:'#f6ead2',line:'#7a5a36',safeBg:'#e2cfa8',safe:'#a07a46',frame:['#8a6a3e','#5a4026']},
  {id:'sand',name:'صحراوي',price:1000,bg:'#ecd3a0',line:'#9a6b33',safeBg:'#d6b072',safe:'#7a4f1c',frame:['#b07a3c','#6e4520']},
- {id:'sea',name:'بحري',price:1500,bg:'#dff3f2',line:'#2d7c86',safeBg:'#b2e0de',safe:'#1f6a73',frame:['#2a8fa0','#155a66']},
+ {id:'sea',name:'بحري',price:1500,bg:'#cdeefa',line:'#1f6f9a',safeBg:'#8fd3ef',safe:'#0e4f7a',frame:['#1f8fc4','#0b4a73'],waves:'#7cc6e8',deco:['🐚','🐠','⚓','⛵'],mid:'🌊'},
  {id:'night',name:'ليلي',price:25,gem:true,bg:'#22304f',line:'#5b6f9e',safeBg:'#31446d',safe:'#f5d36b',frame:['#3a4a78','#1a2240']},
  {id:'kashta',name:'الكشتة',price:2000,season:'winter',bg:'#2a2030',line:'#8c6a7c',safeBg:'#47304a',safe:'#ffb347',frame:['#8a5a34','#4a2c18'],deco:['⛺','🔥','🌙','🪵'],mid:'🔥'},
  {id:'ramadan',name:'ليالي رمضان',price:2000,season:'ramadan',bg:'#1c2647',line:'#c9a24a',safeBg:'#2b3866',safe:'#f5d36b',frame:['#c9a24a','#6e521a'],deco:['🌙','✨','🕌','⭐'],mid:'🌙'},
@@ -2597,6 +2597,10 @@ const TH=()=>THEMES.find(t=>t.id===W.theme)||THEMES[0];
 function drawBoard(svg,th){
   svg.innerHTML='';svg._g={};svg._cg={};svg.setAttribute('viewBox','0 0 15 15');
   el('rect',{x:0,y:0,width:15,height:15,fill:th.bg},svg);
+  if(th.waves){const pid='wv'+(++UID);let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);
+    const pt=el('pattern',{id:pid,width:1,height:.5,patternUnits:'userSpaceOnUse'},defs);
+    el('path',{d:'M0,.3 Q.25,.12 .5,.3 T1,.3',fill:'none',stroke:th.waves,'stroke-width':.05,'stroke-linecap':'round'},pt);
+    el('rect',{x:0,y:0,width:15,height:15,fill:'url(#'+pid+')'},svg)}
   COL.forEach(c=>{
     const [bx,by]=c.base;
     el('rect',{x:bx,y:by,width:6,height:6,fill:c.hex},svg);
