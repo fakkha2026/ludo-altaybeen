@@ -792,7 +792,7 @@ svg#board{width:100%;height:100%;display:block}
   <div class="sr" id="status" aria-live="polite">جاهز</div>
   <div class="choice" id="choice" hidden><p>طلع لك ٦! وش تبي تسوي؟</p><div class="ch-row"><button class="btn teal" id="chOut" type="button">🚀 طلّع حجر جديد</button><button class="btn sand" id="chWalk" type="button">👣 امشِ ٦ خطوات</button></div></div>
   <div class="tray" id="tray" hidden></div>
-  <div id="diceHold" hidden><button class="dice" id="dice" type="button" aria-label="ارمِ النرد"><svg viewBox="0 0 100 100" id="diceFace"></svg></button><button class="rr" id="rrBtn" type="button" hidden aria-label="أعد الرمية بالجواهر"><span class="rr-ic">↻</span><span class="rr-t">أعد</span><span class="rr-p"><span class="gem" style="width:13px;height:13px"></span>٥</span><span class="rr-left" id="rrLeft"></span></button></div>
+  <div id="diceHold" hidden><button class="dice" id="dice" type="button" aria-label="ارمِ النرد"><svg viewBox="0 0 100 100" id="diceFace"></svg></button><button class="rr" id="rrBtn" type="button" hidden aria-label="أعد الرمية بالجواهر"><span class="rr-ic">↻</span><span class="rr-t">أعد</span><span class="rr-p"><span class="gem" style="width:13px;height:13px"></span><b id="rrCost" style="font-weight:inherit">٥</b></span><span class="rr-left" id="rrLeft"></span></button></div>
 </section>
 
 <!-- مع الربع على نفس الجوال -->
@@ -2403,7 +2403,7 @@ const TUT=[
  {a:'👆',t:'اختر رقمك',p:'من شريط "رمياتك" اضغط الرقم اللي تبيه وبعدين الحجر. تقدر تطلّع حجر بالستة وتمشيه بالرقم الثاني، أو توزعها على أكثر من حجر.'},
  {a:'🔥',t:'انتبه من ٤ ستات',p:'إذا طلع لك ٦ أربع مرات ورا بعض، تنلغي كل رمياتك ويروح الدور للي بعدك.'},
  {a:'😋',t:'الأكل والرمية الزيادة',p:'إذا وقفت على حجر خصمك ترجّعه لبيته وتاخذ رمية زيادة. ونفس الشي لما توصّل حجر للنص.'},
- {a:'💎',t:'إعادة الرمية',p:'ما عجبك الرقم؟ أعد الرمية بـ٥ جواهر. عندك ٥ محاولات في كل لعبة.'}
+ {a:'💎',t:'إعادة الرمية',p:'ما عجبك الرقم؟ أعد الرمية بالجواهر: أول مرة بـ٥، وبعدها ١٠ ثم ٢٠ ثم ٣٠… عندك ٦ محاولات في كل لعبة.'}
 ];let tutI=0;
 function tutShow(){const x=TUT[tutI];$('tutArt').textContent=x.a;$('tutT').textContent=x.t;$('tutP').textContent=x.p;
   $('tutDots').innerHTML=TUT.map((_,i)=>`<i class="${i===tutI?'on':''}"></i>`).join('');$('tutNext').textContent=tutI===TUT.length-1?'يلا نلعب! 🎲':'التالي';
@@ -3642,18 +3642,19 @@ function chooseWalk(){if(!S||S.phase!=='move')return;const [,w]=choiceSets();if(
   if(w.length===1){S.walkKey=chKey();pickMove(w[0]);return}
   S.walkKey=chKey();paintStatus('اختر الحجر اللي تبي تمشيه','');renderTokens()}
 // ---------- إعادة رمي النرد بالجواهر ----------
-const RR_COST=5,RR_MAX=5;let rrUsed=0;
+const RR_COSTS=[5,10,20,30,40,50],RR_MAX=RR_COSTS.length;let rrUsed=0;
+function rrCost(){return RR_COSTS[Math.min(rrUsed,RR_MAX-1)]}
 function rrMine(){return S&&(MODE==='two'||MODE==='four'||MODE==='online')&&player()&&player().ci===meCi()&&(S.phase==='move'||S.phase==='nomove')&&S.pool&&S.pool.length===1&&S.pool[0]!==6&&!S.moved&&!NET.wait}
 function showRR(){const b=$('rrBtn');if(!b)return;const on=rrMine();b.hidden=!on;if(!on){$('diceHold').appendChild(b);return}
-  const seat=$('dslot-'+player().ci);if(seat&&b.parentNode!==seat.parentNode)seat.parentNode.appendChild(b);const left=RR_MAX-rrUsed;b.classList.toggle('poor',W.gems<RR_COST||left<=0);b.classList.toggle('lock',left<=0);
+  const seat=$('dslot-'+player().ci);if(seat&&b.parentNode!==seat.parentNode)seat.parentNode.appendChild(b);const left=RR_MAX-rrUsed;b.classList.toggle('poor',W.gems<rrCost()||left<=0);const rp=$('rrCost');if(rp)rp.textContent=toAr(rrCost());b.classList.toggle('lock',left<=0);
   $('rrLeft').textContent=left>0?`باقي ${toAr(left)}`:'🔒 انتهت'}
 function doReroll(){if(S.log)S.log.push(['r',S.tn||0]);S.turnId++;S.dl=0;S.rollN=(S.rollN||0)+1;S.pool=[];S.phase='roll';S.moves=[];renderTokens();roll()}
 function rerollClick(){if(!rrMine())return;
   if(rrUsed>=RR_MAX){toast(`استخدمت ${toAr(RR_MAX)} محاولات، انقفلت إعادة الرمية لهاللعبة 🔒`);return}
-  if(W.gems<RR_COST){toast(`تحتاج ${toAr(RR_COST)} جواهر 💎`);return}
+  if(W.gems<rrCost()){toast(`تحتاج ${toAr(rrCost())} جواهر 💎`);return}
   if(SV()){if(rrBusy)return;rrBusy=true;const gid=MODE==='online'?tableId(S.gid):PLAY_SID,turn=S.turnId;
-    api('reroll',{gid}).then(()=>{rrBusy=false;if(!S||S.turnId!==turn||!rrMine())return;rrUsed++;rrFx()}).catch(e=>{rrBusy=false;toast(apiErr(e))});return}
-  W.gems-=RR_COST;rrUsed++;save();rrFx()}
+    api('reroll',{gid,v:2}).then(()=>{rrBusy=false;if(!S||S.turnId!==turn||!rrMine())return;rrUsed++;rrFx()}).catch(e=>{rrBusy=false;toast(apiErr(e))});return}
+  W.gems-=rrCost();rrUsed++;save();rrFx()}
 let rrBusy=false;
 function rrFx(){renderWallet();const b=$('rrBtn'),[x,y]=elPt(b);burst(x,y,['#b9f6ff','#3fd2f0','#fff'],26,'star',6);tone(1319,.12,'sine',.12);tone(1760,.18,'sine',.1,.08);
   b.hidden=true;$('diceHold').appendChild(b);
