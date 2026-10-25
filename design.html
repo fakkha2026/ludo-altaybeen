@@ -2151,7 +2151,7 @@ function diceSvg(d,n,svg,accent,flat){
   if(d.shine)el('path',{d:'M14,10 L44,10 L14,44 Z',fill:'#fff',opacity:.35},svg);
   if(!n){const t=el('text',{x:50,y:60,'text-anchor':'middle','font-size':30,fill:d.pip,'font-family':'Lalezar, sans-serif'},svg);t.textContent='ارمِ';return}
   PIPS[n].forEach(([x,y])=>{const f=n===6?(d.six||accent||'#c0392b'):d.pip;
-    if(d.pp&&PIPSTY[d.pp]){PIPSTY[d.pp](svg,x,y+OF,7.6,n===6);return}
+    if(d.pp&&PIPSTY[d.pp]){const sm=d.vault&&d.art&&d.art.startsWith('tx_');let tg=svg;if(sm){tg=el('g',{opacity:.9},svg)}PIPSTY[d.pp](tg,x,y+OF,sm?5:7.6,n===6);return}
     const R=d.ps?7.2:9;if(d.ps)el('circle',{cx:x,cy:y+OF,r:R+2,fill:d.ps,opacity:.95},svg);
     el('circle',{cx:x,cy:y+OF,r:R,fill:f},svg);
     if(d.art==='hole')el('ellipse',{cx:x,cy:y+OF-2,rx:6,ry:3.5,fill:'#fff',opacity:.35},svg);
