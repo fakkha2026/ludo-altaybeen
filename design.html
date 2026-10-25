@@ -2660,7 +2660,26 @@ const BCEN={classic:'data:image/webp;base64,UklGRvhQAABXRUJQVlA4WAoAAAAQAAAAAwEA
 function drawBoard(svg,th){
   svg.innerHTML='';svg._g={};svg._cg={};svg.setAttribute('viewBox','0 0 15 15');
   el('rect',{x:0,y:0,width:15,height:15,fill:th.bg},svg);
-  const TX=BTEX[th.id];if(TX)el('image',{href:TX,x:0,y:0,width:15,height:15,preserveAspectRatio:'xMidYMid slice'},svg);
+  const TX=BTEX[th.id];
+  if(TX){let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);const cid='tc'+(++UID);el('rect',{x:0,y:0,width:15,height:15},el('clipPath',{id:cid},defs));
+    const tg=el('g',{'clip-path':'url(#'+cid+')'},svg),big=th.id==='night',im=el('image',{href:TX,x:big?-3.5:-.6,y:big?-3.5:-.6,width:big?22:16.2,height:big?22:16.2,preserveAspectRatio:'xMidYMid slice'},tg);
+    if(!RM){const rnd=(a,b)=>a+Math.random()*(b-a);
+      if(th.id==='sea'){// الماء يتموج: طبقتين تتحرك عكس بعض، والضوء يلمع
+        anim(im,{tag:'animateTransform',attributeName:'transform',type:'translate',values:'0 0;.45 .3;0 0',dur:'9s'});
+        const im2=el('image',{href:TX,x:-.6,y:-.6,width:16.2,height:16.2,preserveAspectRatio:'xMidYMid slice',opacity:.4,transform:'rotate(90 7.5 7.5)'},tg);
+        anim(im2,{tag:'animateTransform',attributeName:'transform',type:'translate',values:'0 0;-.45 -.35;0 0',dur:'7s',additive:'sum'});anim(im2,{attributeName:'opacity',values:'.2;.5;.2',dur:'4.5s'});
+        for(let j=0;j<10;j++){const s=el('circle',{cx:rnd(.5,14.5).toFixed(2),cy:rnd(.5,14.5).toFixed(2),r:rnd(.05,.11).toFixed(3),fill:'#fff',opacity:0},tg);anim(s,{attributeName:'opacity',values:'0;.9;0',dur:rnd(1.5,3).toFixed(1)+'s',begin:(-rnd(0,3)).toFixed(1)+'s'})}}
+      else if(th.id==='night'){// المجرة تدور ببطء والنجوم تلمع
+        anim(im,{tag:'animateTransform',attributeName:'transform',type:'rotate',values:'0 7.5 7.5;360 7.5 7.5',dur:'300s'});
+        for(let j=0;j<22;j++){const s=el('circle',{cx:rnd(.3,14.7).toFixed(2),cy:rnd(.3,14.7).toFixed(2),r:rnd(.03,.08).toFixed(3),fill:'#fff',opacity:0},tg);anim(s,{attributeName:'opacity',values:'0;1;0',dur:rnd(1.6,3.6).toFixed(1)+'s',begin:(-rnd(0,3.6)).toFixed(1)+'s'})}}
+      else if(th.id==='sand'){// ريح خفيفة: الرمل يتحرك وحبات تطير
+        anim(im,{tag:'animateTransform',attributeName:'transform',type:'translate',values:'0 0;.5 .1;0 0',dur:'14s'});
+        for(let j=0;j<26;j++){const y=rnd(0,15).toFixed(2),d=rnd(2.5,5).toFixed(1),s=el('circle',{cx:-.5,cy:y,r:rnd(.03,.07).toFixed(3),fill:'#fff3d6',opacity:0},tg);
+          anim(s,{tag:'animateTransform',attributeName:'transform',type:'translate',values:'0 0;16 '+rnd(-1.5,1.5).toFixed(2),dur:d+'s',begin:(-rnd(0,5)).toFixed(1)+'s'});anim(s,{attributeName:'opacity',values:'0;.8;.8;0',dur:d+'s',begin:(-rnd(0,5)).toFixed(1)+'s'})}}
+      else{// الرخام: لمعة ضوء تمر عليه
+        const gid='ms'+(++UID),lg=el('linearGradient',{id:gid,x1:0,y1:0,x2:1,y2:0},defs);[[0,'#fff',0],[.5,'#fff',.55],[1,'#fff',0]].forEach(([o,col,op])=>el('stop',{offset:o,'stop-color':col,'stop-opacity':op},lg));
+        const sh=el('rect',{x:-4,y:-4,width:3,height:24,fill:'url(#'+gid+')',transform:'rotate(25 7.5 7.5)'},tg);
+        anim(sh,{tag:'animateTransform',attributeName:'transform',type:'translate',values:'0 0;0 0;22 0',keyTimes:'0;.55;1',dur:'6s',additive:'sum'})}}}
   if(th.rmd){// زخرفة إسلامية: نجمة ثمانية ذهبية في كل مربع
     const pid='rz'+(++UID);let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);
     const pt=el('pattern',{id:pid,width:1,height:1,patternUnits:'userSpaceOnUse'},defs);
@@ -2728,7 +2747,13 @@ function drawBoard(svg,th){
   const tri=[[[6,6],[6,9]],[[6,6],[9,6]],[[9,6],[9,9]],[[6,9],[9,9]]];
   tri.forEach((t,i)=>el('polygon',{points:`${t[0]} ${t[1]} 7.5,7.5`,fill:COL[i].hex,opacity:th.waves?.6:1,stroke:th.line,'stroke-width':.04},svg));
   const CN=BCEN[th.id];
-  if(CN){const r=svg.closest&&svg.closest('#board')?(window.ROT||0):0;el('circle',{cx:7.5,cy:7.5,r:1.05,fill:'#000',opacity:.25},svg);el('image',{class:'midTxt',href:CN,x:6.4,y:6.4,width:2.2,height:2.2,transform:`rotate(${-r*90} 7.5 7.5)`},svg)}
+  if(CN){const r=svg.closest&&svg.closest('#board')?(window.ROT||0):0;el('circle',{cx:7.5,cy:7.5,r:1.05,fill:'#000',opacity:.25},svg);const cg=el('g',{class:'midTxt',transform:`rotate(${-r*90} 7.5 7.5)`},svg);
+    if(!RM){const gid='cg'+(++UID);let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);const rg=el('radialGradient',{id:gid},defs);[[0,th.id==='night'?'#ffe29a':'#fff',.75],[1,'#fff',0]].forEach(([o,col,op])=>el('stop',{offset:o,'stop-color':col,'stop-opacity':op},rg));
+      const gl=el('circle',{cx:7.5,cy:7.5,r:1.5,fill:'url(#'+gid+')'},cg);anim(gl,{attributeName:'opacity',values:'.2;.75;.2',dur:'2.6s'})}
+    const ci=el('image',{href:CN,x:6.4,y:6.4,width:2.2,height:2.2},cg);
+    if(!RM){if(th.id==='classic')anim(ci,{tag:'animateTransform',attributeName:'transform',type:'rotate',values:'0 7.5 7.5;360 7.5 7.5',dur:'40s'});
+      else if(th.id==='sand')anim(ci,{tag:'animateTransform',attributeName:'transform',type:'rotate',values:'-8 7.5 7.5;8 7.5 7.5;-8 7.5 7.5',dur:'5s',calcMode:'spline',keyTimes:'0;.5;1',keySplines:'.45 0 .55 1;.45 0 .55 1'});
+      else anim(ci,{tag:'animateTransform',attributeName:'transform',type:'translate',values:'0 0;0 -.12;0 0',dur:'3s'})}}
   else{el('circle',{cx:7.5,cy:7.5,r:.55,fill:th.bg,stroke:th.line,'stroke-width':.05},svg);
   if(th.mid){const r=svg.closest&&svg.closest('#board')?(window.ROT||0):0;const t=el('text',{class:'midTxt',x:7.5,y:7.53,'text-anchor':'middle','dominant-baseline':'central','font-size':.62,transform:`rotate(${-r*90} 7.5 7.5)`},svg);t.textContent=th.mid}
   else{el('circle',{cx:7.5,cy:7.5,r:.3,fill:'#c98a4a'},svg);el('circle',{cx:7.62,cy:7.42,r:.25,fill:th.bg},svg)}}
