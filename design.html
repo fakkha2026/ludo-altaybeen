@@ -2761,7 +2761,7 @@ function drawBoard(svg,th){
     c.home.forEach(([x,y])=>el('rect',{x,y,width:1,height:1,fill:c.hex},svg));
     const [sx,sy]=TRACK[c.start];el('rect',{x:sx,y:sy,width:1,height:1,fill:c.hex},svg);
   });
-  if(GL)TRACK.forEach(([x,y],i)=>{if(COL.some(c=>c.start===i))return;el('rect',{x,y,width:1,height:1,fill:'#0b1230',opacity:.92},svg)});
+  if(GL)TRACK.forEach(([x,y],i)=>{if(COL.some(c=>c.start===i))return;el('rect',{x,y,width:1,height:1,fill:'#0b1230',opacity:.12},svg)});
   TRACK.forEach(([x,y])=>el('rect',{x,y,width:1,height:1,fill:'none',stroke:th.line,'stroke-width':.035},svg));
   COL.forEach(c=>c.home.forEach(([x,y])=>el('rect',{x,y,width:1,height:1,fill:'none',stroke:th.line,'stroke-width':.035},svg)));
   [8,21,34,47].forEach(i=>{const [x,y]=TRACK[i];el('rect',{x:x+.08,y:y+.08,width:.84,height:.84,rx:.15,fill:th.safeBg},svg);el('polygon',{points:starPts(x+.5,y+.5,.32),fill:th.safe},svg)});
