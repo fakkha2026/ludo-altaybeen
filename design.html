@@ -2761,13 +2761,14 @@ function drawBoard(svg,th){
     c.home.forEach(([x,y])=>el('rect',{x,y,width:1,height:1,fill:c.hex},svg));
     const [sx,sy]=TRACK[c.start];el('rect',{x:sx,y:sy,width:1,height:1,fill:c.hex},svg);
   });
+  if(GL)TRACK.forEach(([x,y],i)=>{if(COL.some(c=>c.start===i))return;el('rect',{x,y,width:1,height:1,fill:'#0b1230',opacity:.92},svg)});
   TRACK.forEach(([x,y])=>el('rect',{x,y,width:1,height:1,fill:'none',stroke:th.line,'stroke-width':.035},svg));
   COL.forEach(c=>c.home.forEach(([x,y])=>el('rect',{x,y,width:1,height:1,fill:'none',stroke:th.line,'stroke-width':.035},svg)));
   [8,21,34,47].forEach(i=>{const [x,y]=TRACK[i];el('rect',{x:x+.08,y:y+.08,width:.84,height:.84,rx:.15,fill:th.safeBg},svg);el('polygon',{points:starPts(x+.5,y+.5,.32),fill:th.safe},svg)});
   COL.forEach(c=>{const [x,y]=TRACK[c.start];el('polygon',{points:starPts(x+.5,y+.5,.3),fill:'#ffffffcc'},svg)});
   const tri=[[[6,6],[6,9]],[[6,6],[9,6]],[[9,6],[9,9]],[[6,9],[9,9]]];
   tri.forEach((t,i)=>el('polygon',{points:`${t[0]} ${t[1]} 7.5,7.5`,fill:COL[i].hex,opacity:th.waves?.6:1,stroke:th.line,'stroke-width':.04},svg));
-  const CN=BCEN[th.id];
+  const CN=GL?null:BCEN[th.id];
   if(CN){const r=svg.closest&&svg.closest('#board')?(window.ROT||0):0;el('circle',{cx:7.5,cy:7.5,r:1.05,fill:'#000',opacity:.25},svg);const cg=el('g',{class:'midTxt',transform:`rotate(${-r*90} 7.5 7.5)`},svg);
     if(!RM){const gid='cg'+(++UID);let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);const rg=el('radialGradient',{id:gid},defs);[[0,th.id==='night'?'#ffe29a':'#fff',.75],[1,'#fff',0]].forEach(([o,col,op])=>el('stop',{offset:o,'stop-color':col,'stop-opacity':op},rg));
       const gl=el('circle',{cx:7.5,cy:7.5,r:1.5,fill:'url(#'+gid+')'},cg);anim(gl,{attributeName:'opacity',values:'.2;.75;.2',dur:'2.6s'})}
@@ -2775,6 +2776,7 @@ function drawBoard(svg,th){
     if(!RM){if(th.id==='classic')anim(ci,{tag:'animateTransform',attributeName:'transform',type:'rotate',values:'0 7.5 7.5;360 7.5 7.5',dur:'40s'});
       else if(th.id==='sand')anim(ci,{tag:'animateTransform',attributeName:'transform',type:'rotate',values:'-8 7.5 7.5;8 7.5 7.5;-8 7.5 7.5',dur:'5s',calcMode:'spline',keyTimes:'0;.5;1',keySplines:'.45 0 .55 1;.45 0 .55 1'});
       else anim(ci,{tag:'animateTransform',attributeName:'transform',type:'translate',values:'0 0;0 -.12;0 0',dur:'3s'})}}
+  else if(GL){}
   else{el('circle',{cx:7.5,cy:7.5,r:.55,fill:th.bg,stroke:th.line,'stroke-width':.05},svg);
   if(th.mid){const r=svg.closest&&svg.closest('#board')?(window.ROT||0):0;const t=el('text',{class:'midTxt',x:7.5,y:7.53,'text-anchor':'middle','dominant-baseline':'central','font-size':.62,transform:`rotate(${-r*90} 7.5 7.5)`},svg);t.textContent=th.mid}
   else{el('circle',{cx:7.5,cy:7.5,r:.3,fill:'#c98a4a'},svg);el('circle',{cx:7.62,cy:7.42,r:.25,fill:th.bg},svg)}}
