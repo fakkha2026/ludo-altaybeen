@@ -2470,8 +2470,7 @@ const SandFx=(()=>{const cv=document.getElementById('sandFx');if(!cv)return{star
       const gr=cx.createLinearGradient(q.x,0,q.x+q.len,0);gr.addColorStop(0,'rgba(255,236,200,0)');gr.addColorStop(.5,`rgba(255,236,200,${q.a})`);gr.addColorStop(1,'rgba(255,236,200,0)');
       cx.fillStyle=gr;cx.beginPath();cx.ellipse(q.x+q.len/2,q.y+Math.sin(t+q.y)*4,q.len/2,q.th/2,-.04,0,6.283);cx.fill()}
     gust=gust.filter(q=>q.x<W*1.3);
-    for(const s of g){s.x+=s.v*wind*dt;s.p+=s.w*dt;s.y+=Math.sin(s.p)*6*dt-1.5*dt;if(s.x>W+4){Object.assign(s,mk(-4))}if(s.y<-4)s.y=H+4;
-      cx.fillStyle=`rgba(255,238,205,${s.a})`;cx.beginPath();cx.arc(s.x,s.y,s.s,0,6.283);cx.fill()}}
+  }
   function start(){if(on||calm)return;on=true;size();last=0;raf=requestAnimationFrame(frame)}
   function stop(){if(!on)return;on=false;cancelAnimationFrame(raf);cx.clearRect(0,0,W,H)}
   addEventListener('resize',()=>{if(on)size()});
