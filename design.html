@@ -2116,12 +2116,13 @@ Object.assign(HQ,{
    el('path',{d:'M12,12 L48,10 C30,16 18,26 12,44 Z',fill:'#dff2ff',opacity:.22},g)}
 });
 function diceSvg(d,n,svg,accent,flat){
-  const FH=flat?92:86,OF=flat?0:-3,RX=flat?11:20;
+  // وجه كامل بدون شريط الحافة تحت (كان يبان كأنه طبقة ثانية)، والعمق يجي من الإضاءة والحواف المشطوفة
+  const FH=92,OF=0,RX=flat?11:18;
   svg.innerHTML='';
-  el('rect',{x:4,y:4,width:92,height:92,rx:RX,fill:d.edge},svg);
   let face=d.bg;if(d.grad){let defs=svg.querySelector('defs')||el('defs',{},svg);const id='dg'+(++UID);const lg=el('linearGradient',{id,x1:0,y1:0,x2:1,y2:1},defs);el('stop',{offset:0,'stop-color':d.grad[0]},lg);el('stop',{offset:1,'stop-color':d.grad[1]},lg);face=`url(#${id})`}
   el('rect',{x:4,y:4,width:92,height:FH,rx:RX,fill:face},svg);
   if(d.art&&(HQ[d.art]||ART[d.art])){let defs=svg.querySelector('defs')||el('defs',{},svg);const cid='da'+(++UID);el('rect',{x:4,y:4,width:92,height:FH,rx:RX},el('clipPath',{id:cid},defs));(HQ[d.art]||ART[d.art])(el('g',{'clip-path':`url(#${cid})`},svg))}
+  if(!flat)diceBevel(svg,RX,d);
   if(d.stars)[[18,20,1.6],[80,16,1.2],[66,40,1],[22,62,1.3],[84,74,1.6],[40,82,1],[50,14,.9],[12,40,1]].forEach(([x,y,r])=>el('circle',{cx:x,cy:y,r,fill:'#fff',opacity:.75},svg));
   if(d.shine)el('path',{d:'M14,10 L44,10 L14,44 Z',fill:'#fff',opacity:.35},svg);
   if(!n){const t=el('text',{x:50,y:60,'text-anchor':'middle','font-size':30,fill:d.pip,'font-family':'Lalezar, sans-serif'},svg);t.textContent='ارمِ';return}
@@ -2144,9 +2145,16 @@ Object.assign(PIPSTY,{
 // ---------- تأثيرات النرد الثابتة: لمعة تمر + جزيئات حسب النوع ----------
 const FXCOL={fire:['#ffe08a','#ff6a2b','#ffb347'],bolt:['#fff','#9fe3ff','#ffe14d'],royal:['#fff','#ffe58a','#fff'],crystal:['#ff7eb6','#7ee0ff','#b6ff7e'],dust:['#fff3d6','#d9b77a','#efd29a'],galaxy:['#fff','#ffd84d','#c9b8ff']};
 function anim(e,o){const a=document.createElementNS(NS,o.tag||'animate');for(const k in o)if(k!=='tag')a.setAttribute(k,o[k]);a.setAttribute('repeatCount','indefinite');e.appendChild(a);return a}
+// حواف واقعية: ضوء من فوق يسار، ظل خفيف تحت يمين، وحافة مشطوفة رفيعة حول الوجه
+function diceBevel(svg,RX,d){let defs=svg.querySelector('defs')||el('defs',{},svg);const u=++UID;
+  const lg=el('linearGradient',{id:'bv'+u,x1:0,y1:0,x2:1,y2:1},defs);[[0,'#fff',.32],[.35,'#fff',0],[.65,'#000',0],[1,'#000',.28]].forEach(([o,c,a])=>el('stop',{offset:o,'stop-color':c,'stop-opacity':a},lg));
+  const sg=el('linearGradient',{id:'bs'+u,x1:0,y1:0,x2:1,y2:1},defs);[[0,'#fff',.85],[.5,'#fff',.15],[1,'#000',.45]].forEach(([o,c,a])=>el('stop',{offset:o,'stop-color':c,'stop-opacity':a},sg));
+  el('rect',{x:4,y:4,width:92,height:92,rx:RX,fill:`url(#bv${u})`},svg);
+  el('rect',{x:5.6,y:5.6,width:88.8,height:88.8,rx:RX-1.4,fill:'none',stroke:`url(#bs${u})`,'stroke-width':2.4,opacity:.7},svg);
+  el('rect',{x:4.4,y:4.4,width:91.2,height:91.2,rx:RX-.3,fill:'none',stroke:'#000','stroke-width':.8,opacity:.35},svg)}
 function diceIdle(d,svg){if(!d||!d.id||d.id==='classic'||RM)return;
   let defs=svg.querySelector('defs')||el('defs',{},svg);const id='dc'+(++UID);
-  el('rect',{x:4,y:4,width:92,height:86,rx:20},el('clipPath',{id},defs));
+  el('rect',{x:4,y:4,width:92,height:92,rx:18},el('clipPath',{id},defs));
   const g=el('g',{'clip-path':`url(#${id})`},svg);
   const sh=el('polygon',{points:'-40,0 -18,0 -48,100 -70,100',fill:'#fff',opacity:d.shine||d.fx?.45:.3},g);
   anim(sh,{tag:'animateTransform',attributeName:'transform',type:'translate',values:'0 0;0 0;190 0',keyTimes:'0;.55;1',dur:(2.6+Math.random()).toFixed(2)+'s'});
