@@ -2753,7 +2753,7 @@ function drawBoard(svg,th){
       c.home.forEach(([x,y])=>el('rect',{x,y,width:1,height:1,fill:c.hex,opacity:.6},svg));
       const [sx,sy]=TRACK[c.start];el('rect',{x:sx,y:sy,width:1,height:1,fill:c.hex,opacity:.6},svg);
       return}
-    el('rect',{x:bx,y:by,width:6,height:6,fill:th.homeFill||c.hex,opacity:TX?.86:GL?.8:1},svg);
+    el('rect',{x:bx,y:by,width:6,height:6,fill:th.homeFill||c.hex,opacity:TX?.86:1},svg);
     if(TX||GL){const gid='hg'+(++UID);let defs=svg.querySelector('defs');if(!defs)defs=el('defs',{},svg);const lg=el('linearGradient',{id:gid,x1:0,y1:0,x2:1,y2:1},defs);[[0,'#fff',.35],[.45,'#fff',0],[1,'#000',.25]].forEach(([o,col,op])=>el('stop',{offset:o,'stop-color':col,'stop-opacity':op},lg));el('rect',{x:bx,y:by,width:6,height:6,fill:'url(#'+gid+')'},svg)}
     el('rect',{x:bx+.7,y:by+.7,width:4.6,height:4.6,rx:.9,fill:th.homeFill?'#06331f':c.dark,opacity:.55},svg);
     if(th.homeFill){el('rect',{x:bx+.12,y:by+.12,width:5.76,height:5.76,rx:.25,fill:'none',stroke:c.hex,'stroke-width':.12},svg);el('rect',{x:bx+.7,y:by+.7,width:4.6,height:4.6,rx:.9,fill:'none',stroke:'#d4ad52','stroke-width':.04,opacity:.8},svg);natEmblem(el('g',{transform:`translate(${bx+3},${by+3}) scale(1.05)`},svg))}
