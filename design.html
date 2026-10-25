@@ -2303,7 +2303,7 @@ function renderWallet(){
   $('giftTxt').textContent=got?'ارجع بكرة لهدية جديدة':'٥٠٠ عملة و٥ جواهر مجاناً كل يوم';
 }
 // الطاولات: الدخول مجاني (بدون رهان)، والفايز ياخذ جائزة ثابتة حسب الطاولة
-const STAKES={n:{name:'عادية',icon:'🪵',lv:1,p:{two:300,four:900}},g:{name:'ذهبية',icon:'🥇',lv:5,p:{two:2000,four:6000}},s:{name:'الشيوخ',icon:'👑',lv:15,p:{two:5000,four:15000}}};
+const STAKES={n:{name:'عادية',icon:'🪵',lv:1,p:{two:1500,four:4500}},g:{name:'ذهبية',icon:'🥇',lv:5,p:{two:5000,four:15000}},s:{name:'الشيوخ',icon:'👑',lv:15,p:{two:10000,four:30000}}};
 const stk=()=>STAKES[W.stake]&&level()>=STAKES[W.stake].lv?W.stake:'n';
 let PLAY_ST='n';
 const prizeOf=(m,st)=>Math.round(((STAKES[st||stk()]||STAKES.n).p[m]||0)*DIFF[W.diff].mult);
