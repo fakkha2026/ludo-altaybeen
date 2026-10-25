@@ -2716,7 +2716,7 @@ function drawBoard(svg,th){
     el('path',{d,fill:'#0f6b3a',opacity:.5},pt);
     el('polygon',{points:'.5,.42 .58,.5 .5,.58 .42,.5',fill:'#d4ad52',opacity:.55},pt);
     el('rect',{x:0,y:0,width:15,height:15,fill:'url(#'+pid+')'},svg)}
-  if(th.sky){// سماء ليل: نجوم صغيرة ثابتة، ونجوم تلمع، وشهاب يمر كل شوي
+  if(th.sky&&!GL){// سماء ليل: نجوم صغيرة ثابتة، ونجوم تلمع، وشهاب يمر كل شوي
     const sg=el('g',{},svg),rnd=(a,b)=>a+Math.random()*(b-a);
     TRACK.forEach(([x,y])=>{for(let j=0;j<2;j++)el('circle',{cx:(x+rnd(.15,.85)).toFixed(2),cy:(y+rnd(.15,.85)).toFixed(2),r:rnd(.015,.035).toFixed(3),fill:'#fff',opacity:rnd(.35,.8).toFixed(2)},sg)});
     for(let j=0;j<14;j++){const [x,y]=TRACK[Math.floor(Math.random()*TRACK.length)];const st=el('polygon',{points:starPts(x+.5,y+.5,.14),fill:'#ffe9a0',opacity:.2},sg);
