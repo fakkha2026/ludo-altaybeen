@@ -1,4 +1,8 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><style>html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}input,textarea,select{font-size:max(16px,1em)!important}</style><script>/* منع التكبير: الشاشة ثابتة زي الألعاب */["gesturestart","gesturechange","gestureend"].forEach(function(e){document.addEventListener(e,function(ev){ev.preventDefault()},{passive:false})});document.addEventListener("touchmove",function(ev){if(ev.touches.length>1)ev.preventDefault()},{passive:false});</script></head><body>
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+.board-box.wood{border:0!important;border-image:none!important;border-radius:4px!important}
+.board-box{border-radius:4px}
+.board-wrap{margin:16px 13px}
+</style><style>html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}input,textarea,select{font-size:max(16px,1em)!important}</style><script>/* منع التكبير: الشاشة ثابتة زي الألعاب */["gesturestart","gesturechange","gestureend"].forEach(function(e){document.addEventListener(e,function(ev){ev.preventDefault()},{passive:false})});document.addEventListener("touchmove",function(ev){if(ev.touches.length>1)ev.preventDefault()},{passive:false});</script></head><body>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -1305,13 +1309,6 @@ const TIERS=[['٤٫٩٩',600],['٧٫٩٩',1500],['٩٫٩٩',3000],['١٤٫٩٩',
 let DROPS={},EVENTS=[];
 const TOKS=[
  {id:'tayb',name:'حجر الطيبين',price:0,stand:1},
- {id:'dot',name:'دائرة',price:0},
- {id:'star',name:'نجمة',price:500},
- {id:'gemt',name:'ألماسة',price:30,gem:true},
- {id:'palm',name:'نخلة',price:1200},
- {id:'pawn',name:'البيدق',price:1500,stand:1},
- {id:'shield',name:'الدرع',price:2000,stand:1},
- {id:'crown',name:'التاج',price:40,gem:true,stand:1},
  {id:'fire',name:'شبّة نار',price:1200,season:'winter'},
  {id:'lantern',name:'فانوس',price:1200,season:'ramadan'}
 ];
@@ -2952,10 +2949,13 @@ function startMode2(m){
 window.ROT=0;
 function viewCi(players){const m=meCi();if(m>=0)return m;const h=players.find(p=>p.kind==='local');return h?h.ci:players[0].ci}
 function setRot(players){window.ROT=(3-viewCi(players)+4)%4;$('board').style.transform=`rotate(${window.ROT*90}deg)`;$('board').querySelectorAll('.midTxt').forEach(t=>t.setAttribute('transform',`rotate(${-window.ROT*90} 7.5 7.5)`));$('board').querySelectorAll('.seaFlow').forEach(g=>g.setAttribute('class','seaFlow sf'+window.ROT+(g.classList.contains('sfb')?' sfb':'')))}
+// إطار اللوحة: طبقات دقيقة حول اللوحة (خيط ذهبي، خشب مصقول بحافة فاتحة، وظل) — ما يغيّر مقاس اللوحة فما يصير فراغ
+function boardFrame(th,wood){const f=wood?['#c9a24a','#4a2a14','#6e4426','#1c0e05']:[th.frame[0],th.frame[1],th.frame[1],'#0008'];
+  return [`0 0 0 1px #0007`,`0 0 0 3px ${f[0]}`,`0 0 0 4px #0006`,`0 0 0 9px ${f[1]}`,`0 0 0 11px ${f[2]}`,`0 0 0 12px ${f[0]}aa`,`0 0 0 13px ${f[3]}`,`0 20px 38px -8px #000c`].join(',')}
 function buildPieces(players){
   setRot(players);
   drawBoard(board,TH());
-  const th=TH(),wood=['classic','kashta'].includes(th.id);$('boardBox').classList.toggle('wood',wood);$('boardBox').style.boxShadow=wood?'0 22px 44px -10px #000e':`0 18px 40px -12px #000c,0 0 0 6px ${th.frame[0]},0 0 0 10px ${th.frame[1]}`;
+  const th=TH(),wood=['classic','kashta'].includes(th.id);$('boardBox').classList.toggle('wood',wood);$('boardBox').style.boxShadow=boardFrame(th,wood);
   lockLayer=el('g',{},board);lockKey='';
   tokLayer=el('g',{},board);tokEls={};
   players.forEach(p=>{
