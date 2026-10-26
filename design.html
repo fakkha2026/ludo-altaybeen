@@ -643,6 +643,24 @@ svg#board{width:100%;height:100%;display:block}
 .spin{display:inline-block;width:16px;height:16px;border:3px solid #3a240855;border-top-color:#3a2408;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}
 @keyframes spin{to{transform:rotate(1turn)}}
 .mode .fee{font-size:.72rem;flex-wrap:wrap;justify-content:center;text-align:center}
+/* بعد جوائز الصدارة: صورة الفايز بإطاره الجديد */
+#frameBox .card{text-align:center;background:radial-gradient(110% 70% at 50% 38%,#3a2c12,var(--panel) 72%);overflow:hidden;position:relative}
+#frameBox.r2 .card{background:radial-gradient(110% 70% at 50% 38%,#2c3442,var(--panel) 72%)}
+#frameBox.r3 .card{background:radial-gradient(110% 70% at 50% 38%,#3a2418,var(--panel) 72%)}
+#frameBox h2{color:#ffe7a0;text-shadow:0 0 16px #ffd76a99;margin-bottom:0}
+#frameBox.r2 h2{color:#eef3ff;text-shadow:0 0 14px #dfe8ff88}#frameBox.r3 h2{color:#ffd2b0;text-shadow:0 0 14px #f0a06688}
+.fr-stage{position:relative;height:230px;display:grid;place-items:center;margin:6px 0 2px}
+.fr-rays{position:absolute;left:50%;top:50%;width:420px;height:420px;margin:-210px;border-radius:50%;
+  background:repeating-conic-gradient(from 0deg,#ffd76a33 0 8deg,transparent 8deg 22deg);-webkit-mask:radial-gradient(closest-side,#000 30%,transparent);mask:radial-gradient(closest-side,#000 30%,transparent);animation:frSpin 14s linear infinite,frIn .8s ease-out both}
+#frameBox.r2 .fr-rays{background:repeating-conic-gradient(from 0deg,#e6eeff30 0 8deg,transparent 8deg 22deg)}
+#frameBox.r3 .fr-rays{background:repeating-conic-gradient(from 0deg,#f0a06630 0 8deg,transparent 8deg 22deg)}
+.fr-av{width:104px;height:104px;border-radius:50%;display:grid;place-items:center;font-size:3.4rem;background:var(--night);animation:frPop .9s .15s cubic-bezier(.2,1.5,.4,1) both}
+.fr-av img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.fr-name{font-weight:800;font-size:1.15rem;color:var(--ink);margin-top:6px;animation:frIn .5s .7s both}
+.fr-sub{color:var(--muted);font-weight:700;font-size:.92rem;margin:4px 0 12px;animation:frIn .5s .9s both}
+@keyframes frSpin{to{transform:rotate(1turn)}}
+@keyframes frIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes frPop{from{opacity:0;transform:scale(.3) rotate(-12deg)}to{opacity:1;transform:scale(1) rotate(0)}}
 /* صندوق الهدية: تصميم المطوّر (صندوق زجاج بنيون بنفسجي وأزرق) */
 .gbx{position:relative;width:250px;aspect-ratio:10/9;margin:0 auto;cursor:pointer;-webkit-tap-highlight-color:transparent;--gc:#a46bff;--gb:#4fd2ff}
 .gbx .gb-glow{position:absolute;left:12%;right:12%;top:22%;bottom:4%;border-radius:50%;background:radial-gradient(closest-side,#a46bff66,#4fd2ff22 60%,transparent);filter:blur(6px);animation:gbGlow 2.2s ease-in-out infinite}
@@ -1306,6 +1324,15 @@ body.ingame.nightg #starFx{opacity:1}
       <p class="note" id="gfMsg" style="font-size:1rem;color:var(--ink)" hidden></p>
       <button class="btn sand" id="gfOk" type="button">شكراً 🤍</button>
     </div>
+  </div>
+</div>
+<div class="overlay" id="frameBox" hidden style="z-index:46">
+  <div class="card">
+    <h2 id="frT">شكلك الجديد 👑</h2>
+    <div class="fr-stage"><div class="fr-rays"></div><span id="frAvW"></span></div>
+    <div class="fr-name" id="frName"></div>
+    <p class="fr-sub" id="frSub"></p>
+    <button class="btn sand" id="frOk" type="button">يا سلام 😎</button>
   </div>
 </div>
 <div class="overlay" id="tutBox" hidden>
@@ -3742,7 +3769,7 @@ const GOT=new Set;
 function giftListen(c){c.fs.collection('gifts').where('to','==',MYUID).onSnapshot(sn=>{sn.docs.forEach(d=>{if(GOT.has(d.id))return;GOT.add(d.id);
     if(SV()){api('claim',{id:d.id}).then(x=>{
         if(x.dice){const dc=DICE.find(z=>z.id===x.dice);if(dc){try{if(!$('shop').hidden)renderShop()}catch(e){}showGift('نرد '+dc.name+(x.had?' (كان عندك)':''),x.msg||'',dc,x.from)}return}
-        const parts=[];if(x.c)parts.push(toAr(x.c.toLocaleString('en-US'))+' عملة');if(x.g)parts.push(toAr(x.g.toLocaleString('en-US'))+' جوهرة');if(parts.length)showGift(parts.join(' و'),x.msg||'',null,x.from)}).catch(()=>{GOT.delete(d.id)});return}
+        const parts=[];if(x.c)parts.push(toAr(x.c.toLocaleString('en-US'))+' عملة');if(x.g)parts.push(toAr(x.g.toLocaleString('en-US'))+' جوهرة');if(parts.length)showGift(parts.join(' و'),x.msg||'',null,x.from,x.r)}).catch(()=>{GOT.delete(d.id)});return}
     c.fs.runTransaction(async t=>{const x=await t.get(d.ref);if(!x.exists)throw 0;t.delete(d.ref);return x.data()}).then(x=>{
       let msg=String(x.msg||''),dc=null;
       if(msg.startsWith(DG)){const e=msg.indexOf('\u0001',DG.length);dc=DICE.find(z=>z.id===msg.slice(DG.length,e>0?e:undefined))||null;msg=e>0?msg.slice(e+1):''}
@@ -3753,10 +3780,23 @@ function giftListen(c){c.fs.collection('gifts').where('to','==',MYUID).onSnapsho
       const parts=[];if(cn)parts.push(toAr(cn.toLocaleString('en-US'))+' عملة');if(gm)parts.push(toAr(gm.toLocaleString('en-US'))+' جوهرة');
       showGift(parts.join(' و'),msg);
     }).catch(()=>{})})},()=>{})}
+// بعد آخر صندوق من جوائز الصدارة: تطلع صورة الفايز وعليها إطاره
+let FR_PEND=0;
+function showFrame(rank){if(!rank)return;const box=$('frameBox');box.className='overlay r'+rank;
+  const d=new Date(Date.now()+108e5),mon=MONTHS_AR[d.getUTCMonth()];
+  $('frT').textContent=['شكلك الجديد 👑','شكلك الجديد 🥈','شكلك الجديد 🥉'][rank-1];
+  const av=document.createElement('span');av.className='fr-av';avSet(av,W.av,myPic());
+  const w=$('frAvW');w.innerHTML='';w.appendChild(bdgWrap(av,rank));
+  $('frName').textContent=safeName(String((W.nick||'').trim()||'لاعب').slice(0,14));
+  $('frSub').textContent='الإطار '+['الذهبي','الفضي','البرونزي'][rank-1]+' حول صورتك طول شهر '+mon+'، في الصدارة وداخل اللعب والغرف';
+  box.hidden=false;
+  setTimeout(()=>{try{const r=w.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+    burst(x,y,rank===1?['#fff6c8','#ffd76a','#e9c46a','#fff']:rank===2?['#fff','#e6eeff','#b8c4d8']:['#ffd2b0','#f0a066','#c47a4a','#fff'],60,'star',10);SFX.home()}catch(e){}},500)}
+$('frOk').onclick=()=>{$('frameBox').hidden=true;setMeBdg()};
 // صندوق الهدية: يوصل مقفل، واللاعب يضغط ويفتحه
 const GQ=[];let gfBusy=false,gfOpening=false;
-function showGift(what,msg,dice,from){GQ.push({what,msg,dice,from});if(!gfBusy)nextGift()}
-function nextGift(){const g=GQ.shift();if(!g){gfBusy=false;return}gfBusy=true;gfOpening=false;
+function showGift(what,msg,dice,from,r){if(r)FR_PEND=Math.max(FR_PEND?Math.min(FR_PEND,r):r,0);GQ.push({what,msg,dice,from});if(!gfBusy)nextGift()}
+function nextGift(){const g=GQ.shift();if(!g){gfBusy=false;if(FR_PEND){const r=FR_PEND;FR_PEND=0;setTimeout(()=>showFrame(r),200)}return}gfBusy=true;gfOpening=false;
   $('gfFrom').textContent=g.from==='ludo'?'من 🏆 لودو الطيبين':'من 🛡️ المطوّر';$('gfWhat').textContent=g.what;$('gfMsg').textContent=g.msg;$('gfMsg').hidden=!g.msg;
   const pz=$('gfPrize');pz.innerHTML='';
   if(g.dice){const sv=el('svg',{viewBox:'0 0 100 100',width:86,height:86});diceSvg(g.dice,6,sv);pz.appendChild(sv)}
