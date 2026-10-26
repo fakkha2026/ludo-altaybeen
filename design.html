@@ -661,6 +661,23 @@ svg#board{width:100%;height:100%;display:block}
 @keyframes frSpin{to{transform:rotate(1turn)}}
 @keyframes frIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes frPop{from{opacity:0;transform:scale(.3) rotate(-12deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+/* موجة نور تطلع من الصورة، ولمعة على الإطار، وبعدها غبار ذهبي يتساقط */
+#frameBox{--fc:#ffd76a;--fl:#fff3c4}#frameBox.r2{--fc:#dfe8ff;--fl:#ffffff}#frameBox.r3{--fc:#f0a066;--fl:#ffd8bc}
+.fr-wave{position:absolute;left:50%;top:50%;width:110px;height:110px;margin:-55px;border-radius:50%;pointer-events:none;opacity:0;
+  box-shadow:0 0 0 3px var(--fl),0 0 24px 8px var(--fc),inset 0 0 22px 6px var(--fc)}
+#frameBox.go .fr-wave{animation:frWave 1.3s .55s cubic-bezier(.15,.7,.3,1) both}
+#frameBox.go .fr-wave.w2{animation-delay:.8s;animation-duration:1.5s}
+.fr-flash{position:absolute;left:50%;top:50%;width:140px;height:140px;margin:-70px;border-radius:50%;pointer-events:none;opacity:0;background:radial-gradient(circle,var(--fl),var(--fc) 30%,transparent 70%)}
+#frameBox.go .fr-flash{animation:frFlash .9s .5s ease-out both}
+#frameBox.go .fr-av+.bdg,#frameBox.go .bdg{animation:frGlint 1s .6s ease-out both,bdGlow1 2.4s 1.6s ease-in-out infinite}
+@keyframes frWave{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(5.5)}}
+@keyframes frFlash{0%{opacity:0;transform:scale(.6)}25%{opacity:1;transform:scale(1.2)}100%{opacity:0;transform:scale(2.4)}}
+@keyframes frGlint{0%{filter:brightness(1)}30%{filter:brightness(2.4) drop-shadow(0 0 18px var(--fc))}100%{filter:brightness(1) drop-shadow(0 2px 3px #0008)}}
+.fr-dust{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:inherit}
+.fr-dust i{position:absolute;top:-10px;width:var(--s,3px);height:var(--s,3px);border-radius:50%;background:var(--fl);box-shadow:0 0 6px 1px var(--fc);opacity:0;animation:frFall var(--d,6s) linear var(--dl,0s) infinite}
+.fr-dust i:nth-child(3n){border-radius:1px;transform:rotate(45deg)}
+@keyframes frFall{0%{opacity:0;transform:translate(0,0)}10%{opacity:1}50%{opacity:.35}60%{opacity:1}90%{opacity:.8}100%{opacity:0;transform:translate(var(--x,10px),560px)}}
+@media (prefers-reduced-motion:reduce){.fr-dust,.fr-wave,.fr-flash{display:none}}
 /* صندوق الهدية: تصميم المطوّر (صندوق زجاج بنيون بنفسجي وأزرق) */
 .gbx{position:relative;width:250px;aspect-ratio:10/9;margin:0 auto;cursor:pointer;-webkit-tap-highlight-color:transparent;--gc:#a46bff;--gb:#4fd2ff}
 .gbx .gb-glow{position:absolute;left:12%;right:12%;top:22%;bottom:4%;border-radius:50%;background:radial-gradient(closest-side,#a46bff66,#4fd2ff22 60%,transparent);filter:blur(6px);animation:gbGlow 2.2s ease-in-out infinite}
@@ -1329,7 +1346,8 @@ body.ingame.nightg #starFx{opacity:1}
 <div class="overlay" id="frameBox" hidden style="z-index:46">
   <div class="card">
     <h2 id="frT">شكلك الجديد 👑</h2>
-    <div class="fr-stage"><div class="fr-rays"></div><span id="frAvW"></span></div>
+    <div class="fr-dust" id="frDust"></div>
+    <div class="fr-stage"><div class="fr-rays"></div><div class="fr-flash"></div><div class="fr-wave"></div><div class="fr-wave w2"></div><span id="frAvW"></span></div>
     <div class="fr-name" id="frName"></div>
     <p class="fr-sub" id="frSub"></p>
     <button class="btn sand" id="frOk" type="button">يا سلام 😎</button>
@@ -3789,9 +3807,11 @@ function showFrame(rank){if(!rank)return;const box=$('frameBox');box.className='
   const w=$('frAvW');w.innerHTML='';w.appendChild(bdgWrap(av,rank));
   $('frName').textContent=safeName(String((W.nick||'').trim()||'لاعب').slice(0,14));
   $('frSub').textContent='الإطار '+['الذهبي','الفضي','البرونزي'][rank-1]+' حول صورتك طول شهر '+mon+'، في الصدارة وداخل اللعب والغرف';
-  box.hidden=false;
-  setTimeout(()=>{try{const r=w.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
-    burst(x,y,rank===1?['#fff6c8','#ffd76a','#e9c46a','#fff']:rank===2?['#fff','#e6eeff','#b8c4d8']:['#ffd2b0','#f0a066','#c47a4a','#fff'],60,'star',10);SFX.home()}catch(e){}},500)}
+  const du=$('frDust');du.innerHTML='';for(let i=0;i<34;i++){const e=document.createElement('i');
+    e.style.left=(Math.random()*100)+'%';e.style.setProperty('--s',(2+Math.random()*3).toFixed(1)+'px');e.style.setProperty('--d',(5+Math.random()*4).toFixed(1)+'s');
+    e.style.setProperty('--dl',(1.2+Math.random()*5).toFixed(1)+'s');e.style.setProperty('--x',((Math.random()-.5)*60).toFixed(0)+'px');du.appendChild(e)}
+  box.classList.remove('go');box.hidden=false;void box.offsetWidth;box.classList.add('go');
+  setTimeout(()=>{try{SFX.home()}catch(e){}},550)}
 $('frOk').onclick=()=>{$('frameBox').hidden=true;setMeBdg()};
 // صندوق الهدية: يوصل مقفل، واللاعب يضغط ويفتحه
 const GQ=[];let gfBusy=false,gfOpening=false;
