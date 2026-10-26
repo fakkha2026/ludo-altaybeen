@@ -1408,7 +1408,7 @@ function bdgWrap(av,rank){if(!rank)return av;const w=document.createElement('spa
 function setMeBdg(){const a=$('meAv');if(!a)return;a.querySelectorAll('.bdg').forEach(x=>x.remove());
   const rk=FORCE_RANK||prevRank({id:MYUID,pid:W.pid});a.classList.toggle('hasb',!!rk);if(rk)a.appendChild(bdgEl(rk))}
 const gemI='<span class="gem" style="width:14px;height:14px;display:inline-block;vertical-align:-2px"></span>';
-function renderPrize(){const box=$('lbPrize');if(!box)return;box.innerHTML='<div class="lbc-h">🎁 جوائز أول ٣ آخر الشهر</div>';
+function renderPrize(){const box=$('lbPrize');if(!box)return;box.innerHTML='<div class="lbc-h">🎁 جوائز الصدارة</div>';
   const row=document.createElement('div');row.className='lbp-row';
   [[2,1000],[1,2000],[3,500]].forEach(([rk,g])=>{const c=document.createElement('div');c.className='lbp'+(rk===1?' first':'');
     const av=document.createElement('span');av.className='lav';av.textContent='👤';
