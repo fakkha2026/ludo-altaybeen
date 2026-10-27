@@ -1102,8 +1102,11 @@ body.ingame.nightg #starFx{opacity:1}
     <button class="btn teal" id="vbRoll" type="button" style="font-size:1rem;padding:8px">🎲 قلّبه</button>
     <div class="pf-lbl" style="text-align:start">وين ينزل؟</div>
     <div class="vb-where" id="vbWhere"></div>
-    <div class="pf-lbl" style="text-align:start">السعر</div>
+    <div class="pf-lbl" style="text-align:start">طريقة البيع</div>
+    <div class="vb-where" id="vbCur"></div>
+    <div id="vbPriceW"><div class="pf-lbl" style="text-align:start;margin:12px 0 6px">السعر</div>
     <div class="vb-where" id="vbPrice"></div>
+    <input class="field" id="vbPriceIn" type="number" inputmode="numeric" min="1" placeholder="أو اكتب سعر ثاني" style="text-align:start;margin-top:6px"></div>
     <button class="btn sand" id="vbGo" type="button">انشره للبيع 🛒</button>
     <button class="btn teal" id="vbGift" type="button" style="font-size:1rem;padding:8px">🎁 أرسله هدية</button>
     <button class="ghost" id="vbHide" type="button" style="color:#ff9d8a">رجّعه للخزنة 🔒</button>
@@ -1275,12 +1278,12 @@ body.ingame.nightg #starFx{opacity:1}
       </div>
       <div class="adm-card">
         <b>🎲 خزنة النرد <small style="color:var(--muted);font-weight:700">· ما يشوفها إلا أنت</small></b>
-        <p class="note" style="margin:0;text-align:start">اضغط على أي نرد، اختر الموسم أو الفعالية والسعر، وينزل في المتجر للكل.</p>
+        <p class="note" style="margin:0;text-align:start">اضغط على أي نرد، اختر وين ينزل (المتجر أو موسم)، وطريقة البيع: مجاني أو بالعملات أو بالجواهر، أو أرسله هدية للاعب.</p>
         <div class="grid" id="vaultGrid"></div>
       </div>
       <div class="adm-card">
         <b>♟️ خزنة الأحجار <small style="color:var(--muted);font-weight:700">· ما يشوفها إلا أنت</small></b>
-        <p class="note" style="margin:0;text-align:start">اضغط على أي حجر، اختر الموسم أو المتجر العادي والسعر، وينزل في المتجر للكل يشترونه.</p>
+        <p class="note" style="margin:0;text-align:start">اضغط على أي حجر، اختر وين ينزل (المتجر أو موسم)، وطريقة البيع: مجاني أو بالعملات أو بالجواهر، أو أرسله هدية للاعب.</p>
         <div class="grid" id="tvaultGrid"></div>
       </div>
       <div class="adm-card">
@@ -1339,7 +1342,7 @@ body.ingame.nightg #starFx{opacity:1}
 </div>
 <div class="overlay" id="sendDiceBox" hidden style="z-index:130">
   <div class="card" style="text-align:center">
-    <h2>🎁 أرسل نرد هدية</h2>
+    <h2 id="sdT">🎁 أرسل نرد هدية</h2>
     <div style="display:flex;justify-content:center"><svg id="sdDice" viewBox="0 0 100 100" width="96" height="96"></svg></div>
     <div class="pay-amt" id="sdName" style="font-size:1.4rem"></div>
     <input class="field" id="sdUser" maxlength="14" placeholder="اسم المستخدم" autocapitalize="off" spellcheck="false" style="text-align:start">
@@ -1469,7 +1472,7 @@ const TOKS=[
  {id:'lantern',name:'فانوس',price:1200,season:'ramadan'}
 ];
 const TVAULT=TOKS.filter(t=>t.vault);TVAULT.forEach(t=>t.coin=1);
-const CTIERS=[5000,10000,20000,50000,100000];
+const CTIERS=[5000,10000,20000,50000,100000],GTIERS=[50,100,200,500,1000],VCUR=['free','c','g'];
 const THEMES=[
  {id:'classic',name:'كلاسيك',price:0,bg:'#f6ead2',line:'#7a5a36',safeBg:'#e2cfa8',safe:'#a07a46',frame:['#8a6a3e','#5a4026']},
  {id:'sand',name:'صحراوي',price:1000,bg:'#ecd3a0',line:'#9a6b33',safeBg:'#d6b072',safe:'#7a4f1c',frame:['#b07a3c','#6e4520']},
@@ -2789,17 +2792,18 @@ setTimeout(iapBoot,0);
 const KINDS={d:{list:DICE,own:'ownD',sel:'dice'},t:{list:TOKS,own:'ownT',sel:'tok'},h:{list:THEMES,own:'ownH',sel:'theme'}};
 function prTxt(pid,sar){const p=pid&&IAP.price[pid];return p||sar+' ر.س'}
 function sarOf(it){if(!it.price)return '';const v=it.gem?it.price*100:it.price;return v<=600?'٤٫٩٩':v<=1500?'٧٫٩٩':v<=3000?'٩٫٩٩':v<=5000?'١٤٫٩٩':'١٩٫٩٩'}
-function priceHtml(it,own,kind){if(own)return '<span class="pr own">عندك ✓</span>';if(it.coin)return `<span class="pr"><span class="coin" style="width:14px;height:14px;display:inline-block;vertical-align:-2px"></span> ${fmt(it.price)}</span>`;if(!it.price)return '<span class="pr own">مجاني</span>';return `<span class="pr">${prTxt(itemPid(kind,it.id),sarOf(it))}</span>`}
+function priceHtml(it,own,kind){if(own)return '<span class="pr own">عندك ✓</span>';if(it.gemc)return `<span class="pr"><span class="gem" style="width:14px;height:14px"></span> ${fmt(it.price)}</span>`;if(it.cur==='free')return '<span class="pr own">مجاني 🎁</span>';if(it.coin)return `<span class="pr"><span class="coin" style="width:14px;height:14px;display:inline-block;vertical-align:-2px"></span> ${fmt(it.price)}</span>`;if(!it.price)return '<span class="pr own">مجاني</span>';return `<span class="pr">${prTxt(itemPid(kind,it.id),sarOf(it))}</span>`}
 function buy(it,kind,sure){
   const K=KINDS[kind],own=W[K.own];
   if(own.includes(it.id)){W[K.sel]=it.id;save();renderShop();toast('تم الاختيار');return}
   if(!sure&&(it.fx||it.stand||kind==='d')){openItem(it,kind);return}
-  if(!it.price){own.push(it.id);W[K.sel]=it.id;save();renderShop();return}
-  if(it.coin){if((+W.coins||0)<it.price){toast('عملاتك ما تكفي، العب واكسب أكثر 💪');return}
+  if(it.coin||it.gemc||it.cur==='free'){const wk=it.gemc?'gems':'coins';
+    if(it.price&&(+W[wk]||0)<it.price){toast(it.gemc?'جواهرك ما تكفي 💎':'عملاتك ما تكفي، العب واكسب أكثر 💪');return}
     const done=()=>{if(!own.includes(it.id))own.push(it.id);W[K.sel]=it.id;$('itemBox').hidden=true;save();renderWallet();renderShop();
-      burst(innerWidth/2,innerHeight/2,['#efd29a','#33c2b0','#ff7b5f','#fff'],40,'star',8);SFX.home();toast('اشتريت '+it.name+' واخترته 🎉')};
+      burst(innerWidth/2,innerHeight/2,['#efd29a','#33c2b0','#ff7b5f','#fff'],40,'star',8);SFX.home();toast((it.price?'اشتريت ':'أخذت ')+it.name+' واخترته 🎉')};
     if(SV()){api('buyc',{kind,id:it.id}).then(done).catch(e=>toast(apiErr(e)));return}
-    W.coins=(+W.coins||0)-it.price;done();return}
+    if(it.price)W[wk]=(+W[wk]||0)-it.price;done();return}
+  if(!it.price){own.push(it.id);W[K.sel]=it.id;save();renderShop();return}
   const sv=el('svg',{viewBox:'0 0 100 100',width:90,height:90});
   if(kind==='d')diceSvg(it,6,sv);else if(kind==='t')tokSvg(it.id,sv);else{sv.setAttribute('width',150);sv.setAttribute('height',150);sv.style.borderRadius='12px';drawBoard(sv,it)}
   payOpen({node:sv,amt:it.name,sub:{d:'شكل نرد',t:'شكل أحجار',h:'ثيم لوحة'}[kind],sar:sarOf(it),pid:itemPid(kind,it.id),api:{kind,id:it.id},done:()=>{
@@ -2825,8 +2829,8 @@ function openItem(it,kind){itemCur=[it,kind];$('itTitle').textContent=it.name;
   const box=$('itShow');box.innerHTML='';
   if(kind==='d'){box.appendChild(cube3(it,92))}
   else COL.forEach(c=>{const sv=el('svg',{viewBox:'-.52 -.52 1.04 1.04',width:72,height:72});const g=el('g',{},sv);tokenInner(g,it.id,c);box.appendChild(sv)});
-  $('itTry').hidden=kind!=='d';$('itGift').hidden=!(IS_ADMIN&&kind==='d');
-  $('itBuy').innerHTML=it.coin?`اشترِ بـ <span class="coin" style="width:18px;height:18px;display:inline-block;vertical-align:-2px"></span> ${fmt(it.price)}`:`اشترِ بـ ${prTxt(itemPid(kind,it.id),sarOf(it))}`;
+  $('itTry').hidden=kind!=='d';$('itGift').hidden=!(IS_ADMIN&&(kind==='d'||kind==='t'));
+  $('itBuy').innerHTML=it.cur==='free'?'خذه مجاناً 🎁':it.gemc?`اشترِ بـ <span class="gem" style="width:18px;height:18px"></span> ${fmt(it.price)}`:it.coin?`اشترِ بـ <span class="coin" style="width:18px;height:18px;display:inline-block;vertical-align:-2px"></span> ${fmt(it.price)}`:`اشترِ بـ ${prTxt(itemPid(kind,it.id),sarOf(it))}`;
   $('itemBox').hidden=false}
 function tryItem(){const [it]=itemCur,card=$('itemBox').querySelector('.card').getBoundingClientRect(),from=elPt($('itTry'));
   throwDice(-1,1+Math.floor(Math.random()*6),'#c0392b',{skin:it,from,area:{left:card.left,top:card.top+card.height*.05,width:card.width,height:card.height*.45},back:$('itTry'),hold:700});SFX.roll()}
@@ -3728,10 +3732,11 @@ function applyDrops(o){
   SEASONS.length=0;
   BASE_SEASONS.forEach(z=>{const e=EVENTS.find(x=>x.base&&x.id===z.id);if(e&&e.off)return;SEASONS.push(e?mkSz(e,z):z)});
   EVENTS.filter(e=>!e.base).forEach(e=>SEASONS.push(mkSz(e)));
-  VAULT.forEach(d=>{const p=DROPS[d.id],ok=p&&(p.where==='shop'||SEASONS.some(z=>z.id===p.where));
-    d.hidden=ok?0:1;d.season=ok&&p.where!=='shop'?p.where:undefined;d.price=ok?(+p.price||600):0});
-  TVAULT.forEach(d=>{const p=DROPS['t:'+d.id],ok=p&&(p.where==='shop'||SEASONS.some(z=>z.id===p.where));
-    d.coin=1;d.hidden=ok?0:1;d.season=ok&&p.where!=='shop'?p.where:undefined;d.price=ok?(+p.price||10000):0});
+  const setV=(d,p,defCur)=>{const ok=p&&(p.where==='shop'||SEASONS.some(z=>z.id===p.where)),cur=p&&VCUR.includes(p.cur)?p.cur:defCur;
+    d.hidden=ok?0:1;d.season=ok&&p.where!=='shop'?p.where:undefined;d.cur=ok?cur:undefined;d.coin=ok&&cur==='c'?1:0;d.gemc=ok&&cur==='g'?1:0;
+    d.price=!ok||cur==='free'?0:(+p.price||(cur==='g'?100:cur==='c'?10000:600))};
+  VAULT.forEach(d=>setV(d,DROPS[d.id],'sar'));
+  TVAULT.forEach(d=>setV(d,DROPS['t:'+d.id],'c'));
   if(!$('shop').hidden)renderShop();renderSeasonBanner();if(IS_ADMIN)renderVault()}
 const isD=x=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x);
 function mkSz(e,bz){const z={id:e.id,ev:bz?0:1,base:!!bz,name:String(e.name||(bz&&bz.name)||'موسم').slice(0,24),emoji:String(e.emoji||(bz&&bz.emoji)||'🎉').slice(0,4),desc:String(e.desc!=null&&e.desc!==''?e.desc:(bz?bz.desc:'موسم لفترة محدودة')).slice(0,50)};
@@ -3742,10 +3747,10 @@ function whereName(w){if(w==='shop')return 'المتجر العادي';const z=S
 function renderVault(){const g=$('vaultGrid');if(!g)return;g.innerHTML='';
   VAULT.forEach(d=>{const b=itemCard(d,'d',false,false,()=>openVault(d));b.querySelector('.pr').outerHTML='';
     const p=DROPS[d.id],t=document.createElement('span');t.className='vtag'+(d.hidden?'':' live');t.textContent=d.hidden?'🔒 مخفي':'🟢 '+whereName(p.where);b.appendChild(t);
-    if(!d.hidden)b.insertAdjacentHTML('beforeend',`<span class="pr">${sarOf(d)} ر.س</span>`);g.appendChild(b)});
+    if(!d.hidden)b.insertAdjacentHTML('beforeend',priceHtml(d,false,'d'));g.appendChild(b)});
   const tg=$('tvaultGrid');if(tg){tg.innerHTML='';TVAULT.forEach(d=>{const b=itemCard(d,'t',false,false,()=>openVault(d,'t'));b.querySelector('.pr').outerHTML='';
     const p=DROPS['t:'+d.id],t=document.createElement('span');t.className='vtag'+(d.hidden?'':' live');t.textContent=d.hidden?'🔒 مخفي':'🟢 '+whereName(p.where);b.appendChild(t);
-    if(!d.hidden)b.insertAdjacentHTML('beforeend',`<span class="pr"><span class="coin" style="width:14px;height:14px;display:inline-block;vertical-align:-2px"></span> ${fmt(d.price)}</span>`);tg.appendChild(b)})}
+    if(!d.hidden)b.insertAdjacentHTML('beforeend',priceHtml(d,false,'t'));tg.appendChild(b)})}
   renderSzAdm()}
 function renderSzAdm(){const l=$('evList');if(!l)return;l.innerHTML='';
   if(!SEASONS.length)l.innerHTML='<p class="note" style="margin:0">ما فيه مواسم للحين.</p>';
@@ -3771,20 +3776,26 @@ function szEdit(z){SZE=z||null;$('szFormT').textContent=z?'تعديل: '+z.name:
   $('szForm').hidden=false;$('szNew').hidden=true;$('szForm').scrollIntoView({behavior:'smooth',block:'center'})}
 function szClose(){SZE=null;$('szForm').hidden=true;$('szNew').hidden=false}
 $('szNew').onclick=()=>szEdit(null);$('szCancel').onclick=szClose;
-let vbCur=null,vbWhere='',vbPrice=600,vbT=null,vbKind='d';
-function openVault(d,kind){vbCur=d;vbKind=kind||'d';const p=DROPS[vKey(d,vbKind)];vbWhere=p?p.where:'';vbPrice=p?(+p.price||(vbKind==='t'?10000:600)):(vbKind==='t'?10000:600);
+let vbCur=null,vbWhere='',vbPrice=10000,vbCurr='c',vbT=null,vbKind='d';
+function openVault(d,kind){vbCur=d;vbKind=kind||'d';const p=DROPS[vKey(d,vbKind)];vbWhere=p?p.where:'';vbCurr=p&&VCUR.includes(p.cur)?p.cur:'c';vbPrice=p&&+p.price&&p.cur===vbCurr?+p.price:(vbCurr==='g'?100:10000);$('vbPriceIn').value='';
   $('vbTitle').textContent=d.name+(d.fx?' ✨':'');$('vbSub').textContent=d.hidden?'🔒 مخفي عن اللاعبين':'🟢 معروض في: '+whereName(p.where);
-  const vs=$('vbDice');if(vbKind==='t'){tokSvg(d.id,vs)}else{vs.setAttribute('viewBox','0 0 100 100');diceSvg(d,6,vs)}$('vbRoll').hidden=$('vbGift').hidden=vbKind==='t';$('vbHide').hidden=d.hidden;$('vbGo').textContent=d.hidden?'انشره للبيع 🛒':'احفظ التعديل ✓';paintVb();$('vaultBox').hidden=false}
+  const vs=$('vbDice');if(vbKind==='t'){tokSvg(d.id,vs)}else{vs.setAttribute('viewBox','0 0 100 100');diceSvg(d,6,vs)}$('vbRoll').hidden=vbKind==='t';$('vbHide').hidden=d.hidden;$('vbGo').textContent=d.hidden?'انشره للبيع 🛒':'احفظ التعديل ✓';paintVb();$('vaultBox').hidden=false}
 function paintVb(){const w=$('vbWhere');w.innerHTML='';
   [['shop','🛒 المتجر العادي']].concat(SEASONS.filter(z=>{const r=seasonRange(z);return !z.ev||r}).map(z=>[z.id,z.emoji+' '+z.name])).forEach(([id,t])=>{
     const b=document.createElement('button');b.type='button';b.textContent=t;b.className=vbWhere===id?'sel':'';b.onclick=()=>{vbWhere=id;paintVb()};w.appendChild(b)});
+  const cu=$('vbCur');cu.innerHTML='';
+  [['free','🆓 مجاني'],['c','🪙 بالعملات'],['g','💎 بالجواهر']].forEach(([id,t])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.className=vbCurr===id?'sel':'';
+    b.onclick=()=>{if(vbCurr!==id){vbCurr=id;vbPrice=id==='g'?100:10000;$('vbPriceIn').value=''}paintVb()};cu.appendChild(b)});
+  $('vbPriceW').hidden=vbCurr==='free';
   const pr=$('vbPrice');pr.innerHTML='';
-  (vbKind==='t'?CTIERS.map(v=>[fmt(v)+' عملة',v]):TIERS.map(([s,v])=>[s+' ر.س',v])).forEach(([s,v])=>{const b=document.createElement('button');b.type='button';b.textContent=s;b.className=vbPrice===v?'sel':'';b.onclick=()=>{vbPrice=v;paintVb()};pr.appendChild(b)})}
+  (vbCurr==='g'?GTIERS.map(v=>[fmt(v)+' جوهرة',v]):CTIERS.map(v=>[fmt(v)+' عملة',v])).forEach(([s,v])=>{const b=document.createElement('button');b.type='button';b.textContent=s;b.className=vbPrice===v&&!$('vbPriceIn').value?'sel':'';b.onclick=()=>{vbPrice=v;$('vbPriceIn').value='';paintVb()};pr.appendChild(b)})}
+$('vbPriceIn').oninput=()=>{const v=Math.floor(+$('vbPriceIn').value||0);if(v>0)vbPrice=v;paintVb()};
 $('vbRoll').onclick=()=>{if(!vbCur)return;clearInterval(vbT);let i=0;SFX.roll&&SFX.roll();vbT=setInterval(()=>{const n=1+Math.floor(Math.random()*6);diceSvg(vbCur,n,$('vbDice'));if(++i>9)clearInterval(vbT)},80)};
 $('vbClose').onclick=()=>{clearInterval(vbT);$('vaultBox').hidden=true};
 $('vbGo').onclick=async()=>{if(!vbCur)return;if(!vbWhere){toast('اختر وين ينزل أول');return}
-  const was=vbCur.hidden,drops=Object.assign({},DROPS);drops[vKey(vbCur,vbKind)]={where:vbWhere,price:vbPrice,ts:Date.now()};
-  if(await admCfg({drops})){$('vaultBox').hidden=true;toast(was?`${vbKind==='t'?'♟️':'🎲'} نزل "${vbCur.name}" في ${whereName(vbWhere)}`:'تم حفظ التعديل ✓')}};
+  const pv=vbCurr==='free'?0:Math.max(1,Math.min(1e9,Math.floor(+vbPrice||0)));if(vbCurr!=='free'&&!pv){toast('اختر السعر');return}
+  const was=vbCur.hidden,drops=Object.assign({},DROPS);drops[vKey(vbCur,vbKind)]={where:vbWhere,cur:vbCurr,price:pv,ts:Date.now()};
+  if(await admCfg({drops})){$('vaultBox').hidden=true;toast(was?`${vbKind==='t'?'♟️':'🎲'} نزل "${vbCur.name}" ${vbCurr==='free'?'مجاناً ':''}في ${whereName(vbWhere)}`:'تم حفظ التعديل ✓')}};
 $('vbHide').onclick=async()=>{if(!vbCur)return;const drops=Object.assign({},DROPS);delete drops[vKey(vbCur,vbKind)];
   if(await admCfg({drops})){$('vaultBox').hidden=true;toast('🔒 رجع "'+vbCur.name+'" للخزنة')}};
 $('evAdd').onclick=async()=>{const e=$('evErr'),name=$('evName').value.trim(),from=$('evFrom').value,to=$('evTo').value,rep=$('evRep').checked;e.textContent='';
@@ -3846,10 +3857,12 @@ function toEn(v){return String(v||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨�
 const GOT=new Set;
 function giftListen(c){c.fs.collection('gifts').where('to','==',MYUID).onSnapshot(sn=>{sn.docs.forEach(d=>{if(GOT.has(d.id))return;GOT.add(d.id);
     if(SV()){api('claim',{id:d.id}).then(x=>{
+        if(x.tok){const tk=TOKS.find(z=>z.id===x.tok);if(tk){if(!W.ownT.includes(tk.id))W.ownT.push(tk.id);try{if(!$('shop').hidden)renderShop()}catch(e){}showGift('حجر '+tk.name+(x.had?' (كان عندك)':''),x.msg||'',null,x.from,0,tk)}return}
         if(x.dice){const dc=DICE.find(z=>z.id===x.dice);if(dc){try{if(!$('shop').hidden)renderShop()}catch(e){}showGift('نرد '+dc.name+(x.had?' (كان عندك)':''),x.msg||'',dc,x.from)}return}
         const parts=[];if(x.c)parts.push(toAr(x.c.toLocaleString('en-US'))+' عملة');if(x.g)parts.push(toAr(x.g.toLocaleString('en-US'))+' جوهرة');if(parts.length)showGift(parts.join(' و'),x.msg||'',null,x.from,x.r)}).catch(()=>{GOT.delete(d.id)});return}
     c.fs.runTransaction(async t=>{const x=await t.get(d.ref);if(!x.exists)throw 0;t.delete(d.ref);return x.data()}).then(x=>{
       let msg=String(x.msg||''),dc=null;
+      if(msg.startsWith(TG)){const e=msg.indexOf('\u0001',TG.length),tk=TOKS.find(z=>z.id===msg.slice(TG.length,e>0?e:undefined));msg=e>0?msg.slice(e+1):'';if(tk){const had=W.ownT.includes(tk.id);if(!had)W.ownT.push(tk.id);save();showGift('حجر '+tk.name+(had?' (كان عندك)':''),msg,null,null,0,tk);return}}
       if(msg.startsWith(DG)){const e=msg.indexOf('\u0001',DG.length);dc=DICE.find(z=>z.id===msg.slice(DG.length,e>0?e:undefined))||null;msg=e>0?msg.slice(e+1):''}
       if(dc){const had=W.ownD.includes(dc.id);if(!had)W.ownD.push(dc.id);save();try{if(!$('shop').hidden)renderShop()}catch(e){}
         showGift('نرد '+dc.name+(had?' (كان عندك)':''),msg,dc);return}
@@ -3875,11 +3888,12 @@ function showFrame(rank){if(!rank)return;const box=$('frameBox');box.className='
 $('frOk').onclick=()=>{$('frameBox').hidden=true;setMeBdg()};
 // صندوق الهدية: يوصل مقفل، واللاعب يضغط ويفتحه
 const GQ=[];let gfBusy=false,gfOpening=false;
-function showGift(what,msg,dice,from,r){if(r)FR_PEND=Math.max(FR_PEND?Math.min(FR_PEND,r):r,0);GQ.push({what,msg,dice,from});if(!gfBusy)nextGift()}
+function showGift(what,msg,dice,from,r,tok){if(r)FR_PEND=Math.max(FR_PEND?Math.min(FR_PEND,r):r,0);GQ.push({what,msg,dice,from,tok});if(!gfBusy)nextGift()}
 function nextGift(){const g=GQ.shift();if(!g){gfBusy=false;if(FR_PEND){const r=FR_PEND;FR_PEND=0;setTimeout(()=>showFrame(r),200)}return}gfBusy=true;gfOpening=false;
   $('gfFrom').textContent=g.from==='ludo'?'من 🏆 لودو الطيبين':'من 🛡️ المطوّر';$('gfWhat').textContent=g.what;$('gfMsg').textContent=g.msg;$('gfMsg').hidden=!g.msg;
   const pz=$('gfPrize');pz.innerHTML='';
-  if(g.dice){const sv=el('svg',{viewBox:'0 0 100 100',width:86,height:86});diceSvg(g.dice,6,sv);pz.appendChild(sv)}
+  if(g.tok){const sv=el('svg',{width:96,height:96});tokSvg(g.tok.id,sv);pz.appendChild(sv)}
+  else if(g.dice){const sv=el('svg',{viewBox:'0 0 100 100',width:86,height:86});diceSvg(g.dice,6,sv);pz.appendChild(sv)}
   else pz.innerHTML='<div style="font-size:3.4rem;line-height:1;filter:drop-shadow(0 0 14px #c9a6ff)">'+(/جوهرة/.test(g.what)&&!/عملة/.test(g.what)?'💎':'🪙')+'</div>';
   $('gfBox').className='gbx idle';$('gfTap').hidden=false;$('gfClosed').hidden=false;$('gfOpen').hidden=true;$('giftBox').hidden=false;
   try{SFX.coin()}catch(e){}}
@@ -3891,11 +3905,11 @@ $('gfBox').onclick=()=>{if(gfOpening)return;gfOpening=true;const b=$('gfBox');b.
     setTimeout(()=>{$('gfOpen').hidden=false},950)},720)};
 $('gfOk').onclick=()=>{$('giftBox').hidden=true;setTimeout(nextGift,250)};
 // المطوّر يرسل نرد هدية
-const DG='\u0001d:';let sdCur=null;
-function openSendDice(d){if(!IS_ADMIN||!d)return;sdCur=d;diceSvg(d,6,$('sdDice'));$('sdName').textContent=d.name;
+const DG='\u0001d:',TG='\u0001t:';let sdCur=null,sdKind='d';
+function openSendDice(d,kind){if(!IS_ADMIN||!d)return;sdCur=d;sdKind=kind||'d';const sv=$('sdDice');if(sdKind==='t')tokSvg(d.id,sv);else{sv.setAttribute('viewBox','0 0 100 100');diceSvg(d,6,sv)}$('sdT').textContent=sdKind==='t'?'🎁 أرسل حجر هدية':'🎁 أرسل نرد هدية';$('sdName').textContent=d.name;
   $('sdErr').textContent='';$('sdErr').style.color='';$('sdGo').disabled=false;$('sendDiceBox').hidden=false;setTimeout(()=>{try{$('sdUser').focus()}catch(e){}},50)}
-$('itGift').onclick=()=>{if(itemCur&&itemCur[1]==='d')openSendDice(itemCur[0])};
-$('vbGift').onclick=()=>{if(vbCur)openSendDice(vbCur)};
+$('itGift').onclick=()=>{if(itemCur)openSendDice(itemCur[0],itemCur[1])};
+$('vbGift').onclick=()=>{if(vbCur)openSendDice(vbCur,vbKind)};
 $('sdClose').onclick=()=>$('sendDiceBox').hidden=true;
 $('sdGo').onclick=async()=>{const er=$('sdErr'),go=$('sdGo');er.style.color='';er.textContent='';if(!IS_ADMIN||!sdCur)return;
   const nm=$('sdUser').value.trim(),msg=$('sdMsg').value.trim();
@@ -3903,7 +3917,7 @@ $('sdGo').onclick=async()=>{const er=$('sdErr'),go=$('sdGo');er.style.color='';e
   if(msg&&badName(msg)){er.textContent='الرسالة فيها كلمة غير لائقة.';return}
   go.disabled=true;er.textContent='لحظة…';
   try{const d=await AU.c.fs.collection('usernames').doc(unKey(nm)).get();if(!d.exists){er.textContent='ما لقينا لاعب بهالاسم.';go.disabled=false;return}
-    const to=d.data().uid,who=d.data().name||nm,tag=DG+sdCur.id+'\u0001';
+    const to=d.data().uid,who=d.data().name||nm,tag=(sdKind==='t'?TG:DG)+sdCur.id+'\u0001';
     await AU.c.fs.collection('gifts').add({to,name:String(who).slice(0,20),c:0,g:0,msg:(tag+msg).slice(0,60),by:MYUID,ts:Date.now()});
     er.style.color='var(--teal)';er.textContent='✔️ انرسل نرد "'+sdCur.name+'" لـ '+who+'، يوصله صندوق هدية أول ما يفتح اللعبة.';$('sdUser').value='';$('sdMsg').value=''}
   catch(e){er.textContent='ما قدرنا نرسل الهدية. جرّب مرة ثانية.'}go.disabled=false};
