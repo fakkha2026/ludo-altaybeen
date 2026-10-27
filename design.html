@@ -1279,6 +1279,11 @@ body.ingame.nightg #starFx{opacity:1}
         <div class="grid" id="vaultGrid"></div>
       </div>
       <div class="adm-card">
+        <b>♟️ خزنة الأحجار <small style="color:var(--muted);font-weight:700">· ما يشوفها إلا أنت</small></b>
+        <p class="note" style="margin:0;text-align:start">اضغط على أي حجر، اختر الموسم أو المتجر العادي والسعر، وينزل في المتجر للكل يشترونه.</p>
+        <div class="grid" id="tvaultGrid"></div>
+      </div>
+      <div class="adm-card">
         <b>🌙 المواسم <small style="color:var(--muted);font-weight:700">· أنت اللي تتحكم فيها</small></b>
         <p class="note" style="margin:0;text-align:start">عدّل اسم أي موسم ووقته وجايزته، أو احذفه، أو أضف موسم جديد. بعدها انشر فيه نرد من الخزنة.</p>
         <div id="evList" style="display:flex;flex-direction:column;gap:6px"></div>
@@ -1446,17 +1451,19 @@ const DICE=[
  {id:'v_monkey',vault:1,hidden:1,name:'القرد',bg:'#cfe3c4',pip:'#3a2418',six:'#e0507a',edge:'#5a7a4a',art:'tx_v_monkey',pp:'cocoa'},
 ];
 const VAULT=DICE.filter(d=>d.vault&&!d.draft);
+const vKey=(d,k)=>k==='t'?'t:'+d.id:d.id;
 // السعر بالريال → قيمة داخلية (نفس جدول sarOf)
 const TIERS=[['٤٫٩٩',600],['٧٫٩٩',1500],['٩٫٩٩',3000],['١٤٫٩٩',5000],['١٩٫٩٩',6000]];
 let DROPS={},EVENTS=[];
 const TOKS=[
  {id:'tayb',name:'حجر الطيبين',price:0,stand:1},
- {id:'shield',name:'الصقر',price:2000,stand:1},
- {id:'gemt',name:'الناقة',price:30,gem:true,stand:1},
- {id:'crown',name:'المحارب',price:40,gem:true,stand:1},
+ {id:'shield',name:'الصقر',vault:1,hidden:1,stand:1},
+ {id:'gemt',name:'الناقة',vault:1,hidden:1,stand:1},
+ {id:'crown',name:'المحارب',vault:1,hidden:1,stand:1},
  {id:'fire',name:'شبّة نار',price:1200,season:'winter'},
  {id:'lantern',name:'فانوس',price:1200,season:'ramadan'}
 ];
+const TVAULT=TOKS.filter(t=>t.vault);
 const THEMES=[
  {id:'classic',name:'كلاسيك',price:0,bg:'#f6ead2',line:'#7a5a36',safeBg:'#e2cfa8',safe:'#a07a46',frame:['#8a6a3e','#5a4026']},
  {id:'sand',name:'صحراوي',price:1000,bg:'#ecd3a0',line:'#9a6b33',safeBg:'#d6b072',safe:'#7a4f1c',frame:['#b07a3c','#6e4520']},
@@ -3712,6 +3719,8 @@ function applyDrops(o){
   EVENTS.filter(e=>!e.base).forEach(e=>SEASONS.push(mkSz(e)));
   VAULT.forEach(d=>{const p=DROPS[d.id],ok=p&&(p.where==='shop'||SEASONS.some(z=>z.id===p.where));
     d.hidden=ok?0:1;d.season=ok&&p.where!=='shop'?p.where:undefined;d.price=ok?(+p.price||600):0});
+  TVAULT.forEach(d=>{const p=DROPS['t:'+d.id],ok=p&&(p.where==='shop'||SEASONS.some(z=>z.id===p.where));
+    d.hidden=ok?0:1;d.season=ok&&p.where!=='shop'?p.where:undefined;d.price=ok?(+p.price||600):0});
   if(!$('shop').hidden)renderShop();renderSeasonBanner();if(IS_ADMIN)renderVault()}
 const isD=x=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x);
 function mkSz(e,bz){const z={id:e.id,ev:bz?0:1,base:!!bz,name:String(e.name||(bz&&bz.name)||'موسم').slice(0,24),emoji:String(e.emoji||(bz&&bz.emoji)||'🎉').slice(0,4),desc:String(e.desc!=null&&e.desc!==''?e.desc:(bz?bz.desc:'موسم لفترة محدودة')).slice(0,50)};
@@ -3723,6 +3732,9 @@ function renderVault(){const g=$('vaultGrid');if(!g)return;g.innerHTML='';
   VAULT.forEach(d=>{const b=itemCard(d,'d',false,false,()=>openVault(d));b.querySelector('.pr').outerHTML='';
     const p=DROPS[d.id],t=document.createElement('span');t.className='vtag'+(d.hidden?'':' live');t.textContent=d.hidden?'🔒 مخفي':'🟢 '+whereName(p.where);b.appendChild(t);
     if(!d.hidden)b.insertAdjacentHTML('beforeend',`<span class="pr">${sarOf(d)} ر.س</span>`);g.appendChild(b)});
+  const tg=$('tvaultGrid');if(tg){tg.innerHTML='';TVAULT.forEach(d=>{const b=itemCard(d,'t',false,false,()=>openVault(d,'t'));b.querySelector('.pr').outerHTML='';
+    const p=DROPS['t:'+d.id],t=document.createElement('span');t.className='vtag'+(d.hidden?'':' live');t.textContent=d.hidden?'🔒 مخفي':'🟢 '+whereName(p.where);b.appendChild(t);
+    if(!d.hidden)b.insertAdjacentHTML('beforeend',`<span class="pr">${sarOf(d)} ر.س</span>`);tg.appendChild(b)})}
   renderSzAdm()}
 function renderSzAdm(){const l=$('evList');if(!l)return;l.innerHTML='';
   if(!SEASONS.length)l.innerHTML='<p class="note" style="margin:0">ما فيه مواسم للحين.</p>';
@@ -3748,10 +3760,10 @@ function szEdit(z){SZE=z||null;$('szFormT').textContent=z?'تعديل: '+z.name:
   $('szForm').hidden=false;$('szNew').hidden=true;$('szForm').scrollIntoView({behavior:'smooth',block:'center'})}
 function szClose(){SZE=null;$('szForm').hidden=true;$('szNew').hidden=false}
 $('szNew').onclick=()=>szEdit(null);$('szCancel').onclick=szClose;
-let vbCur=null,vbWhere='',vbPrice=600,vbT=null;
-function openVault(d){vbCur=d;const p=DROPS[d.id];vbWhere=p?p.where:'';vbPrice=p?(+p.price||600):600;
+let vbCur=null,vbWhere='',vbPrice=600,vbT=null,vbKind='d';
+function openVault(d,kind){vbCur=d;vbKind=kind||'d';const p=DROPS[vKey(d,vbKind)];vbWhere=p?p.where:'';vbPrice=p?(+p.price||600):600;
   $('vbTitle').textContent=d.name+(d.fx?' ✨':'');$('vbSub').textContent=d.hidden?'🔒 مخفي عن اللاعبين':'🟢 معروض في: '+whereName(p.where);
-  diceSvg(d,6,$('vbDice'));$('vbHide').hidden=d.hidden;$('vbGo').textContent=d.hidden?'انشره للبيع 🛒':'احفظ التعديل ✓';paintVb();$('vaultBox').hidden=false}
+  const vs=$('vbDice');if(vbKind==='t'){tokSvg(d.id,vs)}else{vs.setAttribute('viewBox','0 0 100 100');diceSvg(d,6,vs)}$('vbRoll').hidden=$('vbGift').hidden=vbKind==='t';$('vbHide').hidden=d.hidden;$('vbGo').textContent=d.hidden?'انشره للبيع 🛒':'احفظ التعديل ✓';paintVb();$('vaultBox').hidden=false}
 function paintVb(){const w=$('vbWhere');w.innerHTML='';
   [['shop','🛒 المتجر العادي']].concat(SEASONS.filter(z=>{const r=seasonRange(z);return !z.ev||r}).map(z=>[z.id,z.emoji+' '+z.name])).forEach(([id,t])=>{
     const b=document.createElement('button');b.type='button';b.textContent=t;b.className=vbWhere===id?'sel':'';b.onclick=()=>{vbWhere=id;paintVb()};w.appendChild(b)});
@@ -3760,9 +3772,9 @@ function paintVb(){const w=$('vbWhere');w.innerHTML='';
 $('vbRoll').onclick=()=>{if(!vbCur)return;clearInterval(vbT);let i=0;SFX.roll&&SFX.roll();vbT=setInterval(()=>{const n=1+Math.floor(Math.random()*6);diceSvg(vbCur,n,$('vbDice'));if(++i>9)clearInterval(vbT)},80)};
 $('vbClose').onclick=()=>{clearInterval(vbT);$('vaultBox').hidden=true};
 $('vbGo').onclick=async()=>{if(!vbCur)return;if(!vbWhere){toast('اختر وين ينزل أول');return}
-  const was=vbCur.hidden,drops=Object.assign({},DROPS);drops[vbCur.id]={where:vbWhere,price:vbPrice,ts:Date.now()};
-  if(await admCfg({drops})){$('vaultBox').hidden=true;toast(was?`🎲 نزل "${vbCur.name}" في ${whereName(vbWhere)}`:'تم حفظ التعديل ✓')}};
-$('vbHide').onclick=async()=>{if(!vbCur)return;const drops=Object.assign({},DROPS);delete drops[vbCur.id];
+  const was=vbCur.hidden,drops=Object.assign({},DROPS);drops[vKey(vbCur,vbKind)]={where:vbWhere,price:vbPrice,ts:Date.now()};
+  if(await admCfg({drops})){$('vaultBox').hidden=true;toast(was?`${vbKind==='t'?'♟️':'🎲'} نزل "${vbCur.name}" في ${whereName(vbWhere)}`:'تم حفظ التعديل ✓')}};
+$('vbHide').onclick=async()=>{if(!vbCur)return;const drops=Object.assign({},DROPS);delete drops[vKey(vbCur,vbKind)];
   if(await admCfg({drops})){$('vaultBox').hidden=true;toast('🔒 رجع "'+vbCur.name+'" للخزنة')}};
 $('evAdd').onclick=async()=>{const e=$('evErr'),name=$('evName').value.trim(),from=$('evFrom').value,to=$('evTo').value,rep=$('evRep').checked;e.textContent='';
   if(!name){e.textContent='اكتب اسم الموسم';return}if(!from||!to){e.textContent='اختر تاريخ البداية والنهاية';return}
