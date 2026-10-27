@@ -1463,7 +1463,8 @@ const TOKS=[
  {id:'fire',name:'شبّة نار',price:1200,season:'winter'},
  {id:'lantern',name:'فانوس',price:1200,season:'ramadan'}
 ];
-const TVAULT=TOKS.filter(t=>t.vault);
+const TVAULT=TOKS.filter(t=>t.vault);TVAULT.forEach(t=>t.coin=1);
+const CTIERS=[5000,10000,20000,50000,100000];
 const THEMES=[
  {id:'classic',name:'كلاسيك',price:0,bg:'#f6ead2',line:'#7a5a36',safeBg:'#e2cfa8',safe:'#a07a46',frame:['#8a6a3e','#5a4026']},
  {id:'sand',name:'صحراوي',price:1000,bg:'#ecd3a0',line:'#9a6b33',safeBg:'#d6b072',safe:'#7a4f1c',frame:['#b07a3c','#6e4520']},
@@ -2741,7 +2742,7 @@ function packPid(pk){return IAP_PFX+(IAP_GEMS[pk.g]||'gems'+pk.g)}
 function itemPid(kind,id){return kind?IAP_PFX+kind+'_'+id:''}
 function iapNative(){const C=window.Capacitor;return !!(C&&C.isNativePlatform&&C.isNativePlatform()&&C.getPlatform&&C.getPlatform()==='ios')}
 function iapAllIds(){const out=GPACKS.map(packPid);
-  [['d',DICE],['t',TOKS],['h',THEMES]].forEach(([k,l])=>l.forEach(it=>{if(it.price||it.vault)out.push(itemPid(k,it.id))}));return out}
+  [['d',DICE],['t',TOKS],['h',THEMES]].forEach(([k,l])=>l.forEach(it=>{if((it.price||it.vault)&&!it.coin)out.push(itemPid(k,it.id))}));return out}
 function iapItem(pid){if(!pid.startsWith(IAP_PFX))return null;const s=pid.slice(IAP_PFX.length),m=/^([dth])_(.+)$/.exec(s);return m?{kind:m[1],id:m[2]}:null}
 function iapBoot(){if(!iapNative())return;IAP.on=true;window.CdvPurchaseCapacitor={installed:true};
   const s=document.createElement('script');s.src='store.js';
@@ -2783,12 +2784,17 @@ setTimeout(iapBoot,0);
 const KINDS={d:{list:DICE,own:'ownD',sel:'dice'},t:{list:TOKS,own:'ownT',sel:'tok'},h:{list:THEMES,own:'ownH',sel:'theme'}};
 function prTxt(pid,sar){const p=pid&&IAP.price[pid];return p||sar+' ر.س'}
 function sarOf(it){if(!it.price)return '';const v=it.gem?it.price*100:it.price;return v<=600?'٤٫٩٩':v<=1500?'٧٫٩٩':v<=3000?'٩٫٩٩':v<=5000?'١٤٫٩٩':'١٩٫٩٩'}
-function priceHtml(it,own,kind){if(own)return '<span class="pr own">عندك ✓</span>';if(!it.price)return '<span class="pr own">مجاني</span>';return `<span class="pr">${prTxt(itemPid(kind,it.id),sarOf(it))}</span>`}
+function priceHtml(it,own,kind){if(own)return '<span class="pr own">عندك ✓</span>';if(it.coin)return `<span class="pr"><span class="coin" style="width:14px;height:14px;display:inline-block;vertical-align:-2px"></span> ${fmt(it.price)}</span>`;if(!it.price)return '<span class="pr own">مجاني</span>';return `<span class="pr">${prTxt(itemPid(kind,it.id),sarOf(it))}</span>`}
 function buy(it,kind,sure){
   const K=KINDS[kind],own=W[K.own];
   if(own.includes(it.id)){W[K.sel]=it.id;save();renderShop();toast('تم الاختيار');return}
   if(!sure&&(it.fx||it.stand||kind==='d')){openItem(it,kind);return}
   if(!it.price){own.push(it.id);W[K.sel]=it.id;save();renderShop();return}
+  if(it.coin){if((+W.coins||0)<it.price){toast('عملاتك ما تكفي، العب واكسب أكثر 💪');return}
+    const done=()=>{if(!own.includes(it.id))own.push(it.id);W[K.sel]=it.id;$('itemBox').hidden=true;save();renderWallet();renderShop();
+      burst(innerWidth/2,innerHeight/2,['#efd29a','#33c2b0','#ff7b5f','#fff'],40,'star',8);SFX.home();toast('اشتريت '+it.name+' واخترته 🎉')};
+    if(SV()){api('buyc',{kind,id:it.id}).then(done).catch(e=>toast(apiErr(e)));return}
+    W.coins=(+W.coins||0)-it.price;done();return}
   const sv=el('svg',{viewBox:'0 0 100 100',width:90,height:90});
   if(kind==='d')diceSvg(it,6,sv);else if(kind==='t')tokSvg(it.id,sv);else{sv.setAttribute('width',150);sv.setAttribute('height',150);sv.style.borderRadius='12px';drawBoard(sv,it)}
   payOpen({node:sv,amt:it.name,sub:{d:'شكل نرد',t:'شكل أحجار',h:'ثيم لوحة'}[kind],sar:sarOf(it),pid:itemPid(kind,it.id),api:{kind,id:it.id},done:()=>{
@@ -2815,7 +2821,7 @@ function openItem(it,kind){itemCur=[it,kind];$('itTitle').textContent=it.name;
   if(kind==='d'){box.appendChild(cube3(it,92))}
   else COL.forEach(c=>{const sv=el('svg',{viewBox:'-.52 -.52 1.04 1.04',width:72,height:72});const g=el('g',{},sv);tokenInner(g,it.id,c);box.appendChild(sv)});
   $('itTry').hidden=kind!=='d';$('itGift').hidden=!(IS_ADMIN&&kind==='d');
-  $('itBuy').textContent=`اشترِ بـ ${prTxt(itemPid(kind,it.id),sarOf(it))}`;
+  $('itBuy').innerHTML=it.coin?`اشترِ بـ <span class="coin" style="width:18px;height:18px;display:inline-block;vertical-align:-2px"></span> ${fmt(it.price)}`:`اشترِ بـ ${prTxt(itemPid(kind,it.id),sarOf(it))}`;
   $('itemBox').hidden=false}
 function tryItem(){const [it]=itemCur,card=$('itemBox').querySelector('.card').getBoundingClientRect(),from=elPt($('itTry'));
   throwDice(-1,1+Math.floor(Math.random()*6),'#c0392b',{skin:it,from,area:{left:card.left,top:card.top+card.height*.05,width:card.width,height:card.height*.45},back:$('itTry'),hold:700});SFX.roll()}
@@ -3720,7 +3726,7 @@ function applyDrops(o){
   VAULT.forEach(d=>{const p=DROPS[d.id],ok=p&&(p.where==='shop'||SEASONS.some(z=>z.id===p.where));
     d.hidden=ok?0:1;d.season=ok&&p.where!=='shop'?p.where:undefined;d.price=ok?(+p.price||600):0});
   TVAULT.forEach(d=>{const p=DROPS['t:'+d.id],ok=p&&(p.where==='shop'||SEASONS.some(z=>z.id===p.where));
-    d.hidden=ok?0:1;d.season=ok&&p.where!=='shop'?p.where:undefined;d.price=ok?(+p.price||600):0});
+    d.coin=1;d.hidden=ok?0:1;d.season=ok&&p.where!=='shop'?p.where:undefined;d.price=ok?(+p.price||10000):0});
   if(!$('shop').hidden)renderShop();renderSeasonBanner();if(IS_ADMIN)renderVault()}
 const isD=x=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x);
 function mkSz(e,bz){const z={id:e.id,ev:bz?0:1,base:!!bz,name:String(e.name||(bz&&bz.name)||'موسم').slice(0,24),emoji:String(e.emoji||(bz&&bz.emoji)||'🎉').slice(0,4),desc:String(e.desc!=null&&e.desc!==''?e.desc:(bz?bz.desc:'موسم لفترة محدودة')).slice(0,50)};
@@ -3734,7 +3740,7 @@ function renderVault(){const g=$('vaultGrid');if(!g)return;g.innerHTML='';
     if(!d.hidden)b.insertAdjacentHTML('beforeend',`<span class="pr">${sarOf(d)} ر.س</span>`);g.appendChild(b)});
   const tg=$('tvaultGrid');if(tg){tg.innerHTML='';TVAULT.forEach(d=>{const b=itemCard(d,'t',false,false,()=>openVault(d,'t'));b.querySelector('.pr').outerHTML='';
     const p=DROPS['t:'+d.id],t=document.createElement('span');t.className='vtag'+(d.hidden?'':' live');t.textContent=d.hidden?'🔒 مخفي':'🟢 '+whereName(p.where);b.appendChild(t);
-    if(!d.hidden)b.insertAdjacentHTML('beforeend',`<span class="pr">${sarOf(d)} ر.س</span>`);tg.appendChild(b)})}
+    if(!d.hidden)b.insertAdjacentHTML('beforeend',`<span class="pr"><span class="coin" style="width:14px;height:14px;display:inline-block;vertical-align:-2px"></span> ${fmt(d.price)}</span>`);tg.appendChild(b)})}
   renderSzAdm()}
 function renderSzAdm(){const l=$('evList');if(!l)return;l.innerHTML='';
   if(!SEASONS.length)l.innerHTML='<p class="note" style="margin:0">ما فيه مواسم للحين.</p>';
@@ -3761,14 +3767,14 @@ function szEdit(z){SZE=z||null;$('szFormT').textContent=z?'تعديل: '+z.name:
 function szClose(){SZE=null;$('szForm').hidden=true;$('szNew').hidden=false}
 $('szNew').onclick=()=>szEdit(null);$('szCancel').onclick=szClose;
 let vbCur=null,vbWhere='',vbPrice=600,vbT=null,vbKind='d';
-function openVault(d,kind){vbCur=d;vbKind=kind||'d';const p=DROPS[vKey(d,vbKind)];vbWhere=p?p.where:'';vbPrice=p?(+p.price||600):600;
+function openVault(d,kind){vbCur=d;vbKind=kind||'d';const p=DROPS[vKey(d,vbKind)];vbWhere=p?p.where:'';vbPrice=p?(+p.price||(vbKind==='t'?10000:600)):(vbKind==='t'?10000:600);
   $('vbTitle').textContent=d.name+(d.fx?' ✨':'');$('vbSub').textContent=d.hidden?'🔒 مخفي عن اللاعبين':'🟢 معروض في: '+whereName(p.where);
   const vs=$('vbDice');if(vbKind==='t'){tokSvg(d.id,vs)}else{vs.setAttribute('viewBox','0 0 100 100');diceSvg(d,6,vs)}$('vbRoll').hidden=$('vbGift').hidden=vbKind==='t';$('vbHide').hidden=d.hidden;$('vbGo').textContent=d.hidden?'انشره للبيع 🛒':'احفظ التعديل ✓';paintVb();$('vaultBox').hidden=false}
 function paintVb(){const w=$('vbWhere');w.innerHTML='';
   [['shop','🛒 المتجر العادي']].concat(SEASONS.filter(z=>{const r=seasonRange(z);return !z.ev||r}).map(z=>[z.id,z.emoji+' '+z.name])).forEach(([id,t])=>{
     const b=document.createElement('button');b.type='button';b.textContent=t;b.className=vbWhere===id?'sel':'';b.onclick=()=>{vbWhere=id;paintVb()};w.appendChild(b)});
   const pr=$('vbPrice');pr.innerHTML='';
-  TIERS.forEach(([s,v])=>{const b=document.createElement('button');b.type='button';b.textContent=s+' ر.س';b.className=vbPrice===v?'sel':'';b.onclick=()=>{vbPrice=v;paintVb()};pr.appendChild(b)})}
+  (vbKind==='t'?CTIERS.map(v=>[fmt(v)+' عملة',v]):TIERS.map(([s,v])=>[s+' ر.س',v])).forEach(([s,v])=>{const b=document.createElement('button');b.type='button';b.textContent=s;b.className=vbPrice===v?'sel':'';b.onclick=()=>{vbPrice=v;paintVb()};pr.appendChild(b)})}
 $('vbRoll').onclick=()=>{if(!vbCur)return;clearInterval(vbT);let i=0;SFX.roll&&SFX.roll();vbT=setInterval(()=>{const n=1+Math.floor(Math.random()*6);diceSvg(vbCur,n,$('vbDice'));if(++i>9)clearInterval(vbT)},80)};
 $('vbClose').onclick=()=>{clearInterval(vbT);$('vaultBox').hidden=true};
 $('vbGo').onclick=async()=>{if(!vbCur)return;if(!vbWhere){toast('اختر وين ينزل أول');return}
