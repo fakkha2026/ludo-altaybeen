@@ -818,7 +818,8 @@ body.ingame.nightg #starFx{opacity:1}
 .rug[data-tb=g]{background-image:none!important;background-color:#000}
 .rug[data-tb=g]::after{display:none}
 #board.ngb .tok .tb{filter:brightness(1.45) saturate(1.25)}
-.rug[data-tb=s]{background-image:var(--tb-s)!important;background-color:#e9e2d4}
+.rug[data-tb=s]{background-image:radial-gradient(ellipse at 50% 38%,#163a6b 0%,#0a1b36 55%,#040a16 100%)!important;background-color:#050c1a}
+.rug[data-tb=s]::after{display:none}
 .stk.tb-n,.stk.tb-g,.stk.tb-s{background-size:cover;background-position:center;text-shadow:0 1px 3px #000}
 .stk.tb-n{background-image:linear-gradient(#0007,#000b),var(--tb-n)}
 .stk.tb-g{background-image:linear-gradient(#0006,#000a),var(--tb-g)}
@@ -3212,6 +3213,62 @@ function neonGold(svg){
   // خط مسح ينزل على اللوحة مثل الشاشات
   const sc=el('rect',{x:0,y:0,width:15,height:.14,fill:'#9fdcff',opacity:.06},svg);A(sc,{tag:'animateTransform',attributeName:'transform',type:'translate',values:'0 0;0 14.86',dur:'5.5s'});
 }
+// طاولة الشيوخ: لوحة زجاج نيون سماوي، بيوت بإطار ذهبي منقوش، وخلفية كحلية بدوائر كهربائية
+const SNE=['#ff4b5c','#3cf08f','#ffd34a','#3a8dff'],SGD='#d9b45a',SCY='#5fe3ff';
+function neonSheikh(svg){
+  svg.innerHTML='';svg._g={};svg._cg={};svg.setAttribute('viewBox','-1.1 -1.1 17.2 17.2');
+  const SL=3.6,T=v=>(parseFloat(v)*SL).toFixed(2)+'s',A=(e,o)=>{if(RM)return;o=Object.assign({},o);if(o.dur)o.dur=T(o.dur);if(o.begin)o.begin=T(o.begin);anim(e,o)},defs=el('defs',{},svg),uid='sh'+(++UID);
+  const bgG=el('radialGradient',{id:uid+'b',cx:.5,cy:.42,r:.75},defs);[[0,'#123059'],[.6,'#0a1b36'],[1,'#050c1a']].forEach(([o,c])=>el('stop',{offset:o,'stop-color':c},bgG));
+  el('rect',{x:-1.1,y:-1.1,width:17.2,height:17.2,fill:`url(#${uid}b)`},svg);
+  // خطوط دوائر كهربائية خفيفة في الخلفية
+  const cp='M-1 2.2H-.5L-.2 2.5V5 M-1 11H-.6L-.3 10.7V8.6 M16 3.4H15.6L15.3 3.7V6 M16 12.6H15.5L15.2 12.3V9.4 M2.4 -1V-.6L2.7 -.3H5 M11.8 -1V-.55L11.5 -.25H9.6 M3.6 16V15.6L3.9 15.3H6 M12.4 16V15.5L12.1 15.2H9.8';
+  el('path',{d:cp,fill:'none',stroke:'#3f7fc4','stroke-width':.035,opacity:.35},svg);
+  [[-.2,5],[-.3,8.6],[15.3,6],[15.2,9.4],[5,-.3],[9.6,-.25],[6,15.3],[9.8,15.2]].forEach(([x,y],i)=>{const c=el('circle',{cx:x,cy:y,r:.07,fill:SCY,opacity:.4},svg);A(c,{attributeName:'opacity',values:'.15;.55;.15',dur:'3s',begin:(-i*.4)+'s'})});
+  // إطار معدني بخيط ذهبي
+  el('rect',{x:-.42,y:-.42,width:15.84,height:15.84,rx:.32,fill:'#0b1426',stroke:'#2a3550','stroke-width':.12},svg);
+  el('rect',{x:-.3,y:-.3,width:15.6,height:15.6,rx:.26,fill:'none',stroke:SGD,'stroke-width':.05,opacity:.85},svg);
+  el('rect',{x:0,y:0,width:15,height:15,fill:'#0a1a33'},svg);
+  // نقشة ذهبية ملفوفة للزوايا
+  const orn='M0 0C.55 .02 .95 .25 1.05 .62C1.12 .9 .9 1.05 .72 .95C.58 .87 .62 .68 .76 .7 M0 0C.02 .55 .25 .95 .62 1.05C.9 1.12 1.05 .9 .95 .72C.87 .58 .68 .62 .7 .76 M.18 .18C.4 .32 .5 .5 .45 .72 M.18 .18C.32 .4 .5 .5 .72 .45 M1.05 .62C1.25 .55 1.4 .62 1.45 .78 M.62 1.05C.55 1.25 .62 1.4 .78 1.45';
+  const ornAt=(x,y,r)=>{const g=el('g',{transform:`translate(${x} ${y}) rotate(${r}) scale(.78)`},svg);
+    el('path',{d:orn,fill:'none',stroke:'#000',opacity:.45,'stroke-width':.09,'stroke-linecap':'round'},g);
+    el('path',{d:orn,fill:'none',stroke:SGD,'stroke-width':.045,'stroke-linecap':'round'},g);
+    el('circle',{cx:.12,cy:.12,r:.07,fill:SGD},g)};
+  // البيوت
+  COL.forEach((col,i)=>{const [bx,by]=col.base,k=SNE[i],cx=bx+3,cy=by+3;
+    el('rect',{x:bx+.12,y:by+.12,width:5.76,height:5.76,rx:.18,fill:'#0c1a33',stroke:SGD,'stroke-width':.05},svg);
+    [[bx+.3,by+.3,0],[bx+5.7,by+.3,90],[bx+5.7,by+5.7,180],[bx+.3,by+5.7,270]].forEach(([x,y,r])=>ornAt(x,y,r));
+    const rg=el('radialGradient',{id:uid+'h'+i,cx:.45,cy:.4,r:.65},defs);[[0,k,.5],[.7,k,.22],[1,k,.08]].forEach(([o,c,op])=>el('stop',{offset:o,'stop-color':c,'stop-opacity':op},rg));
+    const gl=el('circle',{cx,cy,r:2.35,fill:'none',stroke:k,'stroke-width':.45,opacity:.12},svg);A(gl,{attributeName:'opacity',values:'.06;.18;.06',dur:'3s',begin:(-i*.75)+'s'});
+    el('circle',{cx,cy,r:2.35,fill:`url(#${uid}h${i})`,stroke:k,'stroke-width':.1},svg);
+    el('circle',{cx,cy,r:2.12,fill:'none',stroke:k,'stroke-width':.035,opacity:.55},svg);
+    SPOTS.forEach(([sx,sy])=>{el('circle',{cx:bx+sx,cy:by+sy,r:.52,fill:'#081223','fill-opacity':.55,stroke:k,'stroke-width':.08},svg);el('circle',{cx:bx+sx,cy:by+sy,r:.36,fill:'none',stroke:k,'stroke-width':.04,opacity:.7},svg)})});
+  // الخانات: زجاج سماوي يضوي بهدوء
+  const cell=(x,y,k,f)=>{const gl=el('rect',{x:x+.04,y:y+.04,width:.92,height:.92,rx:.1,fill:'none',stroke:k,'stroke-width':.16,opacity:.12},svg);
+    el('rect',{x:x+.08,y:y+.08,width:.84,height:.84,rx:.08,fill:k,'fill-opacity':f,stroke:k,'stroke-width':.05},svg);
+    el('rect',{x:x+.14,y:y+.12,width:.72,height:.18,rx:.06,fill:'#fff',opacity:.07},svg);return gl};
+  const starts=COL.map(c=>c.start),D2=(26/12).toFixed(2);
+  TRACK.forEach(([x,y],i)=>{const s=starts.indexOf(i),k=s>=0?SNE[s]:SCY,gl=cell(x,y,k,s>=0?.42:.16);
+    const bg=(((i%26)/12)-(+D2)).toFixed(2)+'s';A(gl,{attributeName:'opacity',values:'.38;.1;.1',keyTimes:'0;.23;1',dur:D2+'s',begin:bg})});
+  COL.forEach((col,i)=>col.home.forEach(([x,y],j)=>{const gl=cell(x,y,SNE[i],.24);A(gl,{attributeName:'opacity',values:'.06;.3;.06',dur:'2.1s',begin:(j*.27-2.1).toFixed(2)+'s'})}));
+  // أسهم البداية باتجاه المشي
+  COL.forEach((c,i)=>{const [x,y]=TRACK[c.start],[nx,ny]=TRACK[c.start+1],r=Math.atan2(ny-y,nx-x)*180/Math.PI,g=el('g',{transform:`translate(${x+.5} ${y+.5}) rotate(${r})`},svg);
+    const ch=el('path',{d:'M-.28 -.2L-.1 0L-.28 .2 M.02 -.2L.2 0L.02 .2',fill:'none',stroke:'#fff','stroke-width':.09,'stroke-linecap':'round','stroke-linejoin':'round'},g);A(ch,{attributeName:'opacity',values:'.55;1;.55',dur:'1.6s'})});
+  // نجوم الأمان ذهبية مفرّغة
+  [8,21,34,47].forEach((i,j)=>{const [x,y]=TRACK[i],s=el('polygon',{points:starPts(x+.5,y+.5,.33),fill:'#d9b45a','fill-opacity':.18,stroke:'#ffe6a3','stroke-width':.05,'stroke-linejoin':'round'},svg);A(s,{attributeName:'fill-opacity',values:'.1;.35;.1',dur:'2s',begin:(-j*.5)+'s'})});
+  // النص: مثلثات الألوان، وفوقها ثماني ذهبي وشبكة نور تدور ببطء
+  [[[6,6],[6,9]],[[6,6],[9,6]],[[9,6],[9,9]],[[6,9],[9,9]]].forEach((tr,i)=>{const p=el('polygon',{points:`${tr[0]} ${tr[1]} 7.5,7.5`,fill:SNE[i],'fill-opacity':.2,stroke:SNE[i],'stroke-width':.05},svg);A(p,{attributeName:'fill-opacity',values:'.14;.28;.14',dur:'2.4s',begin:(-i*.6)+'s'})});
+  el('rect',{x:6,y:6,width:3,height:3,fill:'none',stroke:SGD,'stroke-width':.07},svg);
+  const oct=(r,rot=22.5)=>Array.from({length:8},(_,k)=>{const a=(k*45+rot)*Math.PI/180;return (7.5+r*Math.cos(a)).toFixed(3)+','+(7.5+r*Math.sin(a)).toFixed(3)}).join(' ');
+  el('polygon',{points:oct(1.08),fill:'#0a1830','fill-opacity':.9,stroke:SGD,'stroke-width':.07},svg);
+  el('polygon',{points:oct(.94),fill:'none',stroke:SCY,'stroke-width':.03,opacity:.6},svg);
+  const r=window.ROT||0,cg=el('g',{class:'midTxt',transform:`rotate(${-r*90} 7.5 7.5)`},svg),web=el('g',{},cg);
+  const hx=rr=>Array.from({length:6},(_,k)=>{const a=(k*60-90)*Math.PI/180;return (7.5+rr*Math.cos(a)).toFixed(3)+','+(7.5+rr*Math.sin(a)).toFixed(3)}).join(' ');
+  [.68,.5,.32,.15].forEach((rr,k)=>el('polygon',{points:hx(rr),fill:k==3?SCY:'none','fill-opacity':.5,stroke:SCY,'stroke-width':k?.03:.045,opacity:k?.75:1},web));
+  for(let k=0;k<6;k++){const a=(k*60-90)*Math.PI/180;el('line',{x1:7.5,y1:7.5,x2:(7.5+.68*Math.cos(a)).toFixed(3),y2:(7.5+.68*Math.sin(a)).toFixed(3),stroke:SCY,'stroke-width':.025,opacity:.7},web)}
+  const hw=el('circle',{cx:7.5,cy:7.5,r:.75,fill:SCY,opacity:.08},cg);A(hw,{attributeName:'opacity',values:'.04;.14;.04',dur:'2.5s'});
+  A(web,{tag:'animateTransform',attributeName:'transform',type:'rotate',values:'0 7.5 7.5;360 7.5 7.5',dur:'14s'});
+}
 // تدوير اللوحة: لون صاحب الجوال يكون دايم تحت يسار
 window.ROT=0;
 function viewCi(players){const m=meCi();if(m>=0)return m;const h=players.find(p=>p.kind==='local');return h?h.ci:players[0].ci}
@@ -3221,9 +3278,9 @@ function boardFrame(th,wood){const f=wood?['#c9a24a','#4a2a14','#6e4426','#1c0e0
   return [`0 0 0 1px #0007`,`0 0 0 3px ${f[0]}`,`0 0 0 4px #0006`,`0 0 0 9px ${f[1]}`,`0 0 0 11px ${f[2]}`,`0 0 0 12px ${f[0]}aa`,`0 0 0 13px ${f[3]}`,`0 20px 38px -8px #000c`].join(',')}
 function buildPieces(players){
   setRot(players);
-  const NG=tableOf()==='g';NG?neonGold(board):drawBoard(board,TH());
+  const TBL=tableOf(),NG=TBL==='g'||TBL==='s';TBL==='g'?neonGold(board):TBL==='s'?neonSheikh(board):drawBoard(board,TH());
   board.classList.toggle('ngb',NG);
-  const th=TH(),wood=!NG&&['classic','kashta'].includes(th.id);$('boardBox').classList.toggle('wood',wood);$('boardBox').style.boxShadow=NG?'0 0 14px #e2bd621f,0 0 0 1px #000':boardFrame(th,wood);
+  const th=TH(),wood=!NG&&['classic','kashta'].includes(th.id);$('boardBox').classList.toggle('wood',wood);$('boardBox').style.boxShadow=TBL==='s'?'0 0 18px #5fe3ff1f,0 0 0 1px #000':NG?'0 0 14px #e2bd621f,0 0 0 1px #000':boardFrame(th,wood);
   lockLayer=el('g',{},board);lockKey='';
   tokLayer=el('g',{},board);tokEls={};
   players.forEach(p=>{
