@@ -3155,7 +3155,7 @@ function startMode2(m){
 const NEON=['#ff4058','#35f08c','#ffcf3d','#3fa6ff'],NGD='#e2bd62';
 function neonGold(svg){
   svg.innerHTML='';svg._g={};svg._cg={};svg.setAttribute('viewBox','-1.1 -1.1 17.2 17.2');
-  const A=(e,o)=>{if(!RM)anim(e,o)},defs=el('defs',{},svg),uid='ng'+(++UID);
+  const SL=2.2,T=v=>(parseFloat(v)*SL).toFixed(2)+'s',A=(e,o)=>{if(RM)return;o=Object.assign({},o);if(o.dur)o.dur=T(o.dur);if(o.begin)o.begin=T(o.begin);anim(e,o)},defs=el('defs',{},svg),uid='ng'+(++UID);
   el('rect',{x:-1.1,y:-1.1,width:17.2,height:17.2,fill:'#030305'},svg);
   // إطار السدو: معيّنات ومثلثات وعلامات، وتحته خط زقزاق، وتمشي عليه لمعة
   const lg=el('linearGradient',{id:uid+'s',gradientUnits:'userSpaceOnUse',x1:0,y1:0,x2:5,y2:5},defs);
@@ -3181,7 +3181,7 @@ function neonGold(svg){
     el('rect',{x:bx+.25,y:by+.25,width:5.5,height:5.5,rx:.45,fill:'#0c0f15',stroke:NGD,'stroke-width':.03},svg);
     [`M${bx+.55} ${by+4.6}h.6l.35.35v.75`,`M${bx+5.45} ${by+1.4}h-.6l-.35-.35v-.75`].forEach((p,j)=>{
       el('path',{d:p,fill:'none',stroke:k,'stroke-width':.04,opacity:.4},svg);
-      if(!RM){const dt=el('circle',{r:.08,fill:'#fff'},svg);el('animateMotion',{path:p,dur:'1.8s',begin:(-j*.9-i*.3).toFixed(1)+'s',repeatCount:'indefinite'},dt)}});
+      if(!RM){const dt=el('circle',{r:.08,fill:'#fff'},svg);el('animateMotion',{path:p,dur:T(1.8),begin:T(-j*.9-i*.3),repeatCount:'indefinite'},dt)}});
     const g=el('circle',{cx,cy,r:2.25,fill:'none',stroke:k,'stroke-width':.5,opacity:.15},svg);A(g,{attributeName:'opacity',values:'.08;.32;.08',dur:'3s',begin:(-i*.75)+'s'});
     el('circle',{cx,cy,r:2.25,fill:k,'fill-opacity':.07,stroke:k,'stroke-width':.11},svg);
     const sp=el('circle',{cx,cy,r:2.5,fill:'none',stroke:NGD,'stroke-width':.055,'stroke-dasharray':'.1 .3'},svg);
