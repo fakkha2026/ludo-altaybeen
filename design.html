@@ -3257,6 +3257,8 @@ function newGame(players){
 function hopTok(g){if(RM||!g._b||!g._b.animate)return;const D=205;
   g._b.animate([{transform:'translate(0,0) scale(1,1)'},{transform:'translate(0,-.36px) scale(1.12,1.12)',offset:.45},{transform:'translate(0,.05px) scale(1.12,.84)',offset:.82},{transform:'translate(0,0) scale(1,1)'}],{duration:D,easing:'ease-out'});
   if(g._sh)g._sh.animate([{opacity:.3,transform:'scale(1)'},{opacity:.14,transform:'scale(.7)',offset:.45},{opacity:.32,transform:'scale(1.05)',offset:.82},{opacity:0,transform:'scale(1)'}],{duration:D+40})}
+// الحجر يكون بنص الخانة بالضبط: نقيس رسمته ونزّحه لين يصير نصّه على نص الخانة
+function tokMid(g){if(g._mid==null&&g._b){try{const bb=g._b.getBBox();if(bb.height>0)g._mid=+(-(bb.y+bb.height/2)).toFixed(3)}catch(e){}}return g._mid||0}
 function renderTokens(){
   if(!S)return;
   renderLocks();
@@ -3273,7 +3275,7 @@ function renderTokens(){
       if(n>1){s=n>2?.62:.75;const a=Math.PI*2*i/n;dx=Math.cos(a)*.2;dy=Math.sin(a)*.2}
       const g=tokEls[t.ci][t.k],pp=S.tok[t.ci][t.k];
       if(S.hop&&S.hop[0]===t.ci&&S.hop[1]===t.k){const hk=t.ci+'-'+t.k+'-'+pp;if(g._hk!==hk){g._hk=hk;hopTok(g)}}
-      g.style.transform=`translate(${t.x+dx}px,${t.y+dy}px) rotate(${-(window.ROT||0)*90}deg) scale(${(pp===56?.6:s)*(board.classList.contains('ngb')?1.4:1)})`;
+      g.style.transform=`translate(${t.x+dx}px,${t.y+dy}px) rotate(${-(window.ROT||0)*90}deg) scale(${(pp===56?.6:s)*(board.classList.contains('ngb')?1.4:1)}) translate(0px,${tokMid(g)}px)`;
     });
   });
   S.players.forEach(p=>tokEls[p.ci].forEach((g,k)=>{
