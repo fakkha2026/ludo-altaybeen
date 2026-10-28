@@ -3257,8 +3257,10 @@ function newGame(players){
 function hopTok(g){if(RM||!g._b||!g._b.animate)return;const D=205;
   g._b.animate([{transform:'translate(0,0) scale(1,1)'},{transform:'translate(0,-.36px) scale(1.12,1.12)',offset:.45},{transform:'translate(0,.05px) scale(1.12,.84)',offset:.82},{transform:'translate(0,0) scale(1,1)'}],{duration:D,easing:'ease-out'});
   if(g._sh)g._sh.animate([{opacity:.3,transform:'scale(1)'},{opacity:.14,transform:'scale(.7)',offset:.45},{opacity:.32,transform:'scale(1.05)',offset:.82},{opacity:0,transform:'scale(1)'}],{duration:D+40})}
-// الحجر يكون بنص الخانة بالضبط: نقيس رسمته ونزّحه لين يصير نصّه على نص الخانة
-function tokMid(g){if(g._mid==null&&g._b){try{const bb=g._b.getBBox();if(bb.height>0)g._mid=+(-(bb.y+bb.height/2)).toFixed(3)}catch(e){}}return g._mid||0}
+// قاعدة الحجر تكون بنص الخانة بالضبط: نقيس رسمته؛ الواقف ننزّل قاعدته على نص الخانة، والمسطّح نخلي نصّه على نصها
+function tokMid(g){if(g._mid==null&&g._b){try{const bb=g._b.getBBox();if(bb.height>0){const im=g._b.querySelector('image');let m=-(bb.y+bb.height/2);
+  if(im){const ib=im.getBBox(),M=g._b.getCTM().inverse().multiply(im.getCTM()),pt=new DOMPoint(ib.x+ib.width/2,ib.y+ib.height).matrixTransform(M);m=.08-pt.y}
+  g._mid=+m.toFixed(3)}}catch(e){}}return g._mid||0}
 function renderTokens(){
   if(!S)return;
   renderLocks();
