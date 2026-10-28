@@ -3155,7 +3155,7 @@ function startMode2(m){
 const NEON=['#ff4058','#35f08c','#ffcf3d','#3fa6ff'],NGD='#e2bd62';
 function neonGold(svg){
   svg.innerHTML='';svg._g={};svg._cg={};svg.setAttribute('viewBox','-1.1 -1.1 17.2 17.2');
-  const SL=2.2,T=v=>(parseFloat(v)*SL).toFixed(2)+'s',A=(e,o)=>{if(RM)return;o=Object.assign({},o);if(o.dur)o.dur=T(o.dur);if(o.begin)o.begin=T(o.begin);anim(e,o)},defs=el('defs',{},svg),uid='ng'+(++UID);
+  const SL=3.6,T=v=>(parseFloat(v)*SL).toFixed(2)+'s',A=(e,o)=>{if(RM)return;o=Object.assign({},o);if(o.dur)o.dur=T(o.dur);if(o.begin)o.begin=T(o.begin);anim(e,o)},defs=el('defs',{},svg),uid='ng'+(++UID);
   el('rect',{x:-1.1,y:-1.1,width:17.2,height:17.2,fill:'#030305'},svg);
   // إطار السدو: معيّنات ومثلثات وعلامات، وتحته خط زقزاق، وتمشي عليه لمعة
   const lg=el('linearGradient',{id:uid+'s',gradientUnits:'userSpaceOnUse',x1:0,y1:0,x2:5,y2:5},defs);
@@ -3171,46 +3171,46 @@ function neonGold(svg){
   d+=`M-1 -1H16 M-1 -.4H16 M-1 -.1H16 M-1 -1V-.4H-.4V-1 M-.7 -.95L-.45 -.7L-.7 -.45L-.95 -.7Z `;
   const fr=el('g',{},svg);
   [0,90,180,270].forEach(r=>{const tf=`rotate(${r} 7.5 7.5)`;
-    el('path',{d,fill:'none',stroke:NGD,'stroke-width':.13,opacity:.18,transform:tf},fr);
+    el('path',{d,fill:'none',stroke:NGD,'stroke-width':.13,opacity:.09,transform:tf},fr);
     el('path',{d,fill:'none',stroke:NGD,'stroke-width':.04,'stroke-linejoin':'round',transform:tf},fr);
     el('path',{d,fill:'none',stroke:`url(#${uid}s)`,'stroke-width':.055,'stroke-linejoin':'round',transform:tf},fr)});
-  A(fr,{attributeName:'opacity',values:'.82;1;.82',dur:'3s'});
+  A(fr,{attributeName:'opacity',values:'.72;.88;.72',dur:'3s'});
   el('rect',{x:0,y:0,width:15,height:15,fill:'#07080c'},svg);
   // البيوت: لوح داكن بإطار ذهبي، وخيوط دوائر كهربائية تمشي عليها نقاط ضوء، ودائرة نيون تتنفس
   COL.forEach((col,i)=>{const [bx,by]=col.base,k=NEON[i],cx=bx+3,cy=by+3;
     el('rect',{x:bx+.25,y:by+.25,width:5.5,height:5.5,rx:.45,fill:'#0c0f15',stroke:NGD,'stroke-width':.03},svg);
     [`M${bx+.55} ${by+4.6}h.6l.35.35v.75`,`M${bx+5.45} ${by+1.4}h-.6l-.35-.35v-.75`].forEach((p,j)=>{
-      el('path',{d:p,fill:'none',stroke:k,'stroke-width':.04,opacity:.4},svg);
-      if(!RM){const dt=el('circle',{r:.08,fill:'#fff'},svg);el('animateMotion',{path:p,dur:T(1.8),begin:T(-j*.9-i*.3),repeatCount:'indefinite'},dt)}});
-    const g=el('circle',{cx,cy,r:2.25,fill:'none',stroke:k,'stroke-width':.5,opacity:.15},svg);A(g,{attributeName:'opacity',values:'.08;.32;.08',dur:'3s',begin:(-i*.75)+'s'});
-    el('circle',{cx,cy,r:2.25,fill:k,'fill-opacity':.07,stroke:k,'stroke-width':.11},svg);
+      el('path',{d:p,fill:'none',stroke:k,'stroke-width':.04,opacity:.25},svg);
+      if(!RM){const dt=el('circle',{r:.07,fill:'#fff',opacity:.6},svg);el('animateMotion',{path:p,dur:T(1.8),begin:T(-j*.9-i*.3),repeatCount:'indefinite'},dt)}});
+    const g=el('circle',{cx,cy,r:2.25,fill:'none',stroke:k,'stroke-width':.5,opacity:.15},svg);A(g,{attributeName:'opacity',values:'.04;.16;.04',dur:'3s',begin:(-i*.75)+'s'});
+    el('circle',{cx,cy,r:2.25,fill:k,'fill-opacity':.05,stroke:k,'stroke-width':.08,'stroke-opacity':.75},svg);
     const sp=el('circle',{cx,cy,r:2.5,fill:'none',stroke:NGD,'stroke-width':.055,'stroke-dasharray':'.1 .3'},svg);
     A(sp,{tag:'animateTransform',attributeName:'transform',type:'rotate',values:i%2?`360 ${cx} ${cy};0 ${cx} ${cy}`:`0 ${cx} ${cy};360 ${cx} ${cy}`,dur:'18s'});
     SPOTS.forEach(([sx,sy])=>el('circle',{cx:bx+sx,cy:by+sy,r:.5,fill:'#07080b',stroke:k,'stroke-width':.075},svg))});
   // الخانات: زجاج داكن بحواف تضوي، ونبضتين ضوء تلفّ على المسار
-  const cell=(x,y,k,f)=>{const gl=el('rect',{x:x+.02,y:y+.02,width:.96,height:.96,rx:.22,fill:k,'fill-opacity':0,stroke:k,'stroke-width':.2,opacity:.14},svg);
+  const cell=(x,y,k,f)=>{const gl=el('rect',{x:x+.02,y:y+.02,width:.96,height:.96,rx:.22,fill:k,'fill-opacity':0,stroke:k,'stroke-width':.2,opacity:.08},svg);
     el('rect',{x:x+.1,y:y+.1,width:.8,height:.8,rx:.15,fill:k,'fill-opacity':f,stroke:k,'stroke-width':.06},svg);return gl};
   const starts=COL.map(c=>c.start),D2=(26/12).toFixed(2);
-  TRACK.forEach(([x,y],i)=>{const s=starts.indexOf(i),k=s>=0?NEON[s]:'#bfe6ff',gl=cell(x,y,k,s>=0?.55:.04);
+  TRACK.forEach(([x,y],i)=>{const s=starts.indexOf(i),k=s>=0?NEON[s]:'#bfe6ff',gl=cell(x,y,k,s>=0?.38:.03);
     const bg=(((i%26)/12)-(+D2)).toFixed(2)+'s';
-    A(gl,{attributeName:'opacity',values:'.85;.14;.14',keyTimes:'0;.23;1',dur:D2+'s',begin:bg});
-    A(gl,{attributeName:'fill-opacity',values:'.35;0;0',keyTimes:'0;.23;1',dur:D2+'s',begin:bg})});
-  COL.forEach((col,i)=>col.home.forEach(([x,y],j)=>{const gl=cell(x,y,NEON[i],.28);A(gl,{attributeName:'opacity',values:'.1;.7;.1',dur:'2.1s',begin:(j*.27-2.1).toFixed(2)+'s'})}));
-  [8,21,34,47].forEach((i,j)=>{const [x,y]=TRACK[i],s=el('polygon',{points:starPts(x+.5,y+.5,.32),fill:NGD,stroke:'#fff3c4','stroke-width':.02},svg);A(s,{attributeName:'opacity',values:'.55;1;.55',dur:'1.6s',begin:(-j*.4)+'s'})});
+    A(gl,{attributeName:'opacity',values:'.42;.08;.08',keyTimes:'0;.23;1',dur:D2+'s',begin:bg});
+    A(gl,{attributeName:'fill-opacity',values:'.15;0;0',keyTimes:'0;.23;1',dur:D2+'s',begin:bg})});
+  COL.forEach((col,i)=>col.home.forEach(([x,y],j)=>{const gl=cell(x,y,NEON[i],.2);A(gl,{attributeName:'opacity',values:'.06;.32;.06',dur:'2.1s',begin:(j*.27-2.1).toFixed(2)+'s'})}));
+  [8,21,34,47].forEach((i,j)=>{const [x,y]=TRACK[i],s=el('polygon',{points:starPts(x+.5,y+.5,.32),fill:NGD,stroke:'#fff3c4','stroke-width':.02},svg);A(s,{attributeName:'opacity',values:'.5;.8;.5',dur:'1.6s',begin:(-j*.4)+'s'})});
   COL.forEach(c=>{const [x,y]=TRACK[c.start];el('polygon',{points:starPts(x+.5,y+.5,.27),fill:'#fff'},svg)});
   // النص: مثلثات تضوي بالدور، وهلال ذهبي بحلقة تدور
-  [[[6,6],[6,9]],[[6,6],[9,6]],[[9,6],[9,9]],[[6,9],[9,9]]].forEach((tr,i)=>{const p=el('polygon',{points:`${tr[0]} ${tr[1]} 7.5,7.5`,fill:NEON[i],'fill-opacity':.35,stroke:NEON[i],'stroke-width':.06},svg);
-    A(p,{attributeName:'fill-opacity',values:'.2;.5;.2',dur:'2.4s',begin:(-i*.6)+'s'})});
+  [[[6,6],[6,9]],[[6,6],[9,6]],[[9,6],[9,9]],[[6,9],[9,9]]].forEach((tr,i)=>{const p=el('polygon',{points:`${tr[0]} ${tr[1]} 7.5,7.5`,fill:NEON[i],'fill-opacity':.25,stroke:NEON[i],'stroke-width':.06},svg);
+    A(p,{attributeName:'fill-opacity',values:'.16;.3;.16',dur:'2.4s',begin:(-i*.6)+'s'})});
   el('rect',{x:6,y:6,width:3,height:3,fill:'none',stroke:NGD,'stroke-width':.075},svg);
   const r=window.ROT||0,cg=el('g',{class:'midTxt',transform:`rotate(${-r*90} 7.5 7.5)`},svg);
-  const ha=el('circle',{cx:7.5,cy:7.5,r:.9,fill:'none',stroke:NGD,'stroke-width':.3,opacity:.2},cg);A(ha,{attributeName:'opacity',values:'.12;.45;.12',dur:'2s'});
+  const ha=el('circle',{cx:7.5,cy:7.5,r:.9,fill:'none',stroke:NGD,'stroke-width':.3,opacity:.2},cg);A(ha,{attributeName:'opacity',values:'.08;.25;.08',dur:'2s'});
   el('circle',{cx:7.5,cy:7.5,r:.6,fill:'#0b0d12',stroke:NGD,'stroke-width':.085},cg);
   const ri=el('circle',{cx:7.5,cy:7.5,r:.74,fill:'none',stroke:'#fff2c0','stroke-width':.05,'stroke-dasharray':'.34 .2'},cg);
   A(ri,{tag:'animateTransform',attributeName:'transform',type:'rotate',values:'0 7.5 7.5;360 7.5 7.5',dur:'6s'});
   el('path',{d:'M7.65 7.18A.36 .36 0 1 0 7.65 7.82A.28 .28 0 1 1 7.65 7.18Z',fill:NGD},cg);
   el('polygon',{points:starPts(7.67,7.5,.15),fill:NGD},cg);
   // خط مسح ينزل على اللوحة مثل الشاشات
-  const sc=el('rect',{x:0,y:0,width:15,height:.14,fill:'#9fdcff',opacity:.14},svg);A(sc,{tag:'animateTransform',attributeName:'transform',type:'translate',values:'0 0;0 14.86',dur:'5.5s'});
+  const sc=el('rect',{x:0,y:0,width:15,height:.14,fill:'#9fdcff',opacity:.06},svg);A(sc,{tag:'animateTransform',attributeName:'transform',type:'translate',values:'0 0;0 14.86',dur:'5.5s'});
 }
 // تدوير اللوحة: لون صاحب الجوال يكون دايم تحت يسار
 window.ROT=0;
@@ -3223,7 +3223,7 @@ function buildPieces(players){
   setRot(players);
   const NG=tableOf()==='g';NG?neonGold(board):drawBoard(board,TH());
   board.classList.toggle('ngb',NG);
-  const th=TH(),wood=!NG&&['classic','kashta'].includes(th.id);$('boardBox').classList.toggle('wood',wood);$('boardBox').style.boxShadow=NG?'0 0 26px #e2bd6233,0 0 0 1px #000':boardFrame(th,wood);
+  const th=TH(),wood=!NG&&['classic','kashta'].includes(th.id);$('boardBox').classList.toggle('wood',wood);$('boardBox').style.boxShadow=NG?'0 0 14px #e2bd621f,0 0 0 1px #000':boardFrame(th,wood);
   lockLayer=el('g',{},board);lockKey='';
   tokLayer=el('g',{},board);tokEls={};
   players.forEach(p=>{
@@ -3273,7 +3273,7 @@ function renderTokens(){
       if(n>1){s=n>2?.62:.75;const a=Math.PI*2*i/n;dx=Math.cos(a)*.2;dy=Math.sin(a)*.2}
       const g=tokEls[t.ci][t.k],pp=S.tok[t.ci][t.k];
       if(S.hop&&S.hop[0]===t.ci&&S.hop[1]===t.k){const hk=t.ci+'-'+t.k+'-'+pp;if(g._hk!==hk){g._hk=hk;hopTok(g)}}
-      g.style.transform=`translate(${t.x+dx}px,${t.y+dy}px) rotate(${-(window.ROT||0)*90}deg) scale(${(pp===56?.6:s)*(board.classList.contains('ngb')?1.15:1)})`;
+      g.style.transform=`translate(${t.x+dx}px,${t.y+dy}px) rotate(${-(window.ROT||0)*90}deg) scale(${(pp===56?.6:s)*(board.classList.contains('ngb')?1.4:1)})`;
     });
   });
   S.players.forEach(p=>tokEls[p.ci].forEach((g,k)=>{
