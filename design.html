@@ -2563,7 +2563,7 @@ function renderWallet(){
 }
 // الطاولات: الدخول مجاني (بدون رهان)، والفايز ياخذ جائزة ثابتة حسب الطاولة
 const STAKES={n:{name:'عادية',icon:'🪵',lv:1,p:{two:1500,four:4500}},g:{name:'ذهبية',icon:'🥇',lv:5,p:{two:5000,four:15000}},s:{name:'الشيوخ',icon:'👑',lv:15,p:{two:10000,four:30000}}};
-const stk=()=>STAKES[W.stake]&&level()>=STAKES[W.stake].lv?W.stake:'n';
+const stk=()=>STAKES[W.stake]&&(IS_ADMIN||level()>=STAKES[W.stake].lv)?W.stake:'n';
 let PLAY_ST='n';
 const prizeOf=(m,st)=>Math.round(((STAKES[st||stk()]||STAKES.n).p[m]||0)*DIFF[W.diff].mult);
 function renderModes(){
@@ -2585,7 +2585,7 @@ function renderRules(){document.querySelectorAll('[data-rgrid]').forEach(box=>{c
     b.onclick=()=>{W.rule=k;save();SFX.tap();renderRules()};box.appendChild(b)})});
   if($('preRuleNote'))$('preRuleNote').textContent=RULES[W.rule||'classic'].note}
 function renderStakes(m){const box=$('stakeSeg');box.innerHTML='';
-  Object.entries(STAKES).forEach(([k,o])=>{const b=document.createElement('button');b.type='button';const lock=level()<o.lv;
+  Object.entries(STAKES).forEach(([k,o])=>{const b=document.createElement('button');b.type='button';const lock=level()<o.lv&&!IS_ADMIN;
     b.className='stk tb-'+k+(stk()===k?' sel':'')+(lock?' lockd':'');
     b.innerHTML=`<span class="si">${lock?'🔒':o.icon}</span><b>${o.name}</b><small>${lock?'مستوى '+toAr(o.lv):'الجائزة '+fmt(prizeOf(m,k))}</small>`;
     b.onclick=()=>{if(lock){toast(`غرفة ${o.name} تنفتح من مستوى ${toAr(o.lv)}`);return}W.stake=k;save();openPre(m)};box.appendChild(b)})}
