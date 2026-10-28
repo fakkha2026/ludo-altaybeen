@@ -619,6 +619,13 @@ svg#board{width:100%;height:100%;display:block}
 .stk small{color:var(--muted);font-size:.7rem;font-weight:700}
 .stk.sel{border-color:var(--sand);background:var(--panel-2);box-shadow:0 0 0 3px #efd29a33}
 .stk.lockd{opacity:.45}
+.stk{position:relative;overflow:hidden;isolation:isolate}
+.stk .stkB{position:absolute;left:50%;top:50%;height:94%;aspect-ratio:1;width:auto;transform:translate(-50%,-50%);z-index:-1;opacity:.7;pointer-events:none;border-radius:6px}
+.stk>.si,.stk>b,.stk>small{position:relative;text-shadow:0 1px 3px #000,0 0 8px #000}
+.stk.tb-n,.stk.tb-g,.stk.tb-s{background-image:none!important}
+.stk.tb-n{background:var(--tb-n) center/cover!important}
+.stk.tb-g{background:#000!important}
+.stk.tb-s{background:radial-gradient(ellipse at 50% 38%,#163a6b 0%,#0a1b36 55%,#040a16 100%)!important}
 .tut{text-align:center;z-index:41}
 #tutBox{z-index:42}
 .tut-art{font-size:4rem;line-height:1.1;min-height:4.6rem}
@@ -2591,7 +2598,11 @@ function renderStakes(m){const box=$('stakeSeg');box.innerHTML='';
   Object.entries(STAKES).forEach(([k,o])=>{const b=document.createElement('button');b.type='button';const lock=level()<o.lv&&!IS_ADMIN;
     b.className='stk tb-'+k+(stk()===k?' sel':'')+(lock?' lockd':'');
     b.innerHTML=`<span class="si">${lock?'🔒':o.icon}</span><b>${o.name}</b><small>${lock?'مستوى '+toAr(o.lv):'الجائزة '+fmt(prizeOf(m,k))}</small>`;
-    b.onclick=()=>{if(lock){toast(`غرفة ${o.name} تنفتح من مستوى ${toAr(o.lv)}`);return}W.stake=k;save();openPre(m)};box.appendChild(b)})}
+    b.onclick=()=>{if(lock){toast(`غرفة ${o.name} تنفتح من مستوى ${toAr(o.lv)}`);return}W.stake=k;save();openPre(m)};box.appendChild(b);stkPreview(b,k)})}
+// شكل الغرفة من برا نفس شكل لوحتها داخل اللعب: نرسم لوحة صغيرة ثابتة (بدون حركة) خلف الاسم
+function stkPreview(b,k){try{const sv=document.createElementNS(NS,'svg');sv.setAttribute('class','stkB');sv.setAttribute('aria-hidden','true');b.insertBefore(sv,b.firstChild);
+  const r0=window.ROT;window.ROT=0;k==='g'?neonGold(sv):k==='s'?neonSheikh(sv):drawBoard(sv,TH());window.ROT=r0;
+  sv.querySelectorAll('animate,animateTransform,animateMotion,set').forEach(e=>e.remove())}catch(e){}}
 function openPre(m){preMode=m;$('preTitle').textContent=m==='two'?'لعبة لاعبَين':'لعبة ٤ لاعبين';renderRules();renderModes();
   renderStakes(m);$('preFee').innerHTML=`الدخول مجاني · الفوز ${fmt(prizeOf(m))} <span class="coin" style="width:14px;height:14px;display:inline-block;vertical-align:-2px"></span>`;
   $('preBox').hidden=false}
