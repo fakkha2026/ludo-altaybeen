@@ -817,7 +817,7 @@ body.ingame.nightg #starFx{opacity:1}
 .rug{background-image:var(--tb-n)!important;background-size:cover;background-position:center}
 .rug[data-tb=g]{background-image:none!important;background-color:#000}
 .rug[data-tb=g]::after{display:none}
-#board.ngb .tok .tb{filter:brightness(1.45) saturate(1.25) drop-shadow(0 0 1.5px #fff8)}
+#board.ngb .tok .tb{filter:brightness(1.45) saturate(1.25)}
 .rug[data-tb=s]{background-image:var(--tb-s)!important;background-color:#e9e2d4}
 .stk.tb-n,.stk.tb-g,.stk.tb-s{background-size:cover;background-position:center;text-shadow:0 1px 3px #000}
 .stk.tb-n{background-image:linear-gradient(#0007,#000b),var(--tb-n)}
@@ -3231,8 +3231,6 @@ function buildPieces(players){
       const g=el('g',{class:'tok'},tokLayer);
       el('circle',{class:'ring',cx:0,cy:0,r:.5,fill:'none',stroke:'#1d1622'},g);
       el('ellipse',{class:'tsh',cx:0,cy:.34,rx:.34,ry:.11,fill:'#000'},g);
-      if(NG){// الطاولة الذهبية: هالة نيون بلون اللاعب تحت الحجر عشان يبان على اللوحة الداكنة
-        const hl=el('circle',{cx:0,cy:.08,r:.44,fill:NEON[p.ci],'fill-opacity':.32,stroke:NEON[p.ci],'stroke-width':.07},g);if(!RM)anim(hl,{attributeName:'fill-opacity',values:'.22;.45;.22',dur:'2s',begin:(-k*.5)+'s'})}
       const body=el('g',{class:'tb'},g);g._b=body;g._sh=g.lastChild.previousSibling;
       tokenInner(body,TOKS.some(t=>t.id===p.tok)?p.tok:'tayb',COL[p.ci]);
       g.addEventListener('click',()=>onTokenClick(p.ci,k));
