@@ -3275,7 +3275,7 @@ function renderTokens(){
       if(n>1){s=n>2?.62:.75;const a=Math.PI*2*i/n;dx=Math.cos(a)*.2;dy=Math.sin(a)*.2}
       const g=tokEls[t.ci][t.k],pp=S.tok[t.ci][t.k];
       if(S.hop&&S.hop[0]===t.ci&&S.hop[1]===t.k){const hk=t.ci+'-'+t.k+'-'+pp;if(g._hk!==hk){g._hk=hk;hopTok(g)}}
-      g.style.transform=`translate(${t.x+dx}px,${t.y+dy}px) rotate(${-(window.ROT||0)*90}deg) scale(${pp===56?.6:s})`;
+      g.style.transform=`translate(${t.x+dx}px,${t.y+dy}px) rotate(${-(window.ROT||0)*90}deg) scale(${(pp===56?.6:s)*(board.classList.contains('ngb')?1.15:1)})`;
     });
   });
   S.players.forEach(p=>tokEls[p.ci].forEach((g,k)=>{
