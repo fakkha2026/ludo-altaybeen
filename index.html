@@ -2898,7 +2898,7 @@ const SCREENS=['splash','home','shop','closet','game'];
 const StarFx=(()=>{
   const cv=document.getElementById('starFx'),cx=cv.getContext('2d');
   const calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let W=0,H=0,dpr=1,stars=[],shoot=null,nextShoot=0,raf=0,last=0,on=false;
+  let W=0,H=0,dpr=1,stars=[],shoot=null,nextShoot=0,raf=0,last=0,on=false,glints=[],nextGlint=0;
   const COLS=['255,255,255','255,244,214','236,218,170','214,232,255'];
   function mk(x){const z=Math.random();return{x:x??Math.random()*W,y:Math.pow(Math.random(),1.35)*H*.68,
     r:.5+z*1.5,v:4+z*14,a:.35+z*.55,t:Math.random()*6.28,tw:.6+Math.random()*1.6,c:COLS[Math.random()*COLS.length|0],glow:z>.82}}
@@ -2914,6 +2914,14 @@ const StarFx=(()=>{
       const al=Math.max(0,s.a*(.62+.38*Math.sin(s.t))*Math.max(0,Math.min(1,fade))*Math.max(.15,low));
       if(s.glow){const g=cx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*5);g.addColorStop(0,`rgba(${s.c},${al*.45})`);g.addColorStop(1,`rgba(${s.c},0)`);cx.fillStyle=g;cx.beginPath();cx.arc(s.x,s.y,s.r*5,0,6.283);cx.fill()}
       cx.fillStyle=`rgba(${s.c},${al})`;cx.beginPath();cx.arc(s.x,s.y,s.r,0,6.283);cx.fill()}
+    if(now>nextGlint&&glints.length<3){glints.push({x:W*(.06+Math.random()*.88),y:H*(.04+Math.random()*.6),s:5+Math.random()*7,life:0,max:1.6+Math.random()*1.2,c:Math.random()<.5?'255,236,180':'255,255,255'});nextGlint=now+700+Math.random()*1600}
+    glints=glints.filter(g=>{g.life+=dt;const k=g.life/g.max;if(k>=1)return false;const al=Math.sin(Math.PI*k)*.8,L=g.s*(.6+.4*Math.sin(Math.PI*k));
+      cx.save();cx.translate(g.x,g.y);cx.rotate(k*.6);cx.lineCap='round';
+      for(const [len,w] of [[L,1.3],[L*.45,1]]){for(let i=0;i<(len===L?2:2);i++){const ang=i*Math.PI/2+(len===L?0:Math.PI/4);const dx=Math.cos(ang)*len,dy=Math.sin(ang)*len;
+        const gr=cx.createLinearGradient(-dx,-dy,dx,dy);gr.addColorStop(0,`rgba(${g.c},0)`);gr.addColorStop(.5,`rgba(${g.c},${al})`);gr.addColorStop(1,`rgba(${g.c},0)`);
+        cx.strokeStyle=gr;cx.lineWidth=w;cx.beginPath();cx.moveTo(-dx,-dy);cx.lineTo(dx,dy);cx.stroke()}}
+      const rg=cx.createRadialGradient(0,0,0,0,0,g.s*.9);rg.addColorStop(0,`rgba(${g.c},${al*.5})`);rg.addColorStop(1,`rgba(${g.c},0)`);cx.fillStyle=rg;cx.beginPath();cx.arc(0,0,g.s*.9,0,6.283);cx.fill();
+      cx.restore();return true});
     if(!shoot&&now>nextShoot)newShoot(now);
     if(shoot){const o=shoot;o.life+=dt;o.x+=o.vx*dt;o.y+=o.vy*dt;const k=o.life/o.max,al=Math.sin(Math.PI*Math.min(1,k))*.85,len=110;
       const tx=o.x-o.vx/Math.hypot(o.vx,o.vy)*len,ty=o.y-o.vy/Math.hypot(o.vx,o.vy)*len;
@@ -2922,7 +2930,7 @@ const StarFx=(()=>{
       cx.fillStyle=`rgba(255,250,235,${al})`;cx.beginPath();cx.arc(o.x,o.y,1.6,0,6.283);cx.fill();
       if(k>=1)shoot=null}}
   function start(){if(on)return;on=true;size();cv.classList.add('on');if(calm){frame(performance.now());cancelAnimationFrame(raf);return}
-    last=0;nextShoot=performance.now()+2500;raf=requestAnimationFrame(frame)}
+    last=0;nextShoot=performance.now()+2500;nextGlint=performance.now()+600;raf=requestAnimationFrame(frame)}
   function stop(){if(!on)return;on=false;cv.classList.remove('on');cancelAnimationFrame(raf)}
   addEventListener('resize',()=>{if(on)size()});
   document.addEventListener('visibilitychange',()=>{if(!on||calm)return;if(document.hidden)cancelAnimationFrame(raf);else{last=0;raf=requestAnimationFrame(frame)}});
@@ -2965,7 +2973,7 @@ function placeRug(){const r=document.querySelector('.rug');if(!r||!document.body
   if(TX){r.style.setProperty('--tx',`url(${TX})`);r.style.backgroundSize='';r.style.backgroundPosition='';return}const b=$('boardBox').getBoundingClientRect();if(!b.width)return;const vw=innerWidth,vh=innerHeight,k=Math.max(vw/m.w,vh/m.h),cl=(v,lo)=>Math.min(0,Math.max(lo,v));r.style.backgroundSize=(m.w*k).toFixed(0)+'px '+(m.h*k).toFixed(0)+'px';r.style.backgroundPosition=cl(b.left+b.width/2-m.cx*k,vw-m.w*k).toFixed(0)+'px '+cl(b.top+b.height/2-m.cy*k,vh-m.h*k).toFixed(0)+'px'}
 addEventListener('resize',()=>placeRug());
 function show(id){
-  try{id==='splash'?StarFx.start():StarFx.stop()}catch(e){}
+  try{['splash','home','shop','closet'].includes(id)?StarFx.start():StarFx.stop()}catch(e){}
   SCREENS.forEach(s=>$(s).hidden=s!==id);document.body.classList.toggle('ingame',id==='game');if(id!=='game'){document.body.classList.remove('nightg','sandg');try{SandFx.stop()}catch(e){}}if(id==='game'){placeRug();requestAnimationFrame(placeRug);setTimeout(placeRug,300)}
   if(id!=='game'&&$('choice'))$('choice').hidden=true;
   const app=id!=='splash'&&id!=='game';
