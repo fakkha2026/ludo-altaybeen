@@ -206,6 +206,12 @@ nav.tabs button.off{opacity:.55;position:relative}
 .chip.dev .pic{box-shadow:0 0 0 3px #0b0b0f,0 0 0 5px #e9c46a,0 0 14px #e9c46aaa;background:radial-gradient(circle at 35% 30%,#3a3326,#0b0b0f)}
 .chip .dv{position:absolute;top:2px;right:4px;font-size:.75rem}
 #pfTabs.adm4{grid-template-columns:repeat(4,1fr)}#pfTabs.adm4 button{font-size:.78rem}
+.wh-adm{display:flex;flex-direction:column;gap:6px}
+.wh-row{display:grid;grid-template-columns:22px auto 1fr 64px 38px;gap:6px;align-items:center}
+.wh-row b{text-align:center;color:var(--sand)}.wh-row .field{padding:8px 6px;font-size:.95rem;text-align:center;min-width:0}
+.wh-t{display:flex;gap:3px}.wh-t button{border:0;border-radius:9px;padding:6px 7px;background:var(--panel-2);font-size:1rem;cursor:pointer;opacity:.45}.wh-t button.sel{background:var(--sand);opacity:1}
+.wh-p{color:var(--muted);font-weight:800;text-align:center}
+.wh-h small{color:var(--muted);font-weight:800;text-align:center;font-size:.75rem}
 .adm-card{background:var(--night);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
 .adm-card b{font-size:.95rem}
 .adm-card .admtxt{color:var(--ink);font-size:.88rem;line-height:1.6;word-break:break-word}
@@ -1370,6 +1376,12 @@ body.ingame.nightg #starFx{opacity:1}
         <button type="button" id="admShop"><span>🛒 المتجر مفتوح للاعبين</span><span class="tgl" id="admShopT"></span></button>
       </div>
       <div class="adm-card">
+        <b>🎡 عجلة الحظ <small style="color:var(--muted);font-weight:700">· ٨ خانات</small></b>
+        <p class="note" style="margin:0;text-align:start">لكل خانة: عملات أو جواهر، والكمية، وفرصتها (كل ما كبر الرقم تطلع أكثر). الخانة ١ هي اللي فوق، والباقي بالترتيب مع عقارب الساعة.</p>
+        <div class="wh-adm" id="whAdm"></div>
+        <div class="adm-btns"><button type="button" class="gold" id="whSave">احفظ العجلة</button><button type="button" id="whReset">رجّع الأصلية</button></div>
+      </div>
+      <div class="adm-card">
         <b>📢 إعلان في الرئيسية</b>
         <textarea class="field" id="admAnn" maxlength="200" rows="3" placeholder="اكتب رسالة تظهر لكل اللاعبين (خلّها فاضية عشان تشيل الإعلان)" style="text-align:start;resize:vertical;font-size:.95rem"></textarea>
         <div class="adm-btns"><button type="button" class="gold" id="admAnnGo">نشر الإعلان</button><button type="button" id="admAnnDel">شيل الإعلان</button></div>
@@ -1763,6 +1775,7 @@ function statGame(won,r){const st=ST();st.run=won?st.run+1:0;st.best=Math.max(st
 // ---------- الأيام المتتالية وعجلة الحظ ----------
 function dayKey(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
 function checkIn(){if(SV())return;const t=dayKey(new Date());if(W.lastDay===t)return;const y=new Date();y.setDate(y.getDate()-1);W.days=W.lastDay===dayKey(y)?(W.days||0)+1:1;W.lastDay=t;save()}
+const WHEEL_DEF=[{c:300,w:24},{g:10,w:10},{c:400,w:20},{g:5,w:14},{c:500,w:16},{c:2000,w:3},{c:1000,w:8},{g:30,w:5}];
 const WHEEL=[{c:300,w:24,col:'#e2453c'},{g:10,w:10,col:'#27a35a'},{c:400,w:20,col:'#f0b81c'},{g:5,w:14,col:'#2f7fd8'},{c:500,w:16,col:'#e2453c'},{c:2000,w:3,col:'#27a35a'},{c:1000,w:8,col:'#f0b81c'},{g:30,w:5,col:'#2f7fd8'}];
 let wheelRot=0,spinning=false;
 function wheelLabel(x){return x.g?toAr(x.g)+' 💎':toAr(x.c)}
@@ -4128,7 +4141,7 @@ function renderFriends(){
   fill('frList','friends','ما عندك أصدقاء للحين','إزالة',u=>{frUnfriend(u);toast('انشال من أصدقائك')});
   fill('blList','blocks','ما حظرت أحد','إلغاء الحظر',u=>{frDel('blocks',u);save();toast('انلغى الحظر');frRefresh()})}
 function peerUid(peer){return (window.__PU&&window.__PU[peer])||''}
-function admRefresh(){if(IS_ADMIN)setTimeout(renderVault,0);const t=$('pfAdmTab');if(t)t.hidden=!IS_ADMIN;$('pfTabs').classList.toggle('adm4',IS_ADMIN);paintShopTab();if(!IS_ADMIN&&!$('pf-adm').hidden)pfTab('me');
+function admRefresh(){if(IS_ADMIN){setTimeout(renderVault,0);setTimeout(renderWhAdm,0)}const t=$('pfAdmTab');if(t)t.hidden=!IS_ADMIN;$('pfTabs').classList.toggle('adm4',IS_ADMIN);paintShopTab();if(!IS_ADMIN&&!$('pf-adm').hidden)pfTab('me');
   $('meAv').classList.toggle('dev-av',IS_ADMIN);if(!$('profBox').hidden)renderProfile();if(S)renderChips();try{renderBoard()}catch(e){}}
 function banRefresh(){let bdev='';try{bdev=localStorage.getItem('ludo-bdev')||''}catch(e){}
   if(BANNED.has(MYUID)){try{localStorage.setItem('ludo-bdev',MYUID)}catch(e){}bdev=MYUID}
@@ -4146,7 +4159,27 @@ async function devInit(){if(!window.__FB)return;let c;try{c=await window.__FB}ca
 setTimeout(devInit,0);
 // ---------- خزنة النرد والفعاليات (المطوّر) ----------
 SEASONS.forEach(z=>z.base=true);const BASE_SEASONS=SEASONS.slice();
+// عجلة الحظ من إعدادات المطوّر (لو موجودة وسليمة)
+function wheelOk(a){return Array.isArray(a)&&a.length===8&&a.every(x=>x&&(+x.c>0)!==(+x.g>0)&&+x.w>0)}
+function applyWheel(a){const L=wheelOk(a)?a:WHEEL_DEF;L.forEach((x,i)=>{const w=WHEEL[i];delete w.c;delete w.g;if(+x.g>0)w.g=Math.floor(+x.g);else w.c=Math.floor(+x.c);w.w=+x.w});
+  const sv=$('wheelSvg');if(sv&&!spinning){sv.innerHTML='';WICONS.length=0;if(!$('wheelBox').hidden)drawWheel()}if(IS_ADMIN&&!WH_EDIT)renderWhAdm()}
+let WH_EDIT=false;
+function renderWhAdm(){const box=$('whAdm');if(!box)return;box.innerHTML='';const tot=WHEEL.reduce((a,x)=>a+x.w,0);
+  box.insertAdjacentHTML('beforeend','<div class="wh-row wh-h"><b></b><small>النوع</small><small>الكمية</small><small>الفرصة</small><small></small></div>');
+  WHEEL.forEach((x,i)=>{const r=document.createElement('div');r.className='wh-row';r.dataset.t=x.g?'g':'c';
+    r.innerHTML=`<b>${toAr(i+1)}</b><span class="wh-t"><button type="button" data-k="c">🪙</button><button type="button" data-k="g">💎</button></span>
+      <input class="field wh-n" type="number" inputmode="numeric" min="1" value="${x.g||x.c}"><input class="field wh-w" type="number" inputmode="numeric" min="1" value="${x.w}"><small class="wh-p">${toAr(Math.round(x.w*100/tot))}٪</small>`;
+    const paint=()=>r.querySelectorAll('.wh-t button').forEach(b=>b.classList.toggle('sel',b.dataset.k===r.dataset.t));paint();
+    r.querySelectorAll('.wh-t button').forEach(b=>b.onclick=()=>{r.dataset.t=b.dataset.k;WH_EDIT=true;paint()});
+    r.querySelectorAll('input').forEach(n=>n.oninput=()=>{WH_EDIT=true;whPct()});box.appendChild(r)})}
+function whRead(){return [...document.querySelectorAll('#whAdm .wh-row:not(.wh-h)')].map(r=>{const n=Math.floor(+r.querySelector('.wh-n').value||0),w=Math.floor(+r.querySelector('.wh-w').value||0);return r.dataset.t==='g'?{g:n,w}:{c:n,w}})}
+function whPct(){const a=whRead(),tot=a.reduce((s,x)=>s+(x.w>0?x.w:0),0)||1;document.querySelectorAll('#whAdm .wh-p').forEach((p,i)=>p.textContent=toAr(Math.round(Math.max(0,a[i].w)*100/tot))+'٪')}
+$('whSave').onclick=async()=>{const a=whRead();if(!wheelOk(a)){toast('كل خانة لازم يكون فيها كمية وفرصة أكبر من صفر');return}
+  if(a.some(x=>(x.c||0)>1e6||(x.g||0)>1e4)){toast('الكمية كبيرة مرة، راجعها');return}
+  if(await admCfg({wheel:a})){WH_EDIT=false;toast('انحفظت العجلة 🎡')}};
+$('whReset').onclick=async()=>{if(!confirm('ترجع العجلة لجوائزها الأصلية؟'))return;if(await admCfg({wheel:null})){WH_EDIT=false;applyWheel(null);toast('رجعت العجلة الأصلية')}};
 function applyDrops(o){
+  applyWheel(o&&o.wheel);
   DROPS=(o&&o.drops&&typeof o.drops==='object')?o.drops:{};
   EVENTS=Array.isArray(o&&o.events)?o.events.filter(e=>e&&e.id&&(e.base||(e.from&&e.to))):[];
   SEASONS.length=0;
