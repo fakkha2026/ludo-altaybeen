@@ -488,6 +488,21 @@ svg#board{width:100%;height:100%;display:block}
 .sub-pick .fr img{width:100%;height:100%;border-radius:50%;object-fit:cover}
 .sub-pick .kit{display:flex;align-items:flex-end;gap:6px}.sub-pick .kit img{height:46px}.sub-pick .kit svg{width:36px;height:36px}
 @media (prefers-reduced-motion:reduce){.subb{animation:none!important}}
+/* حركات المشترك: التاج الساحق (الأكل) والتتويج (الفوز) */
+.kfx{position:fixed;left:0;top:0;pointer-events:none;z-index:80;width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2)}
+.kfx svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 3px #ffd76a) drop-shadow(0 0 9px var(--k))}
+.kfx.drop svg{animation:kcDrop .5s cubic-bezier(.55,0,.8,.2) both,kcOut .32s .62s ease-in forwards}
+@keyframes kcDrop{0%{transform:translateY(-150%) scale(1.7);opacity:0}60%{opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes kcOut{to{transform:scale(.55);opacity:0}}
+.kfx.crownw svg{animation:kcWin .7s cubic-bezier(.3,1.4,.5,1) both,kcGlow .9s .7s ease-in-out 2 alternate,kcOut .4s 2.4s ease-in forwards}
+@keyframes kcWin{0%{transform:translateY(-220%) scale(2.2) rotate(-14deg);opacity:0}100%{transform:none;opacity:1}}
+@keyframes kcGlow{to{filter:drop-shadow(0 0 6px #fff3c4) drop-shadow(0 0 18px var(--k)) brightness(1.3)}}
+.kring{position:fixed;left:0;top:0;pointer-events:none;z-index:79;width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2);border-radius:50%;border:3px solid var(--k);box-shadow:0 0 12px var(--k),inset 0 0 10px var(--k);opacity:0;animation:kRing .65s ease-out var(--d,0s) forwards}
+.kring.g{border-color:#ffd76a;box-shadow:0 0 12px #ffd76a,inset 0 0 8px #ffd76a}
+@keyframes kRing{0%{transform:scale(.15);opacity:1}100%{transform:scale(2.3);opacity:0}}
+.kflash{position:fixed;left:0;top:0;pointer-events:none;z-index:78;width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2);border-radius:50%;background:radial-gradient(circle,#fff 0,var(--k) 30%,transparent 68%);opacity:0;animation:kFlash .45s ease-out var(--d,0s) forwards}
+@keyframes kFlash{0%{transform:scale(.3);opacity:1}100%{transform:scale(1.8);opacity:0}}
+.sub-demo{display:flex;gap:8px}.sub-demo button{flex:1;background:#0006;border:1px solid #e9c46a66;color:#ffe7a0;border-radius:12px;padding:8px;font:inherit;font-weight:800;cursor:pointer}
 /* الملف الشخصي: صورة أصغر عشان الشارة تدخل في النافذة، والقلم تحت شريط المستوى */
 .dev-av.hasb,.av.hasb{box-shadow:none!important}
 .pf-top .av.hasb{width:56px;height:56px;font-size:1.9rem;margin:26px 24px 26px 22px}
@@ -1248,6 +1263,7 @@ body.ingame.nightg #starFx{opacity:1}
         <div class="pf-lbl" style="margin:0;color:#ffe7a0">👑 مجلس الطيبين</div>
         <small style="color:var(--muted)">اختر لون طقمك: الإطار والشارة والحجر والنرد كلها تتغيّر مع بعض، وتقدر تغيّره متى ما بغيت.</small>
         <div class="sub-pick" id="subPick"></div>
+        <div class="sub-demo"><button type="button" id="subDemoEat">👀 حركة الأكل</button><button type="button" id="subDemoWin">👀 حركة الفوز</button></div>
       </div>
       <div class="pf-lbl">رصيدك</div>
       <div class="pf-wal"><div class="stat"><b id="pfCoins">٠</b><small>🪙 عملات</small></div><div class="stat"><b id="pfGems">٠</b><small>💎 جواهر</small></div></div>
@@ -2969,6 +2985,7 @@ function renderSeasonBanner(){const list=SEASONS.filter(z=>!z.ev||seasonItems(z.
   const live=list.find(x=>x[1].on),next=list.filter(x=>!x[1].on).sort((a,b)=>a[1].a-b[1].a)[0],pick=live||next;if(!pick){$('szBanner').hidden=true;return}
   $('szBanner').hidden=false;const [z,r]=pick;$('szEmoji').textContent=z.emoji;$('szTitle').textContent=r.on?z.name+' بدأ!':'قريب: '+z.name;
   $('szTxt').textContent=r.on?`${z.gift?'🎁 فيه جايزة تنتظرك · ':''}أغراض خاصة لفترة محدودة · باقي ${toAr(daysTo(r.b))} يوم`:`يبدأ بعد ${toAr(daysTo(r.a))} يوم · شوف وش بيجيك`;$('szBanner').classList.toggle('live',r.on)}
+$('subDemoEat').onclick=()=>subDemo('eat');$('subDemoWin').onclick=()=>subDemo('win');
 function renderSubKit(){const box=$('pfSub');if(!box)return;const c=subC();box.hidden=!c;if(!c)return;const pick=$('subPick');pick.innerHTML='';
   [['p','بنفسجي'],['c','سماوي']].forEach(([k,nm])=>{const b=document.createElement('button');b.type='button';b.className=k+(c===k?' on':'');
     const fr=document.createElement('span');fr.className='fr';fr.innerHTML=avHTML(W.av,myPic());fr.appendChild(bdgEl('s'+k));
@@ -3562,6 +3579,34 @@ function spinOff(){if(SPIN){clearInterval(SPIN);SPIN=null}$('dice').classList.re
 function revealRoll(cb){const ci=S.hid,ph=S.phase;S.phase='reveal';emitEv({t:'rev',ci,v:S.hidV});
   later(()=>{if(!S||S.phase!=='reveal')return;const hp=S.players.find(x=>x.ci===ci);if(hp)S.msg=[`${nameHtml(hp)} طلع ${toAr(S.hidV)}`,ph==='nomove'?'ما فيه حركة':''];S.hid=-1;S.phase=ph;paintStatus(S.msg[0]||'',S.msg[1]||'');renderTokens();cb()},REV_MS)}
 function emitEv(o){S.evN++;S.ev=Object.assign({n:S.evN},o);fxEv(S.ev);sync()}
+
+// ---------- حركات المشترك: التاج الساحق لما ياكل، والتتويج لما يفوز ----------
+const KITC={p:['#c08bff','#8a4dff'],c:['#5fe6ff','#2fb8ff']};
+const CROWN_SVG=k=>`<svg viewBox="0 0 100 100"><defs><linearGradient id="kcg${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d0"/><stop offset=".5" stop-color="#ffd76a"/><stop offset="1" stop-color="#c9900a"/></linearGradient></defs>
+  <path d="M14,72 L20,32 L37,52 L50,22 L63,52 L80,32 L86,72 Z" fill="${KITC[k][1]}" fill-opacity=".28" stroke="url(#kcg${k})" stroke-width="4.5" stroke-linejoin="round"/>
+  <rect x="14" y="72" width="72" height="11" rx="3" fill="${KITC[k][1]}" fill-opacity=".3" stroke="url(#kcg${k})" stroke-width="4"/>
+  <circle cx="20" cy="30" r="5" fill="#ffd76a"/><circle cx="50" cy="19" r="6" fill="#ffd76a"/><circle cx="80" cy="30" r="5" fill="#ffd76a"/>
+  <circle cx="50" cy="56" r="6" fill="${KITC[k][0]}" stroke="#fff" stroke-width="1.5"/><circle cx="32" cy="77.5" r="3" fill="${KITC[k][0]}"/><circle cx="68" cy="77.5" r="3" fill="${KITC[k][0]}"/></svg>`;
+function kfxEl(cls,x,y,sz,k,html,d){const e=document.createElement('div');e.className=cls;e.style.cssText=`left:${x}px;top:${y}px;--s:${sz}px;--k:${KITC[k][0]}`+(d?`;--d:${d}s`:'');if(html)e.innerHTML=html;document.body.appendChild(e);return e}
+function kfxGone(els,ms){setTimeout(()=>els.forEach(e=>e.remove()),ms)}
+function subEatFx(x,y,k){if(RM||!KITC[k])return;const cs=board.getBoundingClientRect().width/15,sz=cs*2.3;
+  const cr=kfxEl('kfx drop',x,y-cs*.25,sz,k,CROWN_SVG(k));
+  setTimeout(()=>{const els=[kfxEl('kflash',x,y,cs*2.2,k),kfxEl('kring',x,y,cs*1.4,k),kfxEl('kring g',x,y,cs*1.4,k,'',.12)];
+    burst(x,y,[KITC[k][0],KITC[k][1],'#ffd76a','#fff'],36,'star',7);kfxGone(els,900)},480);
+  kfxGone([cr],1050)}
+function subWinFx(ci,k,done){if(RM||!KITC[k]){done&&done();return}
+  const r=board.getBoundingClientRect(),cols=[KITC[k][0],KITC[k][1],'#ffd76a','#fff'],els=[];
+  for(let i=0;i<7;i++)setTimeout(()=>{const x=r.left+r.width*(.18+Math.random()*.64),y=r.top+r.height*(.15+Math.random()*.6);
+    burst(x,y,cols,46,'star',8);els.push(kfxEl('kring',x,y,r.width*.16,k),kfxEl('kflash',x,y,r.width*.22,k));try{SFX.six()}catch(e){}},i*230);
+  setTimeout(()=>{const pic=document.querySelector('#chip-'+ci+' .pic');if(pic){const pr=pic.getBoundingClientRect(),x=pr.left+pr.width/2,y=pr.top+pr.height/2;
+      els.push(kfxEl('kfx crownw',x,pr.top-pr.width*.62,pr.width*1.1,k,CROWN_SVG(k)));
+      setTimeout(()=>{els.push(kfxEl('kring g',x,y,pr.width*1.3,k),kfxEl('kring',x,y,pr.width*1.3,k,'',.15),kfxEl('kring',x,y,pr.width*1.3,k,'',.35));burst(x,pr.top,cols,40,'star',6)},620)}
+    else{const x=r.left+r.width/2,y=r.top+r.height/2;els.push(kfxEl('kfx crownw',x,y,r.width*.35,k,CROWN_SVG(k)))}},1500);
+  setTimeout(()=>{kfxGone(els,0);done&&done()},4300)}
+function winPlay(ci){const pl=S.players.find(p=>p.ci===ci),k=plSub(pl);if(k&&!RM)subWinFx(ci,k,()=>{if(S&&S.winner===ci)showWin(ci)});else showWin(ci)}
+function subDemo(kind){const k=subC();if(!k)return;$('profBox').hidden=true;
+  const go=()=>{if(kind==='eat'){const [x,y]=boardPt(6.5,10.5);SFX.eat();setTimeout(SFX.eaten,250);shake($('boardBox'));subEatFx(x,y,k)}else subWinFx(meCi(),k)};
+  if(!S||S.phase==='over'||$('game').hidden){startMode2('four');setTimeout(go,700)}else go()}
 function fxEv(ev){
   const mine=ev.ci===meCi();
   if(ev.t==='roll'&&ev.h&&!mine&&MODE==='online'){
@@ -3586,6 +3631,7 @@ function fxEv(ev){
     const [bx,by]=posOf(ev.ci,ev.p,ev.k),[x,y]=boardPt(bx,by);
     SFX.eat();setTimeout(SFX.eaten,250);shake($('boardBox'));buzz(120);
     burst(x,y,[ev.v>=0?COL[ev.v].hex:'#fff',COL[ev.ci].hex,'#fff'],40,'dot',7);
+    {const sk=plSub(S&&S.players.find(p=>p.ci===ev.ci));if(sk)subEatFx(x,y,sk)}
     if(mine)track('eat',ev.cnt||1);
   }else if(ev.t==='home'){
     const [bx,by]=posOf(ev.ci,56,ev.k),[x,y]=boardPt(bx,by);
@@ -4307,7 +4353,7 @@ function land(ci,k){
 function endTurn(extra){if(S.phase==='over')return;if(S.hid>=0&&S.phase!=='reveal'){revealRoll(()=>endTurn(extra));return}if(!extra)S.cur=(S.cur+1)%S.players.length;startTurn()}
 function win(ci){
   S.phase='over';S.winner=ci;renderChips();sync();
-  showWin(ci);
+  winPlay(ci);
 }
 function showWin(ci){
   const c=COL[ci],pl=S.players.find(p=>p.ci===ci);
@@ -4539,7 +4585,7 @@ function applySnap(g){
   if(mine&&S.phase==='roll')paintStatus('دورك!','اضغط النرد');
   else if(mine&&S.phase==='move'&&S.moves.length>1)paintStatus(`طلع ${toAr(S.dice)}`,'اختر حجر تحرّكه');
   else paintStatus(S.msg[0]||'',S.msg[1]||'');
-  if(S.winner>=0&&!NET.winShown){NET.winShown=true;S.phase='over';showWin(S.winner)}
+  if(S.winner>=0&&!NET.winShown){NET.winShown=true;S.phase='over';winPlay(S.winner)}
 }
 function tableId(gid){return 'ludo-'+String(NET.code||'x').replace(/[^0-9]/g,'')+'_'+String(gid).replace(/[^0-9A-Za-z]/g,'')}
 function srvWin(youWon,ci,m){
