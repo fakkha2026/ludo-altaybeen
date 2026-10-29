@@ -529,6 +529,7 @@ svg#board{width:100%;height:100%;display:block}
 .wic{transform-box:view-box;transform-origin:0 0;transition:transform 4.2s cubic-bezier(.15,.85,.2,1)}
 
 /* حركات المتجر */
+body.fxTop #fx{z-index:300}body.fxTop .efx,body.fxTop .kfx,body.fxTop .kring,body.fxTop .kflash{z-index:301}
 .efx{position:fixed;left:0;top:0;pointer-events:none;z-index:120;width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2)}
 .efx svg{width:100%;height:100%;overflow:visible}
 .efx.sword svg{transform-origin:50% 92%;filter:drop-shadow(0 0 6px #fff8) drop-shadow(0 4px 6px #0008);animation:swSwing .32s cubic-bezier(.6,0,.9,.6) both,swOut .3s .45s ease-in forwards}
@@ -3723,7 +3724,7 @@ const CROWN_SVG=k=>`<svg viewBox="0 0 100 100"><defs><linearGradient id="kcg${k}
   <circle cx="50" cy="56" r="6" fill="${KITC[k][0]}" stroke="#fff" stroke-width="1.5"/><circle cx="32" cy="77.5" r="3" fill="${KITC[k][0]}"/><circle cx="68" cy="77.5" r="3" fill="${KITC[k][0]}"/></svg>`;
 function kfxEl(cls,x,y,sz,k,html,d){const e=document.createElement('div');e.className=cls;e.style.cssText=`left:${x}px;top:${y}px;--s:${sz}px;--k:${KITC[k][0]}`+(d?`;--d:${d}s`:'');if(html)e.innerHTML=html;document.body.appendChild(e);return e}
 function kfxGone(els,ms){setTimeout(()=>els.forEach(e=>e.remove()),ms)}
-function subEatFx(x,y,k){if(RM||!KITC[k])return;const cs=board.getBoundingClientRect().width/15,sz=cs*2.3;
+function subEatFx(x,y,k){if(RM||!KITC[k])return;const cs=cellPx(),sz=cs*2.3;
   const cr=kfxEl('kfx drop',x,y-cs*.25,sz,k,CROWN_SVG(k));
   setTimeout(()=>{const els=[kfxEl('kflash',x,y,cs*2.2,k),kfxEl('kring',x,y,cs*1.4,k),kfxEl('kring g',x,y,cs*1.4,k,'',.12)];
     burst(x,y,[KITC[k][0],KITC[k][1],'#ffd76a','#fff'],44,'dot',7.5);kfxGone(els,900)},480);
@@ -3753,7 +3754,9 @@ function playEat(pl,x,y,vc){if(RM)return;const f=plFx(pl,'e');if(!f)return;
   if(f==='e_crown')subEatFx(x,y,plSub(pl)||'p');else if(f==='e_falcon')falconFx(x,y);else if(f==='e_sword')swordFx(x,y);else if(f==='e_dust')dustFx(x,y)}
 function fxThumb(it,svg){svg.innerHTML='';el('circle',{cx:50,cy:50,r:40,fill:it.sub?'#2a1748':'#0b1e2b',stroke:it.sub?'#e9c46a':'#efd29a66','stroke-width':2.5},svg);
   const t=el('text',{x:50,y:54,'text-anchor':'middle','dominant-baseline':'central','font-size':42},svg);t.textContent=it.ic}
-function cellPx(){return board.getBoundingClientRect().width/15}
+function cellPx(){return (board.getBoundingClientRect().width||Math.min(innerWidth,520))/15}
+// مكان الحركات: اللوحة، وإذا مخفية (تجربة من المتجر أو الخزنة) نافذة التجربة
+let FX_AREA=null;function fxRect(){const r=board.getBoundingClientRect();return r.width?r:(FX_AREA||{left:0,top:0,width:innerWidth,height:innerHeight,right:innerWidth,bottom:innerHeight})}
 function fxDiv(html,x,y,sz,cls){const e=document.createElement('div');e.className='efx '+(cls||'');e.style.cssText=`left:${x}px;top:${y}px;--s:${sz}px`;e.innerHTML=html||'';document.body.appendChild(e);return e}
 const SWORD_SVG=`<svg viewBox="0 0 100 100"><defs><linearGradient id="swb" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8e9aa6"/><stop offset=".45" stop-color="#ffffff"/><stop offset="1" stop-color="#9aa6b2"/></linearGradient><linearGradient id="swh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset="1" stop-color="#b8860b"/></linearGradient></defs>
  <path d="M47,6 Q58,40 53,74 L47,74 Q42,40 47,6 Z" fill="url(#swb)" stroke="#5a6470" stroke-width="1"/><path d="M50,10 Q54,40 51,72" stroke="#fff" stroke-width="1.2" fill="none" opacity=".8"/>
@@ -3775,15 +3778,17 @@ function dustFx(x,y){const cs=cellPx(),els=[];
   burst(x,y,['#e2c07e','#c99a5a','#f3dfb3','#8a6430'],46,'dot',5.5);
   setTimeout(()=>burst(x,y-cs*.8,['#e2c07e','#f3dfb3','#b8904a'],30,'dot',4),300);
   setTimeout(()=>els.forEach(e=>e.remove()),1150)}
-function fireWinFx(ci,done){const r=board.getBoundingClientRect(),pal=[['#ff4d6d','#ffd76a','#fff'],['#4dd2ff','#b388ff','#fff'],['#7dff8a','#ffe14d','#fff'],['#ff9a3a','#ff4dd2','#fff']],els=[];
+function fireWinFx(ci,done){const r=fxRect(),pal=[['#ff4d6d','#ffd76a','#fff'],['#4dd2ff','#b388ff','#fff'],['#7dff8a','#ffe14d','#fff'],['#ff9a3a','#ff4dd2','#fff']],els=[];
   for(let i=0;i<10;i++)setTimeout(()=>{const x=r.left+r.width*(.12+Math.random()*.76),y=r.top+r.height*(.1+Math.random()*.6),c=pal[i%4];
     els.push(fxDiv('',x,r.bottom,8,'rocket'));els[els.length-1].style.setProperty('--dy',(y-r.bottom)+'px');
     setTimeout(()=>{burst(x,y,c,64,'dot',9);els.push(fxDiv('',x,y,r.width*.26,'flash c'+(i%4)));try{SFX.six()}catch(e){}},420)},i*260);
   setTimeout(()=>{els.forEach(e=>e.remove());done&&done()},3600)}
 // تجربة الحركة للمطوّر وللمشتري قبل ما يشتري
 function fxDemo(id,card){const r=card.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height*.3;
+  // الحركة تطلع فوق النافذة: نرفع طبقة الجزيئات مؤقتاً
+  FX_AREA=r;document.body.classList.add('fxTop');clearTimeout(fxDemo.t);fxDemo.t=setTimeout(()=>{document.body.classList.remove('fxTop');FX_AREA=null},4200);
   if(id==='e_sword')swordFx(x,y);else if(id==='e_dust')dustFx(x,y);else if(id==='e_crown')subEatFx(x,y,subC()||'p');else if(id==='e_falcon')falconFx(x,y);
-  else if(id==='w_fire'||id==='w_crown'){if(!board.getBoundingClientRect().width){toast('افتح لعبة عشان تشوفها على اللوحة');return}fireWinFx(-1)}}
+  else if(id==='w_fire'||id==='w_crown')fireWinFx(-1)}
 function fxEv(ev){
   const mine=ev.ci===meCi();
   if(ev.t==='roll'&&ev.h&&!mine&&MODE==='online'){
