@@ -1720,21 +1720,18 @@ function checkIn(){if(SV())return;const t=dayKey(new Date());if(W.lastDay===t)re
 const WHEEL=[{c:300,w:24,col:'#e2453c'},{g:10,w:10,col:'#27a35a'},{c:400,w:20,col:'#f0b81c'},{g:5,w:14,col:'#2f7fd8'},{c:500,w:16,col:'#e2453c'},{c:2000,w:3,col:'#27a35a'},{c:1000,w:8,col:'#f0b81c'},{g:30,w:5,col:'#2f7fd8'}];
 let wheelRot=0,spinning=false;
 function wheelLabel(x){return x.g?toAr(x.g)+' 💎':toAr(x.c)}
+// صورة أيقونة العملة/الجوهرة من نفس ستايل الرصيد (تنقرا مرة وحدة من الـCSS)
+const ICON_CACHE={};
+function ICON_SRC(k){if(k in ICON_CACHE)return ICON_CACHE[k];const e=document.createElement('span');e.className=k;e.style.cssText='position:absolute;left:-99px;width:10px;height:10px';document.body.appendChild(e);
+  const bg=getComputedStyle(e,k==='gem'?'::before':null).backgroundImage||'';e.remove();const m=bg.match(/url\(["']?(.*?)["']?\)/);return ICON_CACHE[k]=m?m[1]:''}
 function drawWheel(){const svg=$('wheelSvg');if(svg.childNodes.length)return;const n=WHEEL.length,a=2*Math.PI/n;
   WHEEL.forEach((x,i)=>{const a0=i*a-Math.PI/2-a/2,a1=a0+a;
     el('path',{d:`M0 0L${95*Math.cos(a0)} ${95*Math.sin(a0)}A95 95 0 0 1 ${95*Math.cos(a1)} ${95*Math.sin(a1)}Z`,fill:x.col,stroke:'#0d2230','stroke-width':2},svg);
     const g=el('g',{transform:`rotate(${i*360/n})`},svg);
     const t=el('text',{x:0,y:-54,'text-anchor':'middle','dominant-baseline':'central',direction:'ltr',fill:'#fff','font-size':String(x.g||x.c).length>=4?14:16,'font-weight':800,style:'font-family:Tajawal,sans-serif;paint-order:stroke;stroke:#0007;stroke-width:3px'},g);t.textContent=toAr(x.g||x.c);
-    if(x.g){
-      el('polygon',{points:'-5,-88 5,-88 10,-82 0,-70 -10,-82',fill:'#1aa8d0',stroke:'#04506a','stroke-width':1.2,'stroke-linejoin':'round'},g);
-      el('polygon',{points:'-5,-88 5,-88 10,-82 -10,-82',fill:'#b9f6ff'},g);
-      el('polygon',{points:'-5,-88 0,-82 5,-88',fill:'#fff'},g);
-      el('polygon',{points:'-10,-82 0,-82 0,-70',fill:'#3fd2f0'},g);
-      el('polygon',{points:'0,-82 10,-82 0,-70',fill:'#0b8fb0'},g)}
-    else{el('circle',{cx:0,cy:-79,r:8,fill:'#f0b416',stroke:'#8a5a00','stroke-width':1.5},g);
-      el('circle',{cx:0,cy:-79,r:5.5,fill:'#ffd94a',stroke:'#c98a06','stroke-width':.8},g);
-      const ds=el('text',{x:0,y:-78.6,'text-anchor':'middle','dominant-baseline':'central','font-size':8.5,'font-weight':900,fill:'#b37a04',style:'font-family:Arial,sans-serif'},g);ds.textContent='$';
-      el('ellipse',{cx:-3,cy:-82,rx:2.4,ry:1.4,fill:'#fff',opacity:.7},g)}});
+    // نفس أيقونة العملة (النخلة) والجوهرة (الزمرد) اللي في الرصيد فوق
+    const src=x.g?ICON_SRC('gem'):ICON_SRC('coin'),sz=x.g?22:20;
+    if(src)el('image',{href:src,x:-sz/2,y:-79-sz/2,width:sz,height:sz,preserveAspectRatio:'xMidYMid meet'},g);});
   el('circle',{r:96,fill:'none',stroke:'#efd29a','stroke-width':5},svg)}
 function streakBonus(){return 0}
 function renderWheel(){const got=W.spin===today();
