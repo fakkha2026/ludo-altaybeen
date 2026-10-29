@@ -3945,7 +3945,7 @@ $('delNo').onclick=()=>{$('delBox').hidden=true;$('profBox').hidden=false};
 // ---------- الحساب: اسم مستخدم وكلمة سر ----------
 const AU={c:null,user:false,key:''};
 function unKey(n){return String(n||'').trim().toLowerCase().replace(/[ً-ٰٟـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي')}
-function unValid(n){return /^[a-zA-Z0-9_ء-ي٠-٩]{3,14}$/.test(n)}
+function unValid(n){return /^[a-zA-Z0-9_ء-ؿف-ي٠-٩]{3,14}$/.test(n)&&/[a-zA-Z0-9ء-ؿف-ي٠-٩]/.test(n)}
 function unMail(k){return 'u'+Array.from(new TextEncoder().encode(k)).map(b=>b.toString(16).padStart(2,'0')).join('')+'@ludo-altaybeen.app'}
 function auErrTxt(e){const c=(e&&e.code)||'';
   if(c==='taken')return 'اسم المستخدم مستخدم، اختر اسم ثاني.';
