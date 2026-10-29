@@ -214,6 +214,7 @@ nav.tabs button.off{opacity:.55;position:relative}
 .wh-h small{color:var(--muted);font-weight:800;text-align:center;font-size:.75rem}
 .adm-card{background:var(--night);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
 .adm-card b{font-size:.95rem}
+.rsv-list{display:flex;flex-wrap:wrap;gap:6px}.rsv-list:empty{display:none}.rsv-list button{border:1px solid #e9c46a66;background:#e9c46a1a;color:var(--ink);border-radius:999px;padding:5px 12px;font:inherit;font-size:.85rem;font-weight:800;cursor:pointer}.rsv-list button i{font-style:normal;color:var(--red);margin-inline-start:6px}
 .adm-card .admtxt{color:var(--ink);font-size:.88rem;line-height:1.6;word-break:break-word}
 .adm-btns{display:flex;gap:6px;flex-wrap:wrap}
 .adm-btns button{flex:1;min-width:80px;border:0;border-radius:10px;padding:8px 6px;font:800 .85rem var(--body);cursor:pointer;background:var(--panel-2);color:var(--ink)}
@@ -1407,6 +1408,18 @@ body.ingame.nightg #starFx{opacity:1}
         <div class="pf-row"><input class="field" id="admBanName" maxlength="14" placeholder="اسم المستخدم" autocapitalize="off" spellcheck="false"><button class="ghost" id="admBanGo" type="button" style="background:var(--red);color:#fff">إيقاف</button></div>
       </div>
       <div class="adm-card">
+        <b>🔒 الأسماء المحجوزة</b>
+        <p class="note" style="margin:0;text-align:start">أي اسم بعدد الحروف المحجوز، أو أي اسم في القائمة، يطلع للاعبين "غير متاح". أنت بس تقدر تاخذه أو تعطيه للاعب. اللي عندهم أسماء من قبل ما يتأثرون.</p>
+        <div class="pf-row"><input class="field" id="rsvLenIn" type="number" inputmode="numeric" min="3" max="14" placeholder="عدد الحروف (٣ إلى ١٤)"><button class="ghost" id="rsvLenGo" type="button">احجز</button></div>
+        <div class="rsv-list" id="rsvLens"></div>
+        <div class="pf-row"><input class="field" id="rsvNameIn" maxlength="14" placeholder="اسم تبي تحجزه" autocapitalize="off" spellcheck="false"><button class="ghost" id="rsvNameGo" type="button">احجز</button></div>
+        <div class="rsv-list" id="rsvNames"></div>
+        <b style="font-size:.88rem">🎁 أعطِ اسم للاعب</b>
+        <div class="pf-row"><input class="field" id="rsvGiveName" maxlength="14" placeholder="الاسم الجديد" autocapitalize="off" spellcheck="false"><input class="field" id="rsvGiveTo" maxlength="14" placeholder="اسم اللاعب الحالي" autocapitalize="off" spellcheck="false"></div>
+        <button class="btn sand" id="rsvGiveGo" type="button" style="font-size:1.05rem;padding:9px">أعطه الاسم</button>
+        <div class="err" id="rsvErr"></div>
+      </div>
+      <div class="adm-card">
         <b>🎁 أرسل هدية للاعب</b>
         <input class="field" id="admGiftName" maxlength="14" placeholder="اسم المستخدم" autocapitalize="off" spellcheck="false" style="text-align:start">
         <div class="seg" id="admGiftKind" style="grid-template-columns:1fr 1fr"><button type="button" data-k="c" class="sel">🪙 عملات</button><button type="button" data-k="g">💎 جواهر</button></div>
@@ -1746,7 +1759,7 @@ async function api(name,body){
   if(!j.ok)throw {code:j.err||'server'};
   return j}
 function apiErr(e){return ({poor:'رصيدك ما يكفي',done:'استلمتها قبل',limit:'وصلت الحد لليوم',banned:'⛔ حسابك موقوف',net:'ما فيه اتصال، تأكد من الإنترنت',
-  iap:'ما قدرنا نتأكد من الشراء عند أبل، جرّب بعد شوي',revoked:'هالشراء ملغي من أبل',closed:'الموسم مو شغّال الحين',account:'سجّل دخولك أول',taken:'اسم المستخدم مستخدم، اختر اسم ثاني.',
+  iap:'ما قدرنا نتأكد من الشراء عند أبل، جرّب بعد شوي',revoked:'هالشراء ملغي من أبل',closed:'الموسم مو شغّال الحين',account:'سجّل دخولك أول',taken:'اسم المستخدم غير متاح، اختر اسم ثاني.',
   rude:'الاسم فيه كلمة غير لائقة، اختر اسم ثاني.',badname:'اسم المستخدم من ٣ إلى ١٤ حرف أو رقم، بدون مسافات أو رموز.',late:'الطاولة بدأت من زمان',full:'الطاولة مليانة',
   over:'اللعبة خلصت',bet:'الطاولة تغيّرت',level:'هالطاولة تنفتح من مستوى أعلى',nogame:'اللعبة انتهت',auth:'سجّل دخولك مرة ثانية',verify:'وثّق إيميلك أول من ملفك 📧',slow:'طلبات كثير ورا بعض، انتظر شوي وجرّب',newbie:'الطاولات بمبلغ تنفتح بعد ما تلعب ٥ لعبات أو يمر يوم على حسابك'})[e&&e.code]||'صار خطأ في السيرفر، جرّب مرة ثانية'}
 function applyWallet(w){if(!w)return;if(WHOLD){WPEND=w;return}WSRV=w;
@@ -1766,7 +1779,7 @@ function isNb(){const w=WSRV;if(!w)return false;if(w.nb!=null)return !!w.nb;retu
 function isVer(){const u=AU.c&&AU.c.auth.currentUser;return !!(u&&!u.isAnonymous&&u.emailVerified&&!isFake(u.email))}
 async function afterVerify(){if(!SV()||!isVer()||AV_BUSY)return;AV_BUSY=true;
   try{const j=await api('wallet');if(j.welcomed)setTimeout(()=>toast('✅ توثّق إيميلك! 🎁 وصلتك هدية الترحيب ٥٬٠٠٠ عملة'),300)}catch(e){}
-  if(!AU.key&&unValid(W.nick||'')){try{const j=await api('uname',{name:W.nick});AU.key=j.key;toast('✅ انحجز اسمك: '+W.nick)}catch(e){if(e.code==='taken')toast('⚠️ اسم '+W.nick+' أخذه أحد قبلك، اختر اسم ثاني من ملفك')}}
+  if(!AU.key&&unValid(W.nick||'')){try{const j=await api('uname',{name:W.nick});AU.key=j.key;toast('✅ انحجز اسمك: '+W.nick)}catch(e){if(e.code==='taken')toast('⚠️ اسم '+W.nick+' غير متاح، اختر اسم ثاني من ملفك')}}
   AV_BUSY=false;try{renderAcct();if(!$('profBox').hidden)renderProfile()}catch(e){}}
 document.addEventListener('visibilitychange',async()=>{if(document.visibilityState!=='visible'||!SV()||!AU.user||isVer())return;
   const u=AU.c&&AU.c.auth.currentUser;if(!u)return;try{await u.reload()}catch(e){}if(isVer())afterVerify()});
@@ -2961,6 +2974,9 @@ function show(id){
   if(id==='shop')renderShop();if(id==='closet')renderCloset();if(id==='home'){renderModes();renderMissions();renderSeasonBanner();renderLogin();lgAuto()}
   renderWallet();window.scrollTo(0,0);
 }
+// الأسماء المحجوزة (config/app): أطوال وأسماء ما يقدر ياخذها إلا المطوّر
+const RSV={lens:[],names:{}};
+function rsvBlocked(n){if(IS_ADMIN)return false;n=String(n||'').trim();return RSV.lens.includes(n.length)||!!RSV.names[unKey(n)]}
 let SHOP_OPEN=false; // يتحكم فيه المطوّر من لوحة الإدارة (config/app.shop)
 function paintShopTab(){const b=document.querySelector('#tabs button[data-t="shop"]');if(!b)return;const open=SHOP_OPEN||IS_ADMIN;b.classList.toggle('off',!open);const sm=b.querySelector('small');if(sm){sm.hidden=SHOP_OPEN;sm.textContent=IS_ADMIN?'مقفل للاعبين':'غير متاح مؤقتاً'}}
 function shopClosed(){toast('🔒 المتجر غير متاح مؤقتاً');}
@@ -3948,7 +3964,7 @@ function unKey(n){return String(n||'').trim().toLowerCase().replace(/[ً-ٰٟـ]
 function unValid(n){return /^[a-zA-Z0-9_ء-ؿف-ي٠-٩]{3,14}$/.test(n)&&/[a-zA-Z0-9ء-ؿف-ي٠-٩]/.test(n)}
 function unMail(k){return 'u'+Array.from(new TextEncoder().encode(k)).map(b=>b.toString(16).padStart(2,'0')).join('')+'@ludo-altaybeen.app'}
 function auErrTxt(e){const c=(e&&e.code)||'';
-  if(c==='taken')return 'اسم المستخدم مستخدم، اختر اسم ثاني.';
+  if(c==='taken')return 'اسم المستخدم غير متاح، اختر اسم ثاني.';
   if(c==='auth/email-already-in-use'||c==='auth/credential-already-in-use')return 'هذا الإيميل مسجل بحساب ثاني. سجّل دخول فيه.';
   if(c==='auth/invalid-email'||c==='auth/missing-email'||c==='badmail')return 'اكتب إيميل صحيح.';
   if(c==='usemail')return 'حسابك مربوط بإيميل، ادخل بإيميلك بدل اسم المستخدم.';
@@ -4017,6 +4033,7 @@ $('auGo').onclick=async()=>{const go=$('auGo'),er=$('auErr'),name=$('auUser').va
     if(!isMail(mailIn)){er.textContent='اكتب إيميلك الصحيح، هو اللي يرجّع لك حسابك.';return}
     if(!unValid(name)){er.textContent='اسم المستخدم من ٣ إلى ١٤ حرف أو رقم، بدون مسافات أو رموز.';return}
     if(badName(name)){er.textContent='الاسم فيه كلمة غير لائقة، اختر اسم ثاني.';return}
+    if(rsvBlocked(name)){er.textContent='اسم المستخدم غير متاح، اختر اسم ثاني.';return}
     if(pass.length<6){er.textContent='كلمة السر لازم ٦ خانات أو أكثر.';return}
     if(pass!==$('auPass2').value){er.textContent='كلمتين السر مو نفس بعض.';return}}
   else if(!pass){er.textContent='اكتب كلمة السر.';return}
@@ -4062,6 +4079,7 @@ $('pfNickSave').onclick=async()=>{const v=$('pfNick').value.trim(),e=$('pfNickEr
   if(!AU.user){openAuth('up');return}
   if(!unValid(v)){e.textContent='اسم المستخدم من ٣ إلى ١٤ حرف أو رقم، بدون مسافات أو رموز.';return}
   if(badName(v)){e.textContent='الاسم فيه كلمة غير لائقة، اختر اسم ثاني.';return}
+  if(v!==W.nick&&rsvBlocked(v)){e.textContent='اسم المستخدم غير متاح، اختر اسم ثاني.';return}
   if(v===W.nick){e.textContent='هذا اسمك الحين.';return}
   const c=AU.c,key=unKey(v),nref=c.fs.collection('usernames').doc(key),oref=AU.key?c.fs.collection('usernames').doc(AU.key):null,btn=$('pfNickSave');btn.disabled=true;e.textContent='لحظة…';
   if(SV()){try{const j=await api('uname',{name:v});AU.key=j.key;W.nick=v;save();renderProfile();e.style.color='var(--teal)';e.textContent='تغيّر اسم المستخدم ✔️ وتدخل فيه من الحين'}catch(x){e.textContent=apiErr(x)}btn.disabled=false;return}
@@ -4189,7 +4207,7 @@ async function devInit(){if(!window.__FB)return;let c;try{c=await window.__FB}ca
   c.fs.collection('admins').onSnapshot(sn=>{ADMINS.clear();sn.docs.forEach(d=>ADMINS.add(d.id));const was=IS_ADMIN;IS_ADMIN=ADMINS.has(MYUID);
     if(IS_ADMIN&&!was){admSub(c);c.fs.collection('leaderboard').doc(MYUID).delete().catch(()=>{})}admRefresh();banRefresh()},()=>{});
   c.fs.collection('bans').onSnapshot(sn=>{BANNED.clear();ADMBANS=[];sn.docs.forEach(d=>{BANNED.add(d.id);ADMBANS.push(Object.assign({id:d.id},d.data()))});banRefresh();admDrawBans()},()=>{});
-  c.fs.doc('config/app').onSnapshot(d=>{const o=d.exists?d.data():{};applyDrops(o);SHOP_OPEN=!!o.shop;paintShopTab();if(!SHOP_OPEN&&!IS_ADMIN&&!$('shop').hidden)show('home');
+  c.fs.doc('config/app').onSnapshot(d=>{const o=d.exists?d.data():{};RSV.lens=Array.isArray(o.rsvLens)?o.rsvLens.map(Number):[];RSV.names=o.rsvNames&&typeof o.rsvNames==='object'?o.rsvNames:{};try{renderRsv()}catch(e){}applyDrops(o);SHOP_OPEN=!!o.shop;paintShopTab();if(!SHOP_OPEN&&!IS_ADMIN&&!$('shop').hidden)show('home');
     const a=String(o.ann||'').trim();$('annBar').hidden=!a;$('annTxt').textContent=a;$('admShopT').classList.toggle('on',SHOP_OPEN);if(document.activeElement!==$('admAnn'))$('admAnn').value=a},()=>{})}
 setTimeout(devInit,0);
 // ---------- خزنة النرد والفعاليات (المطوّر) ----------
@@ -4329,6 +4347,25 @@ async function admCfg(o){try{await AU.c.fs.doc('config/app').set(o,{merge:true})
 $('admShop').onclick=async()=>{if(await admCfg({shop:!SHOP_OPEN}))toast(!SHOP_OPEN?'🛒 انفتح المتجر للكل':'🔒 انقفل المتجر للكل')};
 $('admAnnGo').onclick=async()=>{const v=$('admAnn').value.trim();if(!v){toast('اكتب الإعلان أول');return}if(await admCfg({ann:v.slice(0,200)}))toast('📢 انشر الإعلان')};
 $('admAnnDel').onclick=async()=>{if(await admCfg({ann:''})){$('admAnn').value='';toast('انشال الإعلان')}};
+const arN=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+function renderRsv(){const L=$('rsvLens'),N=$('rsvNames');if(!L||!N)return;
+  L.innerHTML='';RSV.lens.slice().sort((a,b)=>a-b).forEach(n=>{const b=document.createElement('button');b.type='button';b.textContent='🔒 '+arN(n)+' حروف';const x=document.createElement('i');x.textContent='✕ فك';b.appendChild(x);
+    b.onclick=async()=>{if(!confirm('تفك حجز الأسماء اللي فيها '+arN(n)+' حروف؟'))return;if(await admCfg({rsvLens:RSV.lens.filter(k=>k!==n)}))toast('انفك حجز '+arN(n)+' حروف ✔️')};L.appendChild(b)});
+  N.innerHTML='';Object.keys(RSV.names).sort().forEach(k=>{const b=document.createElement('button');b.type='button';b.textContent='🔒 '+String(RSV.names[k]||k);const x=document.createElement('i');x.textContent='✕ فك';b.appendChild(x);
+    b.onclick=async()=>{if(!confirm('تفك حجز "'+(RSV.names[k]||k)+'"؟'))return;if(await admCfg({rsvNames:{[k]:firebase.firestore.FieldValue.delete()}}))toast('انفك الحجز ✔️')};N.appendChild(b)})}
+$('rsvLenGo').onclick=async()=>{const er=$('rsvErr');er.style.color='';er.textContent='';const n=Math.floor(+toEn($('rsvLenIn').value)||0);
+  if(n<3||n>14){er.textContent='اكتب رقم من ٣ إلى ١٤.';return}if(RSV.lens.includes(n)){er.textContent='محجوز من قبل.';return}
+  if(await admCfg({rsvLens:RSV.lens.concat(n)})){$('rsvLenIn').value='';toast('🔒 انحجزت كل الأسماء اللي فيها '+arN(n)+' حروف')}};
+$('rsvNameGo').onclick=async()=>{const er=$('rsvErr');er.style.color='';er.textContent='';const v=$('rsvNameIn').value.trim();
+  if(!unValid(v)){er.textContent='الاسم من ٣ إلى ١٤ حرف أو رقم، بدون مسافات أو رموز.';return}const k=unKey(v);
+  if(RSV.names[k]){er.textContent='محجوز من قبل.';return}
+  try{const d=await AU.c.fs.collection('usernames').doc(k).get();if(d.exists){er.textContent='هالاسم عند لاعب الحين ('+(d.data().name||v)+')، ما ينحجز.';return}}catch(e){}
+  if(await admCfg({rsvNames:{[k]:v}})){$('rsvNameIn').value='';toast('🔒 انحجز "'+v+'"')}};
+$('rsvGiveGo').onclick=async()=>{const er=$('rsvErr'),go=$('rsvGiveGo');er.style.color='';er.textContent='';const nm=$('rsvGiveName').value.trim(),to=$('rsvGiveTo').value.trim();
+  if(!unValid(nm)){er.textContent='الاسم الجديد من ٣ إلى ١٤ حرف أو رقم، بدون مسافات أو رموز.';return}if(!to){er.textContent='اكتب اسم اللاعب الحالي.';return}
+  go.disabled=true;try{await api('rgive',{name:nm,to});const k=unKey(nm);if(RSV.names[k])await admCfg({rsvNames:{[k]:firebase.firestore.FieldValue.delete()}});
+    $('rsvGiveName').value=$('rsvGiveTo').value='';er.style.color='var(--teal)';er.textContent='✔️ صار اسم اللاعب '+nm}
+  catch(e){er.textContent=e&&e.code==='nouser'?'ما لقينا لاعب بهالاسم.':apiErr(e)}go.disabled=false};
 $('admBanGo').onclick=async()=>{const v=$('admBanName').value.trim();if(!v)return;try{const d=await AU.c.fs.collection('usernames').doc(unKey(v)).get();
   if(!d.exists){toast('ما لقينا لاعب بهالاسم');return}await admBan(d.data().uid,d.data().name||v);$('admBanName').value=''}catch(e){toast('صار خطأ')}};
 let giftK='c';document.querySelectorAll('#admGiftKind button').forEach(b=>b.onclick=()=>{giftK=b.dataset.k;document.querySelectorAll('#admGiftKind button').forEach(x=>x.classList.toggle('sel',x===b))});
