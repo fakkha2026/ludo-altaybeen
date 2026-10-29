@@ -487,6 +487,8 @@ svg#board{width:100%;height:100%;display:block}
 @keyframes subBdg{0%,100%{filter:drop-shadow(0 0 1px #ffd76a66)}50%{filter:drop-shadow(0 0 5px #ffd76acc) brightness(1.15)}}
 .pf-id b .subb{width:.9em;height:.9em;vertical-align:-.1em}
 .pf-sub{background:linear-gradient(135deg,#2a1748,#0d1a33);border:1px solid #e9c46a55;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.so-list{margin:0;padding:0 18px 0 0;display:flex;flex-direction:column;gap:6px;font-size:.88rem;font-weight:700;color:var(--ink);text-align:start}
+.so-terms{color:var(--muted);font-size:.72rem;line-height:1.6;text-align:center}.so-terms a{color:#ffe7a0}
 .sub-pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .sub-pick button{background:#0007;border:2px solid #ffffff22;border-radius:14px;padding:10px 6px;color:var(--ink);font:inherit;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer}
 .sub-pick button.on.p{border-color:#c08bff;box-shadow:0 0 14px #b26bff88}.sub-pick button.on.c{border-color:#7fefff;box-shadow:0 0 14px #5fe6ff88}
@@ -1333,6 +1335,19 @@ body.ingame.nightg #starFx{opacity:1}
         <div class="sub-pick" id="subPick"></div>
         <div class="sub-demo"><button type="button" id="subDemoEat">👀 حركة الأكل</button><button type="button" id="subDemoWin">👀 حركة الفوز</button></div>
       </div>
+      <div class="pf-sub sub-offer" id="pfSubOffer" hidden>
+        <div class="pf-lbl" style="margin:0;color:#ffe7a0">👑 مجلس الطيبين</div>
+        <ul class="so-list">
+          <li>💎 ٢٠٠ جوهرة أول ما تشترك، و٥٠ جوهرة كل يوم مع هدية الدخول</li>
+          <li>🪙 ١٠٬٠٠٠ عملة زيادة في اليوم السابع من هدية الدخول</li>
+          <li>🎡 ٥ لفّات مجانية لعجلة الحظ كل ويكند</li>
+          <li>✨ إطار وشارة وحجر ونرد حصرية (بنفسجي أو سماوي)</li>
+          <li>👑 حركة التاج لما تاكل، والتتويج لما تفوز</li>
+        </ul>
+        <button class="btn sand" id="subBuy" type="button">اشترك بـ ١٩٫٩٩ ر.س شهرياً</button>
+        <small class="so-terms">اشتراك شهري يتجدد تلقائياً بنفس السعر لين تلغيه، ويُخصم من حساب أبل حقك. تقدر تلغيه في أي وقت من إعدادات حسابك في أبل قبل ٢٤ ساعة من التجديد. المزايا والأشكال الحصرية تبقى طول ما الاشتراك شغّال. ما فيه أي ميزة في الحظ أو الفوز.
+          <br><a href="privacy.html" target="_blank">سياسة الخصوصية</a> · <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank">شروط الاستخدام</a> · <a href="#" id="subRestore">استعادة المشتريات</a></small>
+      </div>
       <div class="pf-lbl">رصيدك</div>
       <div class="pf-wal"><div class="stat"><b id="pfCoins">٠</b><small>🪙 عملات</small></div><div class="stat"><b id="pfGems">٠</b><small>💎 جواهر</small></div></div>
       <p class="note" id="pfCloud" style="font-weight:800;color:var(--ink)"></p>
@@ -1669,7 +1684,7 @@ if(!TOKS.some(t=>t.id===W.tok))W.tok='tayb';
 // للمعاينة: design.html?sub=p (بنفسجي) أو ?sub=c (سماوي). بعدين W.subOn يجي من السيرفر لما يشترك
 const FORCE_SUB=(()=>{try{const s=new URLSearchParams(location.search).get('sub');return s==='p'||s==='c'?s:''}catch(e){return ''}})();
 if(FORCE_SUB)W.subc=FORCE_SUB;
-function subOn(){return !!FORCE_SUB||!!W.subOn}
+function subOn(){return (!!FORCE_SUB&&(IS_ADMIN||!SV()))||!!(W.sub&&+W.sub.exp>Date.now())}
 function subC(){return subOn()?(W.subc==='c'?'c':'p'):''}
 // النرد والحجر يمشون مع لون الطقم، ويرجعون للعادي إذا انتهى الاشتراك
 function subFix(){const c=subC();['fxE','fxW'].forEach(k=>{if(/_crown$/.test(W[k]||'')&&!c)W[k]=''});[['dice','classic'],['tok','tayb']].forEach(([k,d])=>{const v=W[k]||'';if(/^sub_/.test(v)&&v!=='sub_'+c)W[k]=c?'sub_'+c:d})}
@@ -1720,7 +1735,7 @@ function SV(){return !!window.__FB&&/^https:\/\//.test(SRV_URL)}
 function mkRng(hex){const s=String(hex||'').padEnd(32,'0');let a=parseInt(s.slice(0,8),16)>>>0,b=parseInt(s.slice(8,16),16)>>>0,c=parseInt(s.slice(16,24),16)>>>0,d=parseInt(s.slice(24,32),16)>>>0;
   const next=()=>{a>>>=0;b>>>=0;c>>>=0;d>>>=0;let t=(a+b)|0;a=b^b>>>9;b=c+(c<<3)|0;c=(c<<21|c>>>11);d=d+1|0;t=t+d|0;c=c+t|0;return (t>>>0)/4294967296};
   for(let i=0;i<12;i++)next();return ()=>1+Math.floor(next()*6)}
-const SRVK=['coins','gems','xp','ownD','ownT','ownH','days','lastDay','spin','gift','welcome','szg'];
+const SRVK=['coins','gems','xp','ownD','ownT','ownH','ownE','ownX','days','lastDay','spin','gift','welcome','szg','lg','sub','wk'];
 let WHOLD=0,WPEND=null,WSRV=null,API_VF=false,AV_BUSY=false;
 async function api(name,body){
   const c=await window.__FB,u=c.auth.currentUser;if(!u)throw {code:'auth'};
@@ -1736,8 +1751,9 @@ function apiErr(e){return ({poor:'رصيدك ما يكفي',done:'استلمته
 function applyWallet(w){if(!w)return;if(WHOLD){WPEND=w;return}WSRV=w;
   SRVK.forEach(k=>{if(w[k]!==undefined&&w[k]!==null)W[k]=Array.isArray(w[k])?w[k].slice():w[k]});
   if(w.mis&&W.mis&&Array.isArray(W.mis.list)&&w.mis.d===today()&&Array.isArray(w.mis.ids))W.mis.list.forEach(m=>{if(w.mis.ids.includes(m.id))m.c=true});
+  if(!w.sub)W.sub=null;subFix();
   try{localStorage.setItem('ludo-dira',JSON.stringify(W))}catch(e){}
-  try{renderWallet();if(!$('home').hidden){renderMissions();renderModes()}if(!$('shop').hidden)renderShop();if(!$('closet').hidden)renderCloset();if(!$('profBox').hidden)renderProfile();if(!$('wheelBox').hidden&&!spinning)renderWheel()}catch(e){}}
+  try{renderWallet();setMeBdg();if(!$('home').hidden){renderMissions();renderModes();renderLogin()}if(!$('shop').hidden)renderShop();if(!$('closet').hidden)renderCloset();if(!$('profBox').hidden)renderProfile();if(!$('wheelBox').hidden&&!spinning)renderWheel()}catch(e){}}
 function walletRelease(){WHOLD=0;if(WPEND){const w=WPEND;WPEND=null;applyWallet(w)}}
 async function initServer(){if(!SV())return;let c;try{c=await window.__FB}catch(e){return}
   const uid=c.auth.currentUser?c.auth.currentUser.uid:c.uid;
@@ -1812,8 +1828,13 @@ function wIcon(svg,g0,src,gem,i){const sz=gem?24:22,r=sz/2;
     anim(sh,{tag:'animateTransform',attributeName:'transform',type:'translate',values:`0 0;0 0;${r*4} 0`,keyTimes:'0;.6;1',dur:d,additive:'sum'})}}
 function wIconsTurn(){WICONS.forEach(g=>{const i=+g.dataset.i;g.style.transform=`rotate(${-wheelRot-i*360/WHEEL.length}deg)`})}
 function streakBonus(){return 0}
-function renderWheel(){const got=W.spin===today();
-  $('wheelBtn').textContent=got?'تم':'لف';$('wheelTxt').textContent=got?'ارجع بكرة للفّة جديدة':'لفّة مجانية كل يوم';
+// لفّات الويكند المجانية للمشترك (الجمعة والسبت بتوقيت الرياض)
+const SUB_WK_SPINS=5;
+function wkKey(){const t=Date.now()+108e5,d=new Date(t),wd=d.getUTCDay();if(wd!==5&&wd!==6)return '';return new Date(t-(wd-5)*864e5).toISOString().slice(0,10)}
+function wksLeft(){if(!subOn())return 0;const k=wkKey();if(!k)return 0;const w=W.wk&&typeof W.wk==='object'?W.wk:{};return Math.max(0,SUB_WK_SPINS-(w.k===k?+w.n||0:0))}
+function spinUsed(){return W.spin===today()&&!wksLeft()}
+function renderWheel(){const got=spinUsed(),wkm=W.spin===today()&&wksLeft();
+  $('wheelBtn').textContent=got?'تم':'لف';$('wheelTxt').textContent=got?'ارجع بكرة للفّة جديدة':wkm?`👑 لفّات الويكند: باقي ${toAr(wksLeft())}`:'لفّة مجانية كل يوم';
   const d=Math.min(W.days||1,7);$('streakTxt').textContent=`لك ${toAr(W.days||1)} ${(W.days||1)>1?'أيام':'يوم'} متتالية — مكافأة إضافية ${toAr(streakBonus())} عملة`;
   $('streakDots').innerHTML=[1,2,3,4,5,6,7].map(i=>`<i class="${i<=d?'on':''}">${toAr(i)}</i>`).join('');
   $('spinBtn').disabled=got||spinning;if(got&&!spinning&&!$('wheelRes').textContent)$('wheelRes').textContent='لفّيت اليوم، ارجع بكرة 👋'}
@@ -1822,10 +1843,11 @@ function renderWheel(){const got=W.spin===today();
 // كل يوم يدخل ياخذ هدية اليوم، وإذا غاب يوم يرجع لليوم الأول. المشترك ياخذ فوقها ٥٠ جوهرة كل يوم، و١٠٬٠٠٠ عملة في اليوم السابع
 const LOGIN=[{c:500},{c:1000},{g:5},{c:2000},{g:10},{c:3000},{g:30,box:1}];
 const SUB_DAY_G=50,SUB_D7_C=10000;
-function lgYest(){const y=new Date();y.setDate(y.getDate()-1);return dayKey(y)}
-function lgDone(){return W.lgDay===dayKey(new Date())}
+function lgYest(){return new Date(Date.now()+108e5-864e5).toISOString().slice(0,10)}
+const LG=()=>W.lg&&typeof W.lg==='object'?W.lg:{d:'',n:0};
+function lgDone(){return LG().d===today()}
 // رقم اليوم اللي عليه الدور (٠ لين ٦)
-function lgIdx(){if(lgDone())return Math.max(0,(W.lgN||1)-1);if(W.lgDay===lgYest()&&(W.lgN||0)<7)return W.lgN||0;return 0}
+function lgIdx(){const g=LG();if(lgDone())return Math.max(0,(g.n||1)-1);if(g.d===lgYest()&&(g.n||0)<7)return g.n||0;return 0}
 function lgGot(i){const idx=lgIdx();return lgDone()?i<=idx:i<idx}
 function lgIcon(r){return r.g?'<span class="gem"></span>':'<span class="coin"></span>'}
 function renderLogin(){const idx=lgIdx(),done=lgDone(),sb=!!subC(),g=$('lgGrid');g.innerHTML='';
@@ -1838,22 +1860,22 @@ function renderLogin(){const idx=lgIdx(),done=lgDone(),sb=!!subC(),g=$('lgGrid')
   $('lgClaim').disabled=done;$('lgClaim').textContent=done?'ارجع بكرة 👋':'خذ هدية اليوم';
   $('lgTxt').innerHTML=done?`أخذتها اليوم ✓ — بكرة <b>اليوم ${toAr(idx===6?1:idx+2)}</b>`:`<b>اليوم ${toAr(idx+1)} من ٧</b> — هديتك جاهزة`;$('lgBtn').textContent=done?'شوف':'خذها'}
 function openLogin(){renderLogin();$('loginBox').hidden=false}
-function claimLogin(){if(lgDone())return;const idx=lgIdx(),r=LOGIN[idx],sb=!!subC();
+let lgBusy=false;
+function claimLogin(){if(lgDone()||lgBusy)return;const idx=lgIdx(),r=LOGIN[idx],sb=!!subC();
+  const fx=(c,g)=>{renderWallet();renderLogin();const [x,y]=elPt($('lgClaim'));if(c)coinRain(x,y,24);if(g)burst(x,y,['#b9f6ff','#3fd2f0','#fff'],30,'dot',7);SFX.coin();if(c)bump('coins');if(g)bump('gems');buzz([40,30,40]);
+    toast(`وصلتك ${[c?fmt(c)+' عملة':'',g?toAr(g)+' جوهرة':''].filter(Boolean).join(' و')} 🎉`)};
+  // مع السيرفر: هو اللي يحسب الهدية ويضيفها
+  if(SV()){lgBusy=true;$('lgClaim').disabled=true;api('login').then(j=>fx(j.c||0,j.g||0)).catch(e=>{toast(apiErr(e));renderLogin()}).finally(()=>{lgBusy=false});return}
   let c=r.c||0,g=r.g||0;if(r.box)c+=[1000,1500,2000,3000][Math.floor(Math.random()*4)];if(sb){g+=SUB_DAY_G;if(idx===6)c+=SUB_D7_C}
-  W.lgDay=dayKey(new Date());W.lgN=idx+1;
-  // التجربة: مع السيرفر الرصيد ما يتغيّر من الجوال، فالهدية تنضاف لما نربطها بالسيرفر في التحديث
-  if(!SV()){W.coins=(+W.coins||0)+c;W.gems=(+W.gems||0)+g}
-  save();renderWallet();renderLogin();
-  const [x,y]=elPt($('lgClaim'));if(c)coinRain(x,y,24);if(g)burst(x,y,['#b9f6ff','#3fd2f0','#fff'],30,'dot',7);SFX.coin();if(c)bump('coins');if(g)bump('gems');buzz([40,30,40]);
-  toast(`وصلتك ${[c?fmt(c)+' عملة':'',g?toAr(g)+' جوهرة':''].filter(Boolean).join(' و')} 🎉`+(SV()?' (تجربة)':''))}
+  W.lg={d:today(),n:idx+1};W.coins=(+W.coins||0)+c;W.gems=(+W.gems||0)+g;save();fx(c,g)}
 $('lgBtn').onclick=openLogin;$('lgClaim').onclick=claimLogin;$('lgClose').onclick=()=>$('loginBox').hidden=true;
 let LG_AUTO='';
 function lgAuto(){const t=dayKey(new Date());if(W.tut&&!lgDone()&&LG_AUTO!==t){LG_AUTO=t;setTimeout(()=>{if(!$('home').hidden)openLogin()},700)}}
 function openWheel(){checkIn();drawWheel();$('wheelRes').textContent='';renderWheel();$('wheelBox').hidden=false}
-function spinWheel(){if(spinning||W.spin===today())return;spinning=true;
-  if(SV()){WHOLD=1;renderWheel();api('spin').then(j=>spinGo(j.i,j.bonus)).catch(e=>{spinning=false;walletRelease();renderWheel();toast(apiErr(e))});return}
+function spinWheel(){if(spinning||spinUsed())return;spinning=true;const wkS=W.spin===today();
+  if(SV()){WHOLD=1;renderWheel();api('spin',{v:2}).then(j=>spinGo(j.i,j.bonus)).catch(e=>{spinning=false;walletRelease();renderWheel();toast(apiErr(e))});return}
   let r=Math.random()*WHEEL.reduce((a,x)=>a+x.w,0),i=0;for(;i<WHEEL.length;i++){r-=WHEEL[i].w;if(r<0)break}i=Math.min(i,WHEEL.length-1);
-  W.spin=today();save();spinGo(i,streakBonus())}
+  if(wkS){const k=wkKey(),w=W.wk&&W.wk.k===k?W.wk:{k,n:0};W.wk={k,n:(+w.n||0)+1}}else W.spin=today();save();spinGo(i,streakBonus())}
 function spinGo(i,b){
   const seg=360/WHEEL.length,jit=(Math.random()-.5)*seg*.6;wheelRot+=360*6+((360-i*seg-(wheelRot%360))+360)%360+jit;
   renderWheel();SFX.roll();
@@ -2977,7 +2999,8 @@ const IAP_GEMS={110:'gems10',500:'gems30',980:'gems160',4500:'gems400'};
 function packPid(pk){return IAP_PFX+(IAP_GEMS[pk.g]||'gems'+pk.g)}
 function itemPid(kind,id){return kind?IAP_PFX+kind+'_'+id:''}
 function iapNative(){const C=window.Capacitor;return !!(C&&C.isNativePlatform&&C.isNativePlatform()&&C.getPlatform&&C.getPlatform()==='ios')}
-function iapAllIds(){const out=GPACKS.map(packPid);
+const SUB_PID=IAP_PFX+'sub_majlis';
+function iapAllIds(){const out=GPACKS.map(packPid);out.push(SUB_PID);
   [['d',DICE],['t',TOKS],['h',THEMES]].forEach(([k,l])=>l.forEach(it=>{if((it.price||it.vault)&&!it.coin)out.push(itemPid(k,it.id))}));return out}
 function iapItem(pid){if(!pid.startsWith(IAP_PFX))return null;const s=pid.slice(IAP_PFX.length),m=/^([dth])_(.+)$/.exec(s);return m?{kind:m[1],id:m[2]}:null}
 function iapBoot(){if(!iapNative())return;IAP.on=true;window.CdvPurchaseCapacitor={installed:true};
@@ -2985,7 +3008,7 @@ function iapBoot(){if(!iapNative())return;IAP.on=true;window.CdvPurchaseCapacito
   s.onload=()=>{let n=0;const t=setInterval(()=>{if(window.CdvPurchase&&window.CdvPurchase.store){clearInterval(t);iapInit()}else if(++n>100)clearInterval(t)},50)};
   document.head.appendChild(s)}
 async function iapInit(){const {store,ProductType,Platform}=window.CdvPurchase;
-  store.register(iapAllIds().map(id=>({id,platform:Platform.APPLE_APPSTORE,type:/\.gems\d+$/.test(id)?ProductType.CONSUMABLE:ProductType.NON_CONSUMABLE})));
+  store.register(iapAllIds().map(id=>({id,platform:Platform.APPLE_APPSTORE,type:id===SUB_PID?ProductType.PAID_SUBSCRIPTION:/\.gems\d+$/.test(id)?ProductType.CONSUMABLE:ProductType.NON_CONSUMABLE})));
   store.when().productUpdated(p=>{const pr=p.pricing;if(pr&&pr.price&&IAP.price[p.id]!==pr.price){IAP.price[p.id]=pr.price;iapRepaint()}})
     .approved(tx=>{IAP.q.push(tx);iapFlush()});
   store.error(e=>{try{console.warn('iap',e&&e.code,e&&e.message)}catch(_){}});
@@ -2996,6 +3019,11 @@ let iapRT=null;function iapRepaint(){clearTimeout(iapRT);iapRT=setTimeout(()=>{t
 async function iapFlush(){if(IAP.busy)return;if(!SV()||!WSRV){setTimeout(iapFlush,1500);return}IAP.busy=true;
   try{while(IAP.q.length){await iapDeliver(IAP.q.shift())}}finally{IAP.busy=false}}
 async function iapDeliver(tx){const pid=(tx.products&&tx.products[0]&&tx.products[0].id)||'',it=iapItem(pid),gems=/\.gems\d+$/.test(pid);
+  if(pid===SUB_PID){const pend=IAP.pend&&IAP.pend.o.pid===pid?IAP.pend:null;
+    try{const j=await api('iap',{tid:String(tx.transactionId||'')});try{await tx.finish()}catch(e){}
+      if(pend){IAP.pend=null;$('payBox').hidden=true;paying=false;buzz([40,30,40]);pend.o.done(true,j)}}
+    catch(e){try{await tx.finish()}catch(_){}if(pend){IAP.pend=null;paying=false;$('payBox').hidden=true;toast(e&&e.code==='subused'?'هالاشتراك مستخدم في حساب لعبة ثاني':apiErr(e))}}
+    return}
   const pend=IAP.pend&&IAP.pend.o.pid===pid?IAP.pend:null;
   if(!gems&&it){const own=W[KINDS[it.kind].own];if(own&&own.includes(it.id)&&!pend){try{await tx.finish()}catch(e){}return}}
   if(gems&&tx.isAcknowledged){try{await tx.finish()}catch(e){}return}
@@ -3125,8 +3153,14 @@ function renderSeasonBanner(){const list=SEASONS.filter(z=>!z.ev||seasonItems(z.
   const live=list.find(x=>x[1].on),next=list.filter(x=>!x[1].on).sort((a,b)=>a[1].a-b[1].a)[0],pick=live||next;if(!pick){$('szBanner').hidden=true;return}
   $('szBanner').hidden=false;const [z,r]=pick;$('szEmoji').textContent=z.emoji;$('szTitle').textContent=r.on?z.name+' بدأ!':'قريب: '+z.name;
   $('szTxt').textContent=r.on?`${z.gift?'🎁 فيه جايزة تنتظرك · ':''}أغراض خاصة لفترة محدودة · باقي ${toAr(daysTo(r.b))} يوم`:`يبدأ بعد ${toAr(daysTo(r.a))} يوم · شوف وش بيجيك`;$('szBanner').classList.toggle('live',r.on)}
+function buySub(){if(subOn())return;
+  payOpen({html:'<div style="font-size:4rem;line-height:1">👑</div>',amt:'مجلس الطيبين',sub:'اشتراك شهري يتجدد تلقائياً',sar:'١٩٫٩٩',pid:SUB_PID,api:{sub:1},done:(sv,j)=>{
+    if(!sv){W.sub={exp:Date.now()+30*864e5};save()}W.subc=W.subc||'p';subFix();save();renderProfile();setMeBdg();renderWallet();
+    burst(innerWidth/2,innerHeight/2,['#c08bff','#5fe6ff','#ffd76a','#fff'],60,'dot',9);SFX.home();toast('أهلاً بك في مجلس الطيبين 👑'+(j&&j.bonus?' وصلتك '+toAr(j.bonus)+' جوهرة':''))}})}
+$('subBuy').onclick=buySub;$('subRestore').onclick=e=>{e.preventDefault();iapRestore()};
 $('subDemoEat').onclick=()=>subDemo('eat');$('subDemoWin').onclick=()=>subDemo('win');
-function renderSubKit(){const box=$('pfSub');if(!box)return;const c=subC();box.hidden=!c;if(!c)return;const pick=$('subPick');pick.innerHTML='';
+function renderSubKit(){const box=$('pfSub');if(!box)return;const c=subC();box.hidden=!c;
+  const of=$('pfSubOffer');if(of){of.hidden=!!c;$('subBuy').textContent='اشترك بـ '+prTxt(SUB_PID,'١٩٫٩٩')+' شهرياً'}if(!c)return;const pick=$('subPick');pick.innerHTML='';
   [['p','بنفسجي'],['c','سماوي']].forEach(([k,nm])=>{const b=document.createElement('button');b.type='button';b.className=k+(c===k?' on':'');
     const fr=document.createElement('span');fr.className='fr';fr.innerHTML=avHTML(W.av,myPic());fr.appendChild(bdgEl('s'+k));
     const kit=document.createElement('span');kit.className='kit';const im=new Image();im.alt='';im.src=SUBIMG['sub_'+k].src;
@@ -4702,7 +4736,7 @@ async function createRoom(){
   const code=String(10000+Math.floor(Math.random()*90000));
   let r;try{r=await roomNS.join('ludo-'+code)}catch(e){$('onErr').textContent='ما قدرنا ننشئ الغرفة، جرّب مرة ثانية.';return}
   resetNet();const b0=0;Object.assign(NET,{r,host:true,code,bet:b0});
-  NET.lobby=[{peer:'',nick:W.nick,av:W.av,tok:W.tok,pid:W.pid}];
+  NET.lobby=[{peer:'',nick:W.nick,av:W.av,tok:W.tok,pid:W.pid,sub:subC()}];
   r.presence({role:'host',code,lobby:NET.lobby,g:null,pic:myPic(),bet:b0}).catch(()=>{});
   r.onPeers(onHostPeers);
   $('onA').hidden=true;$('onB').hidden=false;renderLobby();
@@ -4714,8 +4748,8 @@ function onHostPeers(ch){
   if(MODE!=='online'||!S){
     NET.order=NET.order.filter(pe=>guests.some(g=>g.peer===pe));
     guests.forEach(g=>{if(!NET.order.includes(g.peer))NET.order.push(g.peer)});
-    const lob=[{peer:NET.myPeer,nick:W.nick,av:W.av,tok:W.tok,pid:W.pid}];
-    NET.order.slice(0,3).forEach(pe=>{const g=guests.find(x=>x.peer===pe),pr=g.presence;lob.push({peer:pe,nick:safeName(String(pr.nick||'لاعب').slice(0,14)),av:String(pr.av||'🙂').slice(0,4),tok:String(pr.tok||'tayb').slice(0,8),pid:String(pr.pid||'').slice(0,40)})});
+    const lob=[{peer:NET.myPeer,nick:W.nick,av:W.av,tok:W.tok,pid:W.pid,sub:subC(),fxE:plFx({pid:W.pid},'e'),fxW:plFx({pid:W.pid},'w')}];
+    NET.order.slice(0,3).forEach(pe=>{const g=guests.find(x=>x.peer===pe),pr=g.presence;lob.push({peer:pe,nick:safeName(String(pr.nick||'لاعب').slice(0,14)),av:String(pr.av||'🙂').slice(0,4),tok:String(pr.tok||'tayb').slice(0,8),pid:String(pr.pid||'').slice(0,40),sub:pr.sub==='p'||pr.sub==='c'?pr.sub:'',fxE:String(pr.fxE||'').slice(0,12),fxW:String(pr.fxW||'').slice(0,12)})});
     const changed=JSON.stringify(lob)!==JSON.stringify(NET.lobby);
     NET.lobby=lob;if(changed)NET.r.presence({lobby:lob}).catch(()=>{});
     renderLobby();
@@ -4739,7 +4773,7 @@ function handleAct(peer,a){
 function startOnline(){
   if(!NET.host||NET.lobby.length<2)return;
   const seats=SEATS[NET.lobby.length];
-  const players=NET.lobby.map((l,i)=>({ci:seats[i],kind:i===0?'local':'remote',name:l.nick,av:l.av,peer:l.peer,tok:l.tok,pid:l.pid||''}));
+  const players=NET.lobby.map((l,i)=>({ci:seats[i],kind:i===0?'local':'remote',name:l.nick,av:l.av,peer:l.peer,tok:l.tok,pid:l.pid||'',sub:l.sub||'',fxE:l.fxE||'',fxW:l.fxW||''}));
   NET.r.peers().forEach(p=>{const a=p.presence&&p.presence.act;NET.last[p.peer]=a&&typeof a.n==='number'?a.n:0});
   const bet=betOf();
   MODE='online';NET.myCi=seats[0];
@@ -4752,7 +4786,7 @@ async function joinRoom(){
   if(code.length!==5){$('onErr').textContent='الرمز ٥ أرقام';return}
   let r;try{r=await roomNS.join('ludo-'+code)}catch(e){$('onErr').textContent='ما قدرنا ندخل الغرفة، جرّب مرة ثانية.';return}
   resetNet();Object.assign(NET,{r,guest:true,code});
-  r.presence({role:'guest',nick:W.nick,av:W.av,tok:W.tok,pid:W.pid,act:null,pic:myPic(),cash:+W.coins||0}).catch(()=>{});
+  r.presence({role:'guest',nick:W.nick,av:W.av,tok:W.tok,pid:W.pid,act:null,pic:myPic(),cash:+W.coins||0,sub:subC(),fxE:plFx({pid:W.pid},'e'),fxW:plFx({pid:W.pid},'w')}).catch(()=>{});
   r.onPeers(onGuestPeers);
   $('onA').hidden=true;$('onB').hidden=false;renderLobby();
   setTimeout(()=>{if(NET.guest&&NET.code===code&&!NET.hostPeer){$('onWait').textContent='ما لقينا غرفة بهالرمز. تأكد منه وجرّب مرة ثانية.'}},9000);

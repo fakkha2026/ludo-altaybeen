@@ -116,7 +116,7 @@ workflows:
         script: |
           set -e
           echo "رقم البناء: $BUILD_NUMBER"
-          cd ios/App && agvtool new-version -all $BUILD_NUMBER && agvtool new-marketing-version 1.0
+          cd ios/App && agvtool new-version -all $BUILD_NUMBER && agvtool new-marketing-version 1.0.1
 
       - name: بناء ملف التطبيق
         script: |
