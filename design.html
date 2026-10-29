@@ -503,6 +503,24 @@ svg#board{width:100%;height:100%;display:block}
 .kflash{position:fixed;left:0;top:0;pointer-events:none;z-index:78;width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2);border-radius:50%;background:radial-gradient(circle,#fff 0,var(--k) 30%,transparent 68%);opacity:0;animation:kFlash .45s ease-out var(--d,0s) forwards}
 @keyframes kFlash{0%{transform:scale(.3);opacity:1}100%{transform:scale(1.8);opacity:0}}
 .sub-demo{display:flex;gap:8px}.sub-demo button{flex:1;background:#0006;border:1px solid #e9c46a66;color:#ffe7a0;border-radius:12px;padding:8px;font:inherit;font-weight:800;cursor:pointer}
+/* هدية الدخول ٧ أيام: التقويم العادي للكل، والذهبي للمشترك */
+#loginBox .card{gap:12px}
+.lg-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.lg-d{position:relative;background:#0b1e2b;border:2px solid #ffffff1a;border-radius:14px;padding:8px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:92px;justify-content:space-between}
+.lg-d small{color:var(--muted);font-weight:800;font-size:.72rem}
+.lg-d b{font-size:.86rem;color:var(--ink);line-height:1.1;display:flex;align-items:center;gap:3px}
+.lg-d .ic{font-size:1.5rem;line-height:1}
+.lg-d .ic .coin,.lg-d .ic .gem{width:28px;height:28px;display:inline-block}
+.lg-d.d7{grid-column:span 2;background:linear-gradient(135deg,#3a2a0e,#1b1406);border-color:#e9c46a77}
+.lg-d.got{opacity:.5}.lg-d.got::after{content:'✓';position:absolute;inset:0;display:grid;place-items:center;font-size:2rem;color:#5fd08a;font-weight:900;text-shadow:0 2px 6px #000}
+.lg-d.now{border-color:var(--sand);box-shadow:0 0 0 2px #efd29a55,0 0 18px #efd29a66;animation:lgNow 1.6s ease-in-out infinite}
+@keyframes lgNow{50%{transform:translateY(-3px)}}
+.lg-d .vip{font-size:.66rem;font-weight:800;color:#ffe7a0;background:#0008;border-radius:8px;padding:1px 5px;white-space:nowrap}
+.lg-d .vip.lock{color:var(--muted);filter:grayscale(1);opacity:.7}
+.lg-sub{border-radius:14px;padding:10px 12px;font-size:.82rem;font-weight:800;text-align:center;line-height:1.5}
+.lg-sub.on{background:linear-gradient(135deg,#2a1748,#0d1a33);border:1px solid #e9c46a66;color:#ffe7a0}
+.lg-sub.off{background:#0006;color:var(--muted)}
+#lgTxt b{color:var(--sand)}
 /* الملف الشخصي: صورة أصغر عشان الشارة تدخل في النافذة، والقلم تحت شريط المستوى */
 .dev-av.hasb,.av.hasb{box-shadow:none!important}
 .pf-top .av.hasb{width:56px;height:56px;font-size:1.9rem;margin:26px 24px 26px 22px}
@@ -962,11 +980,13 @@ body.ingame.nightg #starFx{opacity:1}
 <section class="screen" id="home" hidden style="padding-top:0">
   <div class="banbar" id="banBar" hidden>⛔ حسابك موقوف بسبب مخالفة شروط الاستخدام، وما تقدر تلعب أونلاين.<br><small style="font-weight:700">للاستفسار: fakkha2026@gmail.com</small></div>
   <div class="ann" id="annBar" hidden><span>📢</span><div id="annTxt"></div></div>
-  <div class="banner">
+  <div class="banner" id="lgBanner">
     <div class="chest">🎁</div>
-    <div><h3>هدية اليوم</h3><p id="giftTxt">٥٠٠ عملة و٥ جواهر مجاناً كل يوم</p></div>
-    <button class="btn sand" id="giftBtn" type="button">استلم</button>
+    <div><h3>هدية الدخول</h3><p id="lgTxt">ادخل كل يوم واكسب أكثر</p></div>
+    <button class="btn sand" id="lgBtn" type="button">خذها</button>
   </div>
+  <!-- هدية اليوم القديمة: انشالت وصار بدلها تقويم هدية الدخول -->
+  <div hidden><p id="giftTxt"></p><button id="giftBtn" type="button"></button></div>
   <button class="banner season-b" id="szBanner" type="button">
     <div class="chest" id="szEmoji">🔥</div>
     <div><h3 id="szTitle">مواسم الديرة</h3><p id="szTxt"></p></div>
@@ -1167,11 +1187,21 @@ body.ingame.nightg #starFx{opacity:1}
     <button class="ghost" id="itClose" type="button">سكّر</button>
   </div>
 </div>
+<div class="overlay" id="loginBox" hidden>
+  <div class="card">
+    <h2>🎁 هدية الدخول</h2>
+    <p id="lgHint" style="margin:-4px 0 0"></p>
+    <div class="lg-grid" id="lgGrid"></div>
+    <div class="lg-sub" id="lgSub"></div>
+    <button class="btn sand" id="lgClaim" type="button">خذ هدية اليوم</button>
+    <button class="ghost" id="lgClose" type="button">سكّر</button>
+  </div>
+</div>
 <div class="overlay" id="wheelBox" hidden>
   <div class="card">
     <h2>عجلة الحظ</h2>
-    <p id="streakTxt"></p>
-    <div class="streak" id="streakDots"></div>
+    <p id="streakTxt" hidden></p>
+    <div class="streak" id="streakDots" hidden></div>
     <div class="wheel-box"><div class="wheel-ptr"></div><svg viewBox="-100 -100 200 200" id="wheelSvg"></svg><div class="wheel-hub">🎲</div></div>
     <p id="wheelRes" style="min-height:1.3em;font-weight:800;color:var(--ink)"></p>
     <button class="btn sand" id="spinBtn" type="button">لف العجلة</button>
@@ -1706,12 +1736,44 @@ function drawWheel(){const svg=$('wheelSvg');if(svg.childNodes.length)return;con
       const ds=el('text',{x:0,y:-78.6,'text-anchor':'middle','dominant-baseline':'central','font-size':8.5,'font-weight':900,fill:'#b37a04',style:'font-family:Arial,sans-serif'},g);ds.textContent='$';
       el('ellipse',{cx:-3,cy:-82,rx:2.4,ry:1.4,fill:'#fff',opacity:.7},g)}});
   el('circle',{r:96,fill:'none',stroke:'#efd29a','stroke-width':5},svg)}
-function streakBonus(){return Math.min(W.days||1,7)*50}
+function streakBonus(){return 0}
 function renderWheel(){const got=W.spin===today();
   $('wheelBtn').textContent=got?'تم':'لف';$('wheelTxt').textContent=got?'ارجع بكرة للفّة جديدة':'لفّة مجانية كل يوم';
   const d=Math.min(W.days||1,7);$('streakTxt').textContent=`لك ${toAr(W.days||1)} ${(W.days||1)>1?'أيام':'يوم'} متتالية — مكافأة إضافية ${toAr(streakBonus())} عملة`;
   $('streakDots').innerHTML=[1,2,3,4,5,6,7].map(i=>`<i class="${i<=d?'on':''}">${toAr(i)}</i>`).join('');
   $('spinBtn').disabled=got||spinning;if(got&&!spinning&&!$('wheelRes').textContent)$('wheelRes').textContent='لفّيت اليوم، ارجع بكرة 👋'}
+
+// ---------- هدية الدخول ٧ أيام ----------
+// كل يوم يدخل ياخذ هدية اليوم، وإذا غاب يوم يرجع لليوم الأول. المشترك ياخذ فوقها ٥٠ جوهرة كل يوم، و١٠٬٠٠٠ عملة في اليوم السابع
+const LOGIN=[{c:500},{c:1000},{g:5},{c:2000},{g:10},{c:3000},{g:30,box:1}];
+const SUB_DAY_G=50,SUB_D7_C=10000;
+function lgYest(){const y=new Date();y.setDate(y.getDate()-1);return dayKey(y)}
+function lgDone(){return W.lgDay===dayKey(new Date())}
+// رقم اليوم اللي عليه الدور (٠ لين ٦)
+function lgIdx(){if(lgDone())return Math.max(0,(W.lgN||1)-1);if(W.lgDay===lgYest()&&(W.lgN||0)<7)return W.lgN||0;return 0}
+function lgGot(i){const idx=lgIdx();return lgDone()?i<=idx:i<idx}
+function lgIcon(r){return r.g?'<span class="gem"></span>':'<span class="coin"></span>'}
+function renderLogin(){const idx=lgIdx(),done=lgDone(),sb=!!subC(),g=$('lgGrid');g.innerHTML='';
+  LOGIN.forEach((r,i)=>{const d=document.createElement('div');d.className='lg-d'+(i===6?' d7':'')+(lgGot(i)?' got':'')+(!done&&i===idx?' now':'');
+    const vip=i===6?`👑 +${fmtS(SUB_D7_C)} عملة`:`👑 +${toAr(SUB_DAY_G)} جوهرة`;
+    d.innerHTML=`<small>اليوم ${toAr(i+1)}</small><span class="ic">${lgIcon(r)}${r.box?' 🎁':''}</span><b>${fmt(r.g||r.c)}${r.box?' + صندوق':''}</b><span class="vip${sb?'':' lock'}">${vip}</span>`;g.appendChild(d)});
+  $('lgHint').textContent=done?`أخذت هدية اليوم ${toAr(idx+1)} ✓ ارجع بكرة لهدية اليوم ${toAr(idx===6?1:idx+2)}`:`هدية اليوم ${toAr(idx+1)} جاهزة — إذا غبت يوم ترجع لليوم الأول`;
+  const ls=$('lgSub');ls.className='lg-sub '+(sb?'on':'off');
+  ls.innerHTML=sb?`👑 أنت في مجلس الطيبين: تاخذ كل يوم ${toAr(SUB_DAY_G)} جوهرة زيادة، وفي اليوم السابع ${fmtS(SUB_D7_C)} عملة زيادة`:`👑 مشتركين مجلس الطيبين ياخذون كل يوم ${toAr(SUB_DAY_G)} جوهرة زيادة، و${fmtS(SUB_D7_C)} عملة في اليوم السابع`;
+  $('lgClaim').disabled=done;$('lgClaim').textContent=done?'ارجع بكرة 👋':'خذ هدية اليوم';
+  $('lgTxt').innerHTML=done?`أخذتها اليوم ✓ — بكرة <b>اليوم ${toAr(idx===6?1:idx+2)}</b>`:`<b>اليوم ${toAr(idx+1)} من ٧</b> — هديتك جاهزة`;$('lgBtn').textContent=done?'شوف':'خذها'}
+function openLogin(){renderLogin();$('loginBox').hidden=false}
+function claimLogin(){if(lgDone())return;const idx=lgIdx(),r=LOGIN[idx],sb=!!subC();
+  let c=r.c||0,g=r.g||0;if(r.box)c+=[1000,1500,2000,3000][Math.floor(Math.random()*4)];if(sb){g+=SUB_DAY_G;if(idx===6)c+=SUB_D7_C}
+  W.lgDay=dayKey(new Date());W.lgN=idx+1;
+  // التجربة: مع السيرفر الرصيد ما يتغيّر من الجوال، فالهدية تنضاف لما نربطها بالسيرفر في التحديث
+  if(!SV()){W.coins=(+W.coins||0)+c;W.gems=(+W.gems||0)+g}
+  save();renderWallet();renderLogin();
+  const [x,y]=elPt($('lgClaim'));if(c)coinRain(x,y,24);if(g)burst(x,y,['#b9f6ff','#3fd2f0','#fff'],30,'dot',7);SFX.coin();if(c)bump('coins');if(g)bump('gems');buzz([40,30,40]);
+  toast(`وصلتك ${[c?fmt(c)+' عملة':'',g?toAr(g)+' جوهرة':''].filter(Boolean).join(' و')} 🎉`+(SV()?' (تجربة)':''))}
+$('lgBtn').onclick=openLogin;$('lgClaim').onclick=claimLogin;$('lgClose').onclick=()=>$('loginBox').hidden=true;
+let LG_AUTO='';
+function lgAuto(){const t=dayKey(new Date());if(W.tut&&!lgDone()&&LG_AUTO!==t){LG_AUTO=t;setTimeout(()=>{if(!$('home').hidden)openLogin()},700)}}
 function openWheel(){checkIn();drawWheel();$('wheelRes').textContent='';renderWheel();$('wheelBox').hidden=false}
 function spinWheel(){if(spinning||W.spin===today())return;spinning=true;
   if(SV()){WHOLD=1;renderWheel();api('spin').then(j=>spinGo(j.i,j.bonus)).catch(e=>{spinning=false;walletRelease();renderWheel();toast(apiErr(e))});return}
@@ -1723,7 +1785,7 @@ function spinGo(i,b){
   $('wheelSvg').style.transform=`rotate(${wheelRot}deg)`;
   let tk=0;const tick=setInterval(()=>{if(++tk>16)clearInterval(tick);else tone(700+tk*20,.03,'square',.05)},230);
   setTimeout(()=>{spinning=false;wheelRot-=jit;const x=WHEEL[i];if(SV())walletRelease();else{W.coins+=(x.c||0)+b;W.gems+=x.g||0;save()}renderWallet();renderWheel();
-    $('wheelRes').textContent=`طلع لك ${x.g?toAr(x.g)+' جواهر':toAr(x.c)+' عملة'} + ${toAr(b)} عملة مكافأة الأيام 🎉`;
+    $('wheelRes').textContent=`طلع لك ${x.g?toAr(x.g)+' جواهر':toAr(x.c)+' عملة'}${b>0?' + '+toAr(b)+' عملة':''} 🎉`;
     const [px,py]=elPt($('wheelRes'));coinRain(px,py,26);SFX.coin();bump('coins');if(x.g)bump('gems');buzz([40,30,40])},4300)}
 // ---------- لوحة الصدارة ----------
 let DB=null,LB=[],LBRAW=[],LBUNS=null,LBMK='';
@@ -2798,7 +2860,7 @@ function show(id){
   const app=id!=='splash'&&id!=='game';
   $('appTop').hidden=!app;$('tabs').hidden=!app;
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('sel',b.dataset.t===id));
-  if(id==='shop')renderShop();if(id==='closet')renderCloset();if(id==='home'){renderModes();renderMissions();renderSeasonBanner()}
+  if(id==='shop')renderShop();if(id==='closet')renderCloset();if(id==='home'){renderModes();renderMissions();renderSeasonBanner();renderLogin();lgAuto()}
   renderWallet();window.scrollTo(0,0);
 }
 let SHOP_OPEN=false; // يتحكم فيه المطوّر من لوحة الإدارة (config/app.shop)
