@@ -2432,9 +2432,9 @@ function standToken(g,style,c,top,side){
   const PI=PIMG[style];
   const SI=SUBIMG[style];
   if(SI){const hh=1.08,ww=hh*SI.a;
-    el('ellipse',{cx:0,cy:.27,rx:.3,ry:.095,fill:c.hex,opacity:.35},g);
-    el('ellipse',{cx:0,cy:.27,rx:.3,ry:.095,fill:'none',stroke:c.hex,'stroke-width':.055},g);
-    el('ellipse',{cx:0,cy:.27,rx:.3,ry:.095,fill:'none',stroke:'#fff','stroke-width':.014,opacity:.7},g);
+    // قاعدة بلون اللاعب تحت الحجر (بدل حلقة ثانية)
+    el('ellipse',{cx:0,cy:.255,rx:.36,ry:.13,fill:c.hex,opacity:.9,filter:blur(g,.035)},g);
+    el('ellipse',{cx:0,cy:.255,rx:.27,ry:.085,fill:c.hex},g);
     el('image',{href:SI.src,x:(-ww/2).toFixed(3),y:(.33-hh).toFixed(3),width:ww.toFixed(3),height:hh.toFixed(3),preserveAspectRatio:'xMidYMax meet'},g);return}
   if(PI){const T=PI[Math.max(0,COL.findIndex(x=>x.hex===c.hex))],hh=Math.min(.9,.74/T.a),ww=hh*T.a;
     el('image',{href:T.src,x:(-ww/2).toFixed(3),y:(.3-hh).toFixed(3),width:ww.toFixed(3),height:hh.toFixed(3),preserveAspectRatio:'xMidYMax meet'},g);return}
