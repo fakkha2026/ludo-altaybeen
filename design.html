@@ -3592,15 +3592,15 @@ function kfxGone(els,ms){setTimeout(()=>els.forEach(e=>e.remove()),ms)}
 function subEatFx(x,y,k){if(RM||!KITC[k])return;const cs=board.getBoundingClientRect().width/15,sz=cs*2.3;
   const cr=kfxEl('kfx drop',x,y-cs*.25,sz,k,CROWN_SVG(k));
   setTimeout(()=>{const els=[kfxEl('kflash',x,y,cs*2.2,k),kfxEl('kring',x,y,cs*1.4,k),kfxEl('kring g',x,y,cs*1.4,k,'',.12)];
-    burst(x,y,[KITC[k][0],KITC[k][1],'#ffd76a','#fff'],36,'star',7);kfxGone(els,900)},480);
+    burst(x,y,[KITC[k][0],KITC[k][1],'#ffd76a','#fff'],44,'dot',7.5);kfxGone(els,900)},480);
   kfxGone([cr],1050)}
 function subWinFx(ci,k,done){if(RM||!KITC[k]){done&&done();return}
   const r=board.getBoundingClientRect(),cols=[KITC[k][0],KITC[k][1],'#ffd76a','#fff'],els=[];
   for(let i=0;i<7;i++)setTimeout(()=>{const x=r.left+r.width*(.18+Math.random()*.64),y=r.top+r.height*(.15+Math.random()*.6);
-    burst(x,y,cols,46,'star',8);els.push(kfxEl('kring',x,y,r.width*.16,k),kfxEl('kflash',x,y,r.width*.22,k));try{SFX.six()}catch(e){}},i*230);
+    burst(x,y,cols,60,'dot',8.5);els.push(kfxEl('kring',x,y,r.width*.16,k),kfxEl('kflash',x,y,r.width*.22,k));try{SFX.six()}catch(e){}},i*230);
   setTimeout(()=>{const pic=document.querySelector('#chip-'+ci+' .pic');if(pic){const pr=pic.getBoundingClientRect(),x=pr.left+pr.width/2,y=pr.top+pr.height/2;
       els.push(kfxEl('kfx crownw',x,pr.top-pr.width*.62,pr.width*1.1,k,CROWN_SVG(k)));
-      setTimeout(()=>{els.push(kfxEl('kring g',x,y,pr.width*1.3,k),kfxEl('kring',x,y,pr.width*1.3,k,'',.15),kfxEl('kring',x,y,pr.width*1.3,k,'',.35));burst(x,pr.top,cols,40,'star',6)},620)}
+      setTimeout(()=>{els.push(kfxEl('kring g',x,y,pr.width*1.3,k),kfxEl('kring',x,y,pr.width*1.3,k,'',.15),kfxEl('kring',x,y,pr.width*1.3,k,'',.35));burst(x,pr.top,cols,48,'dot',6.5)},620)}
     else{const x=r.left+r.width/2,y=r.top+r.height/2;els.push(kfxEl('kfx crownw',x,y,r.width*.35,k,CROWN_SVG(k)))}},1500);
   setTimeout(()=>{kfxGone(els,0);done&&done()},4300)}
 function winPlay(ci){const pl=S.players.find(p=>p.ci===ci),k=plSub(pl);if(k&&!RM)subWinFx(ci,k,()=>{if(S&&S.winner===ci)showWin(ci)});else showWin(ci)}
