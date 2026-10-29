@@ -1410,7 +1410,7 @@ body.ingame.nightg #starFx{opacity:1}
       <div class="adm-card">
         <b>🔒 الأسماء المحجوزة</b>
         <p class="note" style="margin:0;text-align:start">أي اسم بعدد الحروف المحجوز، أو أي اسم في القائمة، يطلع للاعبين "غير متاح". أنت بس تقدر تاخذه أو تعطيه للاعب. اللي عندهم أسماء من قبل ما يتأثرون.</p>
-        <div class="pf-row"><input class="field" id="rsvLenIn" type="number" inputmode="numeric" min="3" max="14" placeholder="عدد الحروف (٣ إلى ١٤)"><button class="ghost" id="rsvLenGo" type="button">احجز</button></div>
+        <div class="pf-row" style="align-items:center"><span style="font-weight:800;font-size:.9rem;white-space:nowrap">الحروف من</span><input class="field" id="rsvLenIn" type="number" inputmode="numeric" min="3" max="14" placeholder="٣"><span style="font-weight:800;font-size:.9rem">إلى</span><input class="field" id="rsvLenTo" type="number" inputmode="numeric" min="3" max="14" placeholder="٥"><button class="ghost" id="rsvLenGo" type="button">احجز</button></div>
         <div class="rsv-list" id="rsvLens"></div>
         <div class="pf-row"><input class="field" id="rsvNameIn" maxlength="14" placeholder="اسم تبي تحجزه" autocapitalize="off" spellcheck="false"><button class="ghost" id="rsvNameGo" type="button">احجز</button></div>
         <div class="rsv-list" id="rsvNames"></div>
@@ -4357,13 +4357,15 @@ $('admAnnGo').onclick=async()=>{const v=$('admAnn').value.trim();if(!v){toast('�
 $('admAnnDel').onclick=async()=>{if(await admCfg({ann:''})){$('admAnn').value='';toast('انشال الإعلان')}};
 const arN=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
 function renderRsv(){const L=$('rsvLens'),N=$('rsvNames');if(!L||!N)return;
-  L.innerHTML='';RSV.lens.slice().sort((a,b)=>a-b).forEach(n=>{const b=document.createElement('button');b.type='button';b.textContent='🔒 '+arN(n)+' حروف';const x=document.createElement('i');x.textContent='✕ فك';b.appendChild(x);
-    b.onclick=async()=>{if(!confirm('تفك حجز الأسماء اللي فيها '+arN(n)+' حروف؟'))return;if(await admCfg({rsvLens:RSV.lens.filter(k=>k!==n)}))toast('انفك حجز '+arN(n)+' حروف ✔️')};L.appendChild(b)});
+  L.innerHTML='';const ls=[...new Set(RSV.lens)].sort((a,b)=>a-b),grp=[];ls.forEach(n=>{const g=grp[grp.length-1];if(g&&n===g[1]+1)g[1]=n;else grp.push([n,n])});
+  grp.forEach(([a,z])=>{const t=a===z?arN(a)+' حروف':'من '+arN(a)+' إلى '+arN(z)+' حروف',b=document.createElement('button');b.type='button';b.textContent='🔒 '+t;const x=document.createElement('i');x.textContent='✕ فك';b.appendChild(x);
+    b.onclick=async()=>{if(!confirm('تفك حجز الأسماء اللي '+t+'؟'))return;if(await admCfg({rsvLens:RSV.lens.filter(k=>k<a||k>z)}))toast('انفك الحجز ✔️')};L.appendChild(b)});
   N.innerHTML='';Object.keys(RSV.names).sort().forEach(k=>{const b=document.createElement('button');b.type='button';b.textContent='🔒 '+String(RSV.names[k]||k);const x=document.createElement('i');x.textContent='✕ فك';b.appendChild(x);
     b.onclick=async()=>{if(!confirm('تفك حجز "'+(RSV.names[k]||k)+'"؟'))return;if(await admCfg({rsvNames:{[k]:firebase.firestore.FieldValue.delete()}}))toast('انفك الحجز ✔️')};N.appendChild(b)})}
-$('rsvLenGo').onclick=async()=>{const er=$('rsvErr');er.style.color='';er.textContent='';const n=Math.floor(+toEn($('rsvLenIn').value)||0);
-  if(n<3||n>14){er.textContent='اكتب رقم من ٣ إلى ١٤.';return}if(RSV.lens.includes(n)){er.textContent='محجوز من قبل.';return}
-  if(await admCfg({rsvLens:RSV.lens.concat(n)})){$('rsvLenIn').value='';toast('🔒 انحجزت كل الأسماء اللي فيها '+arN(n)+' حروف')}};
+$('rsvLenGo').onclick=async()=>{const er=$('rsvErr');er.style.color='';er.textContent='';let a=Math.floor(+toEn($('rsvLenIn').value)||0),z=Math.floor(+toEn($('rsvLenTo').value)||0);if(!z)z=a;if(!a)a=z;if(a>z)[a,z]=[z,a];
+  if(a<3||z>14){er.textContent='اكتب أرقام من ٣ إلى ١٤.';return}const add=[];for(let k=a;k<=z;k++)if(!RSV.lens.includes(k))add.push(k);
+  if(!add.length){er.textContent='محجوزة من قبل.';return}const t=a===z?arN(a)+' حروف':'من '+arN(a)+' إلى '+arN(z)+' حروف';
+  if(await admCfg({rsvLens:RSV.lens.concat(add)})){$('rsvLenIn').value=$('rsvLenTo').value='';toast('🔒 انحجزت كل الأسماء اللي '+t)}};
 $('rsvNameGo').onclick=async()=>{const er=$('rsvErr');er.style.color='';er.textContent='';const v=$('rsvNameIn').value.trim();
   if(!unValid(v)){er.textContent='الاسم من ٣ إلى ١٤ حرف أو رقم، بدون مسافات أو رموز.';return}const k=unKey(v);
   if(RSV.names[k]){er.textContent='محجوز من قبل.';return}
