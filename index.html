@@ -213,6 +213,7 @@ nav.tabs button.off{opacity:.55;position:relative}
 .wh-p{color:var(--muted);font-weight:800;text-align:center}
 .wh-h small{color:var(--muted);font-weight:800;text-align:center;font-size:.75rem}
 .adm-card{background:var(--night);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.mp-adm{display:flex;flex-direction:column;gap:10px}.mp-row{display:grid;grid-template-columns:28px 1fr 1fr;gap:6px;align-items:center}.mp-row .mp-r{font-size:1.3rem;text-align:center;grid-row:span 2}.mp-row label{display:flex;flex-direction:column;gap:2px;font-size:.75rem;color:var(--muted);font-weight:700;min-width:0}.mp-row label.mp-it{grid-column:2/4}.mp-row .field{width:100%;min-width:0}
 .adm-card b{font-size:.95rem}
 .rsv-list{display:flex;flex-wrap:wrap;gap:6px}.rsv-list:empty{display:none}.rsv-list button{border:1px solid #e9c46a66;background:#e9c46a1a;color:var(--ink);border-radius:999px;padding:5px 12px;font:inherit;font-size:.85rem;font-weight:800;cursor:pointer}.rsv-list button i{font-style:normal;color:var(--red);margin-inline-start:6px}
 .adm-card .admtxt{color:var(--ink);font-size:.88rem;line-height:1.6;word-break:break-word}
@@ -1399,6 +1400,12 @@ body.ingame.nightg #starFx{opacity:1}
         <div class="adm-btns"><button type="button" class="gold" id="whSave">احفظ العجلة</button><button type="button" id="whReset">رجّع الأصلية</button></div>
       </div>
       <div class="adm-card">
+        <b>🏆 جوائز الصدارة <small style="color:var(--muted);font-weight:700">· أول كل شهر</small></b>
+        <p class="note" style="margin:0;text-align:start">لكل مركز: كم جوهرة، كم عملة، وجائزة نرد أو حجر (اختياري). السيرفر يوزّعها تلقائي أول الشهر على أول ٣ في صدارة الشهر اللي خلص.</p>
+        <div class="mp-adm" id="mpAdm"></div>
+        <div class="adm-btns"><button type="button" class="gold" id="mpSave">احفظ الجوائز</button><button type="button" id="mpReset">رجّع الأصلية</button></div>
+      </div>
+      <div class="adm-card">
         <b>📢 إعلان في الرئيسية</b>
         <textarea class="field" id="admAnn" maxlength="200" rows="3" placeholder="اكتب رسالة تظهر لكل اللاعبين (خلّها فاضية عشان تشيل الإعلان)" style="text-align:start;resize:vertical;font-size:.95rem"></textarea>
         <div class="adm-btns"><button type="button" class="gold" id="admAnnGo">نشر الإعلان</button><button type="button" id="admAnnDel">شيل الإعلان</button></div>
@@ -1729,13 +1736,14 @@ function plRank(pl){if(!pl)return 0;
 function setMeBdg(){const a=$('meAv');if(!a)return;a.querySelectorAll('.bdg').forEach(x=>x.remove());
   const rk=myRank();a.classList.toggle('hasb',!!rk);if(rk)a.appendChild(bdgEl(rk))}
 const gemI='<span class="gem" style="width:14px;height:14px;display:inline-block;vertical-align:-2px"></span>';
+var MPRIZE_DEF=[{g:2000,c:0,it:'d:champ1'},{g:1000,c:0,it:''},{g:500,c:0,it:''}],MPRIZE=MPRIZE_DEF,MP_EDIT=false;
 function renderPrize(){const box=$('lbPrize');if(!box)return;box.innerHTML='<div class="lbc-h">🎁 جوائز الصدارة</div>';
   const row=document.createElement('div');row.className='lbp-row';
-  [[2,1000],[1,2000],[3,500]].forEach(([rk,g])=>{const c=document.createElement('div');c.className='lbp'+(rk===1?' first':'');
+  [2,1,3].forEach(rk=>{const P=MPRIZE[rk-1]||{},c=document.createElement('div');c.className='lbp'+(rk===1?' first':'');
     const av=document.createElement('span');av.className='lav';av.textContent='👤';
-    const b=document.createElement('b');b.innerHTML=gemI+' '+fmt(g);
-    const sm=document.createElement('small');
-    if(rk===1){const sv=el('svg',{viewBox:'0 0 100 100'});diceSvg(DICE.find(d=>d.id==='champ1'),6,sv,null,true);sm.append('+ نرد البطل ',sv)}else sm.textContent='+ الشارة';
+    const b=document.createElement('b');b.innerHTML=[P.g?gemI+' '+fmt(P.g):'',P.c?coinI+' '+fmt(P.c):''].filter(Boolean).join(' ')||'🏅';
+    const sm=document.createElement('small');const it=mpItem(P.it);
+    if(it&&it.k==='d'){const sv=el('svg',{viewBox:'0 0 100 100'});diceSvg(it.o,6,sv,null,true);sm.append('+ '+it.o.name+' ',sv)}else if(it)sm.textContent='+ '+it.o.name;else sm.textContent='+ الشارة';
     c.append(bdgWrap(av,rk),b,sm);row.appendChild(c)});
   box.appendChild(row)}
 
@@ -4202,7 +4210,7 @@ function renderFriends(){
   fill('frList','friends','ما عندك أصدقاء للحين','إزالة',u=>{frUnfriend(u);toast('انشال من أصدقائك')});
   fill('blList','blocks','ما حظرت أحد','إلغاء الحظر',u=>{frDel('blocks',u);save();toast('انلغى الحظر');frRefresh()})}
 function peerUid(peer){return (window.__PU&&window.__PU[peer])||''}
-function admRefresh(){if(IS_ADMIN){setTimeout(renderVault,0);setTimeout(renderWhAdm,0)}const t=$('pfAdmTab');if(t)t.hidden=!IS_ADMIN;$('pfTabs').classList.toggle('adm4',IS_ADMIN);paintShopTab();if(!IS_ADMIN&&!$('pf-adm').hidden)pfTab('me');
+function admRefresh(){if(IS_ADMIN){setTimeout(renderVault,0);setTimeout(renderWhAdm,0);setTimeout(renderMpAdm,0)}const t=$('pfAdmTab');if(t)t.hidden=!IS_ADMIN;$('pfTabs').classList.toggle('adm4',IS_ADMIN);paintShopTab();if(!IS_ADMIN&&!$('pf-adm').hidden)pfTab('me');
   $('meAv').classList.toggle('dev-av',IS_ADMIN);if(!$('profBox').hidden)renderProfile();if(S)renderChips();try{renderBoard()}catch(e){}}
 function banRefresh(){let bdev='';try{bdev=localStorage.getItem('ludo-bdev')||''}catch(e){}
   if(BANNED.has(MYUID)){try{localStorage.setItem('ludo-bdev',MYUID)}catch(e){}bdev=MYUID}
@@ -4239,8 +4247,23 @@ $('whSave').onclick=async()=>{const a=whRead();if(!wheelOk(a)){toast('كل خا�
   if(a.some(x=>(x.c||0)>1e6||(x.g||0)>1e4)){toast('الكمية كبيرة مرة، راجعها');return}
   if(await admCfg({wheel:a})){WH_EDIT=false;toast('انحفظت العجلة 🎡')}};
 $('whReset').onclick=async()=>{if(!confirm('ترجع العجلة لجوائزها الأصلية؟'))return;if(await admCfg({wheel:null})){WH_EDIT=false;applyWheel(null);toast('رجعت العجلة الأصلية')}};
+// جوائز الصدارة الشهرية من إعدادات المطوّر (config/app.mprize)، والسيرفر يوزّعها أول الشهر
+function mpItem(it){const m=/^(d|t):(.+)$/.exec(String(it||''));if(!m)return null;const o=(m[1]==='d'?DICE:TOKS).find(x=>x.id===m[2]);return o?{k:m[1],o}:null}
+function applyMprize(a){MPRIZE=Array.isArray(a)&&a.length===3?a.map(x=>({g:Math.max(0,Math.floor(+(x&&x.g)||0)),c:Math.max(0,Math.floor(+(x&&x.c)||0)),it:mpItem(x&&x.it)?String(x.it):''})):MPRIZE_DEF;
+  try{renderPrize()}catch(e){}if(IS_ADMIN&&!MP_EDIT)renderMpAdm()}
+function mpOpts(sel){const dz=DICE.filter(d=>d.id!=='classic'&&!d.sub),tz=TOKS.filter(t=>!t.sub&&t.price!==0);
+  const o=(v,n)=>`<option value="${v}"${v===sel?' selected':''}>${n}</option>`;
+  return o('','بدون')+'<optgroup label="🎲 نرد">'+dz.map(d=>o('d:'+d.id,d.name+(d.vault?' (خزنة)':''))).join('')+'</optgroup><optgroup label="♟️ أحجار">'+tz.map(t=>o('t:'+t.id,t.name+(t.vault?' (خزنة)':''))).join('')+'</optgroup>'}
+function renderMpAdm(){const box=$('mpAdm');if(!box)return;box.innerHTML='';
+  MPRIZE.forEach((P,i)=>{const r=document.createElement('div');r.className='mp-row';
+    r.innerHTML=`<span class="mp-r">${['🥇','🥈','🥉'][i]}</span><label>💎 جواهر<input class="field mp-g" type="number" inputmode="numeric" min="0" value="${P.g||0}"></label><label>🪙 عملات<input class="field mp-c" type="number" inputmode="numeric" min="0" value="${P.c||0}"></label><label class="mp-it">🎁 الجائزة<select class="field mp-i">${mpOpts(P.it||'')}</select></label>`;
+    r.querySelectorAll('input,select').forEach(n=>n.oninput=n.onchange=()=>{MP_EDIT=true});box.appendChild(r)})}
+function mpRead(){return [...document.querySelectorAll('#mpAdm .mp-row')].map(r=>({g:Math.max(0,Math.floor(+r.querySelector('.mp-g').value||0)),c:Math.max(0,Math.floor(+r.querySelector('.mp-c').value||0)),it:r.querySelector('.mp-i').value}))}
+$('mpSave').onclick=async()=>{const a=mpRead();if(a.length!==3)return;if(a.some(x=>x.g>1e5||x.c>1e7)){toast('الكمية كبيرة مرة، راجعها');return}
+  if(await admCfg({mprize:a})){MP_EDIT=false;applyMprize(a);toast('انحفظت جوائز الصدارة 🏆')}};
+$('mpReset').onclick=async()=>{if(await admCfg({mprize:null})){MP_EDIT=false;applyMprize(null);toast('رجعت الجوائز الأصلية')}};
 function applyDrops(o){
-  applyWheel(o&&o.wheel);
+  applyWheel(o&&o.wheel);applyMprize(o&&o.mprize);
   DROPS=(o&&o.drops&&typeof o.drops==='object')?o.drops:{};
   EVENTS=Array.isArray(o&&o.events)?o.events.filter(e=>e&&e.id&&(e.base||(e.from&&e.to))):[];
   SEASONS.length=0;
