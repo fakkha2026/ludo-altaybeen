@@ -213,6 +213,7 @@ nav.tabs button.off{opacity:.55;position:relative}
 .wh-p{color:var(--muted);font-weight:800;text-align:center}
 .wh-h small{color:var(--muted);font-weight:800;text-align:center;font-size:.75rem}
 .adm-card{background:var(--night);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.hs-adm{display:flex;flex-direction:column;gap:10px}.hs-adm .hs-h{font-size:.8rem;color:var(--muted);font-weight:800}.hs-g{display:flex;flex-wrap:wrap;gap:6px}.hs-b{border:1px solid #fff2;background:#0003;color:inherit;border-radius:999px;padding:6px 10px;font:inherit;font-size:.8rem;font-weight:700}.hs-b.off{opacity:.55;border-style:dashed;text-decoration:line-through}
 .mp-adm{display:flex;flex-direction:column;gap:10px}.mp-row{display:grid;grid-template-columns:28px 1fr 1fr;gap:6px;align-items:center}.mp-row .mp-r{font-size:1.3rem;text-align:center;grid-row:span 2}.mp-row label{display:flex;flex-direction:column;gap:2px;font-size:.75rem;color:var(--muted);font-weight:700;min-width:0}.mp-row label.mp-it{grid-column:2/4}.mp-row .field{width:100%;min-width:0}
 .adm-card b{font-size:.95rem}
 .rsv-list{display:flex;flex-wrap:wrap;gap:6px}.rsv-list:empty{display:none}.rsv-list button{border:1px solid #e9c46a66;background:#e9c46a1a;color:var(--ink);border-radius:999px;padding:5px 12px;font:inherit;font-size:.85rem;font-weight:800;cursor:pointer}.rsv-list button i{font-style:normal;color:var(--red);margin-inline-start:6px}
@@ -1404,6 +1405,11 @@ body.ingame.nightg #starFx{opacity:1}
         <p class="note" style="margin:0;text-align:start">لكل مركز: كم جوهرة، كم عملة، وجائزة نرد أو حجر (اختياري). السيرفر يوزّعها تلقائي أول الشهر على أول ٣ في صدارة الشهر اللي خلص.</p>
         <div class="mp-adm" id="mpAdm"></div>
         <div class="adm-btns"><button type="button" class="gold" id="mpSave">احفظ الجوائز</button><button type="button" id="mpReset">رجّع الأصلية</button></div>
+      </div>
+      <div class="adm-card">
+        <b>🙈 إخفاء من المتجر</b>
+        <p class="note" style="margin:0;text-align:start">اضغط على أي غرض عشان تخفيه أو ترجّعه. اللي عنده الغرض يبقى عنده. (يطبق على اللاعبين من تحديث 1.0.2)</p>
+        <div class="hs-adm" id="hsAdm"></div>
       </div>
       <div class="adm-card">
         <b>📢 إعلان في الرئيسية</b>
@@ -3078,6 +3084,7 @@ $('restoreBtn').onclick=iapRestore;
 setTimeout(iapBoot,0);
 
 // ---------- المتجر والخزانة ----------
+var HIDESHOP=new Set(); // أغراض أخفاها المطوّر من المتجر (config/app.hideShop)
 const KINDS={d:{list:DICE,own:'ownD',sel:'dice'},t:{list:TOKS,own:'ownT',sel:'tok'},h:{list:THEMES,own:'ownH',sel:'theme'},e:{list:EATFX,own:'ownE',sel:'fxE'},w:{list:WINFX,own:'ownX',sel:'fxW'}};
 function prTxt(pid,sar){const p=pid&&IAP.price[pid];return p||sar+' ر.س'}
 function sarOf(it){if(!it.price)return '';const v=it.gem?it.price*100:it.price;return v<=600?'٤٫٩٩':v<=1500?'٧٫٩٩':v<=3000?'٩٫٩٩':v<=5000?'١٤٫٩٩':'١٩٫٩٩'}
@@ -3109,7 +3116,7 @@ function itemCard(it,kind,own,on,onclick){
 }
 function fillGrid(id,kind,onlyOwned,after){
   const K=KINDS[kind],box=$(id);box.innerHTML='';
-  K.list.filter(it=>it.sub?(onlyOwned&&(it.sub===subC()||(it.sub===1&&!!subC()))):(onlyOwned?W[K.own].includes(it.id):!it.season&&!it.hidden)).forEach(it=>box.appendChild(itemCard(it,kind,W[K.own].includes(it.id)||!!it.sub,W[K.sel]===it.id,
+  K.list.filter(it=>it.sub?(onlyOwned&&(it.sub===subC()||(it.sub===1&&!!subC()))):(onlyOwned?W[K.own].includes(it.id):!it.season&&!it.hidden&&!HIDESHOP.has(kind+':'+it.id))).forEach(it=>box.appendChild(itemCard(it,kind,W[K.own].includes(it.id)||!!it.sub,W[K.sel]===it.id,
     onlyOwned?()=>{W[K.sel]=(kind==='e'||kind==='w')&&W[K.sel]===it.id?'':it.id;save();after()}:()=>buy(it,kind))));
 }
 let itemCur=null;
@@ -3156,7 +3163,7 @@ function doPay(){if(paying||!payCur)return;paying=true;const o=payCur,ok=$('payO
 $('payOk').onclick=doPay;$('payNo').onclick=()=>{if(!paying)$('payBox').hidden=true};
 function renderShop(){renderGemPacks();fillGrid('shopTh','h',false);fillGrid('shopDice','d',false);fillGrid('shopTok','t',false);fillGrid('shopEat','e',false);fillGrid('shopWin','w',false);
   $('shopFxH').hidden=!$('shopEat').children.length&&!$('shopWin').children.length;renderSeasons()}
-function seasonItems(id){const out=[];['h','t','d','e','w'].forEach(k=>KINDS[k].list.filter(it=>it.season===id&&!it.hidden).forEach(it=>out.push([it,k])));return out}
+function seasonItems(id){const out=[];['h','t','d','e','w'].forEach(k=>KINDS[k].list.filter(it=>it.season===id&&!it.hidden&&!HIDESHOP.has(k+':'+it.id)).forEach(it=>out.push([it,k])));return out}
 function renderSeasons(){const box=$('seasonList');box.innerHTML='';
   SEASONS.filter(z=>!z.ev||(seasonRange(z)&&(seasonItems(z.id).length||z.gift))).sort((x,y)=>{const a=seasonRange(x),b=seasonRange(y);return (b&&b.on)-(a&&a.on)||(a?a.a:0)-(b?b.a:0)}).forEach(z=>{
     const on=seasonOn(z.id),card=document.createElement('div');card.className='season'+(on?' live':'');
@@ -4210,7 +4217,7 @@ function renderFriends(){
   fill('frList','friends','ما عندك أصدقاء للحين','إزالة',u=>{frUnfriend(u);toast('انشال من أصدقائك')});
   fill('blList','blocks','ما حظرت أحد','إلغاء الحظر',u=>{frDel('blocks',u);save();toast('انلغى الحظر');frRefresh()})}
 function peerUid(peer){return (window.__PU&&window.__PU[peer])||''}
-function admRefresh(){if(IS_ADMIN){setTimeout(renderVault,0);setTimeout(renderWhAdm,0);setTimeout(renderMpAdm,0)}const t=$('pfAdmTab');if(t)t.hidden=!IS_ADMIN;$('pfTabs').classList.toggle('adm4',IS_ADMIN);paintShopTab();if(!IS_ADMIN&&!$('pf-adm').hidden)pfTab('me');
+function admRefresh(){if(IS_ADMIN){setTimeout(renderVault,0);setTimeout(renderWhAdm,0);setTimeout(renderMpAdm,0);setTimeout(renderHsAdm,0)}const t=$('pfAdmTab');if(t)t.hidden=!IS_ADMIN;$('pfTabs').classList.toggle('adm4',IS_ADMIN);paintShopTab();if(!IS_ADMIN&&!$('pf-adm').hidden)pfTab('me');
   $('meAv').classList.toggle('dev-av',IS_ADMIN);if(!$('profBox').hidden)renderProfile();if(S)renderChips();try{renderBoard()}catch(e){}}
 function banRefresh(){let bdev='';try{bdev=localStorage.getItem('ludo-bdev')||''}catch(e){}
   if(BANNED.has(MYUID)){try{localStorage.setItem('ludo-bdev',MYUID)}catch(e){}bdev=MYUID}
@@ -4261,9 +4268,19 @@ function renderMpAdm(){const box=$('mpAdm');if(!box)return;box.innerHTML='';
 function mpRead(){return [...document.querySelectorAll('#mpAdm .mp-row')].map(r=>({g:Math.max(0,Math.floor(+r.querySelector('.mp-g').value||0)),c:Math.max(0,Math.floor(+r.querySelector('.mp-c').value||0)),it:r.querySelector('.mp-i').value}))}
 $('mpSave').onclick=async()=>{const a=mpRead();if(a.length!==3)return;if(a.some(x=>x.g>1e5||x.c>1e7)){toast('الكمية كبيرة مرة، راجعها');return}
   if(await admCfg({mprize:a})){MP_EDIT=false;applyMprize(a);toast('انحفظت جوائز الصدارة 🏆')}};
+function hsItems(k){return KINDS[k].list.filter(it=>!it.vault&&!it.sub&&!it.champ&&!it.hidden&&it.price>0)}
+function renderHsAdm(){const box=$('hsAdm');if(!box)return;box.innerHTML='';
+  [['d','🎲 النرد'],['t','♟️ الأحجار'],['h','🎨 الثيمات']].forEach(([k,lb])=>{const its=hsItems(k);if(!its.length)return;
+    const h=document.createElement('div');h.className='hs-h';h.textContent=lb;const g=document.createElement('div');g.className='hs-g';
+    its.forEach(it=>{const key=k+':'+it.id,b=document.createElement('button');b.type='button';b.className='hs-b'+(HIDESHOP.has(key)?' off':'');
+      b.textContent=(HIDESHOP.has(key)?'🔒 ':'🟢 ')+it.name+(it.season?' (موسم)':'');
+      b.onclick=async()=>{const nx=new Set(HIDESHOP);nx.has(key)?nx.delete(key):nx.add(key);b.disabled=true;
+        if(await admCfg({hideShop:[...nx]})){applyHide([...nx]);toast(nx.has(key)?'🔒 انخفى '+it.name:'🟢 رجع '+it.name)}b.disabled=false};g.appendChild(b)});
+    box.append(h,g)})}
+function applyHide(a){HIDESHOP=new Set(Array.isArray(a)?a.map(String):[]);try{if(!$('shop').hidden)renderShop()}catch(e){}if(IS_ADMIN)renderHsAdm()}
 $('mpReset').onclick=async()=>{if(await admCfg({mprize:null})){MP_EDIT=false;applyMprize(null);toast('رجعت الجوائز الأصلية')}};
 function applyDrops(o){
-  applyWheel(o&&o.wheel);applyMprize(o&&o.mprize);
+  applyWheel(o&&o.wheel);applyMprize(o&&o.mprize);applyHide(o&&o.hideShop);
   DROPS=(o&&o.drops&&typeof o.drops==='object')?o.drops:{};
   EVENTS=Array.isArray(o&&o.events)?o.events.filter(e=>e&&e.id&&(e.base||(e.from&&e.to))):[];
   SEASONS.length=0;
