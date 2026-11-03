@@ -1071,8 +1071,8 @@ body.ingame.nightg #starFx{opacity:1}
   <div class="gpacks" id="gemPacks"></div>
   <h3 class="sec-title" style="font-size:1.35rem">مواسم الديرة<small>تنباع بوقتها بس، واللي تشتريه يبقى لك على طول</small></h3>
   <div id="seasonList" style="display:flex;flex-direction:column;gap:12px"></div>
-  <h3 class="sec-title" style="font-size:1.35rem">ثيمات اللوحة</h3>
-  <div class="grid" id="shopTh"></div>
+  <h3 class="sec-title" style="font-size:1.35rem" hidden>ثيمات اللوحة</h3>
+  <div class="grid" id="shopTh" hidden></div>
   <h3 class="sec-title" style="font-size:1.35rem">أشكال النرد</h3>
   <div class="grid" id="shopDice"></div>
   <h3 class="sec-title" style="font-size:1.35rem">أشكال الأحجار</h3>
@@ -3148,7 +3148,7 @@ function doPay(){if(paying||!payCur)return;paying=true;const o=payCur,ok=$('payO
 $('payOk').onclick=doPay;$('payNo').onclick=()=>{if(!paying)$('payBox').hidden=true};
 function renderShop(){renderGemPacks();fillGrid('shopTh','h',false);fillGrid('shopDice','d',false);fillGrid('shopTok','t',false);fillGrid('shopEat','e',false);fillGrid('shopWin','w',false);
   $('shopFxH').hidden=!$('shopEat').children.length&&!$('shopWin').children.length;renderSeasons()}
-function seasonItems(id){const out=[];['h','t','d','e','w'].forEach(k=>KINDS[k].list.filter(it=>it.season===id&&!it.hidden).forEach(it=>out.push([it,k])));return out}
+function seasonItems(id){const out=[];['t','d','e','w'].forEach(k=>KINDS[k].list.filter(it=>it.season===id&&!it.hidden).forEach(it=>out.push([it,k])));return out}
 function renderSeasons(){const box=$('seasonList');box.innerHTML='';
   SEASONS.filter(z=>!z.ev||(seasonRange(z)&&(seasonItems(z.id).length||z.gift))).sort((x,y)=>{const a=seasonRange(x),b=seasonRange(y);return (b&&b.on)-(a&&a.on)||(a?a.a:0)-(b?b.a:0)}).forEach(z=>{
     const on=seasonOn(z.id),card=document.createElement('div');card.className='season'+(on?' live':'');
