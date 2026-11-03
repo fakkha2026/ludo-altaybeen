@@ -3875,9 +3875,10 @@ function fxEv(ev){
   }else if(ev.t==='rev'){
     if(!mine&&MODE==='online'){spinOff();SFX.roll();if(!RM&&ev.v>=1&&ev.v<=6)throwDice(ev.ci,ev.v,COL[ev.ci].hex,{speed:.5,hold:250})}
   }else if(ev.t==='roll'){
-    const dice=$('dice'),col=COL[ev.ci]?COL[ev.ci].hex:'#c0392b';spinOff();
-    SFX.roll();dice.classList.remove('ready');
-    if(!RM&&ev.v>=1&&ev.v<=6)throwDice(ev.ci,ev.v,col);
+    const dice=$('dice'),col=COL[ev.ci]?COL[ev.ci].hex:'#c0392b',wasSpin=!!SPIN;spinOff();
+    if(!wasSpin)SFX.roll();dice.classList.remove('ready');
+    // الأونلاين: رمية أسرع عشان ما يتأخر النرد على الكل
+    if(!RM&&ev.v>=1&&ev.v<=6)throwDice(ev.ci,ev.v,col,MODE==='online'?{speed:.65,hold:350}:{});
     else{dice.classList.add('rolling');const spin=setInterval(()=>drawDice(1+Math.floor(Math.random()*6),col),70);
     setTimeout(()=>{clearInterval(spin);dice.classList.remove('rolling')},430)}
   }else if(ev.t==='six'){
@@ -4553,7 +4554,7 @@ function readyRoll(){const p=player(),dice=$('dice'),mine=localControl(p);
 function roll(){
   if(!S||S.phase!=='roll')return;
   S.phase='rolling';S.dl=0;$('dice').disabled=true;
-  if(MODE==='online'&&SV()&&NET.host){srvRoll(S.gid,S.turnId,0);return}
+  if(MODE==='online'&&SV()&&NET.host){if(player().kind!=='bot'){spinOn(player().ci);SFX.roll()}srvRoll(S.gid,S.turnId,0);return}
   roll2(S.rng?S.rng():1+Math.floor(Math.random()*6),-1)}
 function srvRoll(gid,turn,tries){
   api('roll',{gid:tableId(gid)}).then(j=>{if(!S||S.gid!==gid||S.turnId!==turn||S.phase!=='rolling')return;roll2(j.v,j.n)})
@@ -4574,7 +4575,7 @@ function roll2(v,n){
     if(v===6){S.phase='roll';renderTokens();const p=player();
       setStatus('طلع ٦! ارمِ مرة ثانية',S.pool.length>1?`عندك ${toAr(S.pool.length)} رميات`:'');readyRoll();return}
     beginPick();
-  },RM?450:THROW_MS);
+  },RM?450:(MODE==='online'?1600:THROW_MS));
 }
 function canMove(p,d,ci){if(p===56)return false;if(p===-1)return d===6;if(p+d>50&&p<=50&&ci!=null&&locked(ci))return false;return p+d<=56}
 function movesFor(ci,d){return S.tok[ci].map((pp,k)=>canMove(pp,d,ci)?k:-1).filter(k=>k>=0)}
@@ -4997,7 +4998,10 @@ $('start').onclick=()=>{$('setup').hidden=true;startMode('friends')};
 $('setupBack').onclick=()=>$('setup').hidden=true;
 $('dice').onclick=()=>{
   if(!S)return;
-  if(NET.guest){if(player().ci===NET.myCi&&S.phase==='roll'&&!NET.wait){NET.wait=true;$('dice').disabled=true;$('dice').classList.remove('ready');sendAct({t:'roll'})}return}
+  if(NET.guest){if(player().ci===NET.myCi&&S.phase==='roll'&&!NET.wait){NET.wait=true;$('dice').disabled=true;$('dice').classList.remove('ready');
+    // النرد يبدأ يلف على طول أول ما تضغط، بدل ما ينتظر رد الجوال الثاني
+    spinOn(NET.myCi);SFX.roll();const tn=S.turnId;setTimeout(()=>{if(SPIN&&S&&S.turnId===tn&&S.phase==='roll')spinOff()},9000);
+    sendAct({t:'roll'})}return}
   if(player().kind==='local')roll();
 };
 $('again').onclick=()=>{
