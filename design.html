@@ -2,7 +2,17 @@
 .board-box.wood{border:0!important;border-image:none!important;border-radius:4px!important}
 .board-box{border-radius:4px}
 .board-wrap{margin:16px 13px}
-</style><style>html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}input,textarea,select{font-size:max(16px,1em)!important}</style><script>/* منع التكبير: الشاشة ثابتة زي الألعاب */["gesturestart","gesturechange","gestureend"].forEach(function(e){document.addEventListener(e,function(ev){ev.preventDefault()},{passive:false})});document.addEventListener("touchmove",function(ev){if(ev.touches.length>1)ev.preventDefault()},{passive:false});</script></head><body>
+</style><style>html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}input,textarea,select{font-size:max(16px,1em)!important}
+/* بطاقتا ٢ و٤ لاعبين: ألوان متدرجة بنفس ستايل فكّها */
+.modes .mode.two,.modes .mode.four{background-size:auto!important;text-shadow:0 2px 4px #0005!important;padding:18px 10px 14px;gap:7px}
+.modes .mode.two{background:linear-gradient(150deg,#ffa04d 0%,#ff7a3a 45%,#ee4d2a 100%)!important;box-shadow:0 6px 0 #9a3018,0 10px 24px -8px #ff6a2a99!important}
+.modes .mode.four{background:linear-gradient(150deg,#ff7ab0 0%,#ff5294 45%,#e0357a 100%)!important;box-shadow:0 6px 0 #8f1f4f,0 10px 24px -8px #ff4f9299!important}
+.modes .mode.two::before,.modes .mode.four::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 70% at 85% -10%,#ffffff40,#fff0 60%);pointer-events:none}
+.modes .mode .mi{font-size:2.3rem;line-height:1;filter:drop-shadow(0 3px 4px #0004)}
+.modes .mode.two .big,.modes .mode.four .big{font-size:2rem!important;text-shadow:0 3px 0 #0003!important}
+.modes .mode .pawns i{width:13px;height:13px}
+.modes .mode.two .fee,.modes .mode.four .fee{background:#0000002e!important;color:#fff;font-size:.74rem;flex-wrap:nowrap!important;white-space:nowrap}
+</style><script>/* منع التكبير: الشاشة ثابتة زي الألعاب */["gesturestart","gesturechange","gestureend"].forEach(function(e){document.addEventListener(e,function(ev){ev.preventDefault()},{passive:false})});document.addEventListener("touchmove",function(ev){if(ev.touches.length>1)ev.preventDefault()},{passive:false});</script></head><body>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -1037,12 +1047,12 @@ body.ingame.nightg #starFx{opacity:1}
   </div>
   <div class="modes">
     <button class="mode two" id="mode2" type="button">
-      <div class="big">٢</div><div class="nm">لاعبين</div>
+      <div class="mi">🎲</div><div class="big">العب ٢</div>
       <div class="pawns"><i style="background:var(--red)"></i><i style="background:var(--yellow)"></i></div>
       <div class="fee" id="fee2"></div>
     </button>
     <button class="mode four" id="mode4" type="button">
-      <div class="big">٤</div><div class="nm">لاعبين</div>
+      <div class="mi">♟️</div><div class="big">العب ٤</div>
       <div class="pawns"><i style="background:var(--red)"></i><i style="background:var(--green)"></i><i style="background:var(--yellow)"></i><i style="background:var(--blue)"></i></div>
       <div class="fee" id="fee4"></div>
     </button>
