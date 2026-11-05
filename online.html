@@ -3795,7 +3795,8 @@ function throwDice(ci,v,col,o={}){
     shades[k].style.opacity=String((1-d)*.62)})}catch(e){}}
   wrap.append(sh,cube);document.body.appendChild(wrap);dice.style.opacity='0';
   // رمية واقعية: يطير قوس قصير، يلمس اللوحة، ثم يتدحرج على حوافه وجه بعد وجه ويبطّئ لين يثبت
-  const [fx,fy]=FACE_ROT[v],R=Math.random;
+  // رمية فورية: النرد يطير أول ما تضغط، ولو الرقم ما وصل للحين يكمّل يتقلب في الهوا لين يوصل، بعدين ينزل عليه
+  let pend=v==null,[fx,fy]=pend?[0,0]:FACE_ROT[v],fx0=0,fy0=0,fxT=fx,fyT=fy,swapAt=-1,pauseAt=-1,pausedMs=0,extra=0,exFrom=0,exTo=0,resumed=false,dead=false;const R=Math.random;
   let dx=ex-sx,dy=ey-sy;const D=Math.hypot(dx,dy)||1;dx/=D;dy/=D;
   const th=Math.atan2(dy,dx)*180/Math.PI;
   let m=3+Math.floor(R()*2);const step=Math.min(size*.95,D*.6/m);
@@ -3819,17 +3820,31 @@ function throwDice(ci,v,col,o={}){
     }else{const u=(ms-TF-TR)/TS;x=ex;y=ey;A=720-7*Math.sin(u*Math.PI*2)*Math.pow(1-u,2);
       if(lastF===m-1){thud(m);lastF=m}}
     return {x,y,h,A,yaw,wx}}
-  function frame(now){const ms=Math.min(T,now-t0),t=ms/T,P=pose(ms);
+  const PZ=TF*.45;
+  function frame(now){if(dead)return;
+    let ms=Math.min(T,now-t0-pausedMs);
+    if(pend&&ms>=PZ){if(pauseAt<0)pauseAt=now;ms=PZ;extra=(now-pauseAt)*.9}
+    else if(resumed){const u=Math.min(1,Math.max(0,(ms-PZ)/(TF-PZ)));extra=exFrom+(exTo-exFrom)*u}
+    if(swapAt>=0){const k=Math.min(1,(now-swapAt)/160);fx=fx0+(fxT-fx0)*k;fy=fy0+(fyT-fy0)*k}
+    const t=ms/T,P=pose(ms);P.A+=extra;
     if(!landed&&ms>=TF){landed=true;thud(0)}
     wrap.style.transform=`translate(${P.x}px,${P.y}px)`;
     const CT=`rotateZ(${P.yaw}deg) rotateY(${P.A}deg) rotateX(${P.wx}deg) rotateX(${fx}deg) rotateY(${fy}deg)`;cube.style.transform=`translateY(${-P.h}px) scale(${1+P.h/H*.3}) ${CT}`;light(CT);
     const hh=Math.min(1,P.h/H);sh.style.transform=`translateY(${P.h*.15}px) scale(${1-hh*.45})`;sh.style.opacity=String(.55-hh*.35);
-    if(ms<T)requestAnimationFrame(frame);
+    if(ms<T||pend)requestAnimationFrame(frame);
     else{if(skin.fx)landSnd(skin.fx,v);
       setTimeout(()=>{const [bx,by]=elPt(dice);wrap.classList.add('back');wrap.style.transform=`translate(${bx}px,${by}px) scale(.85)`;wrap.style.opacity='0';
         setTimeout(()=>{wrap.remove();dice.style.opacity=''},220)},o.hold||600)}}
   requestAnimationFrame(frame);
+  return {set(nv){if(!pend||dead)return;const now=performance.now();v=nv;fx0=fx;fy0=fy;[fxT,fyT]=FACE_ROT[nv];swapAt=now;pend=false;
+      if(pauseAt>=0){pausedMs+=now-pauseAt;pauseAt=-1;exFrom=extra;exTo=Math.ceil(extra/360)*360+360;resumed=true}},
+    cancel(){if(dead)return;dead=true;wrap.remove();dice.style.opacity=''}};
 }
+// رميتي في الأونلاين: النرد يطير على طول، والرقم ينحط أول ما يوصل من السيرفر
+let PEND=null;
+function pendThrow(ci){if(RM||!COL[ci])return false;try{if(PEND)PEND.h.cancel()}catch(e){}
+  const h=throwDice(ci,null,COL[ci].hex,{speed:.65,hold:350}),me={ci,h};PEND=me;
+  setTimeout(()=>{if(PEND===me){h.cancel();PEND=null}},9000);return true}
 function drawDice(n,color){
   if(hidFor())return;
   const p=S&&player();
@@ -3928,6 +3943,7 @@ function fxDemo(id,card){const r=card.getBoundingClientRect(),x=r.left+r.width/2
   else if(id==='w_fire'||id==='w_crown')fireWinFx(-1)}
 function fxEv(ev){
   const mine=ev.ci===meCi();
+  if(ev.t==='roll'&&PEND&&PEND.ci===ev.ci&&ev.v>=1&&ev.v<=6){spinOff();$('dice').classList.remove('ready');PEND.h.set(ev.v);PEND=null;return}
   if(ev.t==='roll'&&ev.h&&!mine&&MODE==='online'){
     $('dice').classList.remove('ready');if(!SPIN)SFX.roll();spinOn(ev.ci);
   }else if(ev.t==='rev'){
@@ -4612,7 +4628,7 @@ function readyRoll(){const p=player(),dice=$('dice'),mine=localControl(p);
 function roll(){
   if(!S||S.phase!=='roll')return;
   S.phase='rolling';S.dl=0;$('dice').disabled=true;
-  if(MODE==='online'&&SV()&&NET.host){if(player().kind!=='bot'){spinOn(player().ci);SFX.roll()}srvRoll(S.gid,S.turnId,0);return}
+  if(MODE==='online'&&SV()&&NET.host){if(player().kind!=='bot'){if(!(player().ci===NET.myCi&&pendThrow(NET.myCi)))spinOn(player().ci);SFX.roll()}srvRoll(S.gid,S.turnId,0);return}
   roll2(S.rng?S.rng():1+Math.floor(Math.random()*6),-1)}
 function srvRoll(gid,turn,tries){
   api('roll',{gid:tableId(gid)}).then(j=>{if(!S||S.gid!==gid||S.turnId!==turn||S.phase!=='rolling')return;roll2(j.v,j.n)})
@@ -5058,7 +5074,7 @@ $('dice').onclick=()=>{
   if(!S)return;
   if(NET.guest){if(player().ci===NET.myCi&&S.phase==='roll'&&!NET.wait){NET.wait=true;$('dice').disabled=true;$('dice').classList.remove('ready');
     // النرد يبدأ يلف على طول أول ما تضغط، بدل ما ينتظر رد الجوال الثاني
-    spinOn(NET.myCi);SFX.roll();const tn=S.turnId;setTimeout(()=>{if(SPIN&&S&&S.turnId===tn&&S.phase==='roll')spinOff()},9000);
+    if(!pendThrow(NET.myCi))spinOn(NET.myCi);SFX.roll();const tn=S.turnId;setTimeout(()=>{if(SPIN&&S&&S.turnId===tn&&S.phase==='roll')spinOff()},9000);
     sendAct({t:'roll'})}return}
   if(player().kind==='local')roll();
 };
