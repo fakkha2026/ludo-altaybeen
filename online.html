@@ -55,6 +55,8 @@
     return{join:function(name){
       var me='k'+Math.random().toString(36).slice(2,10),id=name+'_'+me,ref=c.fs.collection('rooms').doc(id);
       var state={},cbs=[],known={},list=[],unsub=null,hbT=null,chkT=null,gone=false,seen={},netOk=Date.now(),grace=0;
+      // الصورة في ورقة لحالها: تنرسل مرة وحدة بس، بدل ما تنرسل مع كل رمية وحركة (كانت تبطّئ النرد)
+      var picRef=c.fs.collection('rooms').doc(id+'_pic'),picSent=null,pics={},punsub=null;
       function self(){return{peer:me,presence:JSON.parse(JSON.stringify(state)),sameTab:true}}
       var docs={};
       function emit(){
@@ -63,18 +65,20 @@
         Object.keys(docs).forEach(function(k){var d=docs[k];if(d.peer===me)return;
           var ls=seen[k]?seen[k].t:now;
           if(now-ls>STALE){if(judge){if(now-ls>600000)c.fs.collection('rooms').doc(k).delete().catch(function(){});return}if(!known[d.peer])return}
-          var pr={};try{pr=JSON.parse(d.p||'{}')}catch(e){}
+          var pr={};try{pr=JSON.parse(d.p||'{}')}catch(e){}if(pics[d.peer]&&!pr.pic)pr.pic=pics[d.peer];
           if(d.u)(window.__PU=window.__PU||{})[d.peer]=String(d.u);peers.push({peer:d.peer,presence:pr,sameTab:false});cur[d.peer]=1});
         var left=Object.keys(known).filter(function(p){return !cur[p]}).map(function(p){return{peer:p}});
         known=cur;list=peers;
         cbs.forEach(function(f){try{f({peers:peers,left:left})}catch(e){}});
       }
-      function write(){return ref.set({room:name,peer:me,u:c.uid,p:JSON.stringify(state),hb:Date.now()})}
+      function write(){var o={};for(var k in state)if(k!=='pic')o[k]=state[k];
+        var pc=state.pic||'';if(pc!==picSent){picSent=pc;picRef.set({room:name+'~pic',peer:me,u:c.uid,p:JSON.stringify({pic:pc}),hb:Date.now()}).catch(function(){picSent=null})}
+        return ref.set({room:name,peer:me,u:c.uid,p:JSON.stringify(o),hb:Date.now()})}
       var r={
         presence:function(o){if(gone)return Promise.resolve();Object.assign(state,o||{});return write()},
         onPeers:function(f){cbs.push(f);setTimeout(emit,0);return function(){cbs=cbs.filter(function(x){return x!==f})}},
         peers:function(){return list.length?list:[self()]},
-        leave:function(){gone=true;if(unsub)unsub();clearInterval(hbT);clearInterval(chkT);return ref.delete().catch(function(){})}
+        leave:function(){gone=true;if(unsub)unsub();if(punsub)punsub();clearInterval(hbT);clearInterval(chkT);picRef.delete().catch(function(){});return ref.delete().catch(function(){})}
       };
       return write().then(function(){
         function sub(){
@@ -85,12 +89,17 @@
           },function(){if(!gone)setTimeout(sub,2000)});
         }
         sub();
+        function psub(){if(punsub)try{punsub()}catch(e){}
+          punsub=c.fs.collection('rooms').where('room','==',name+'~pic').onSnapshot(function(s){var now=Date.now(),ch=false;
+            s.forEach(function(d){var v=d.data();if(v.peer===me)return;if(now-(+v.hb||0)>86400000){c.fs.collection('rooms').doc(d.id).delete().catch(function(){});return}
+              var x='';try{x=JSON.parse(v.p||'{}').pic||''}catch(e){}if(pics[v.peer]!==x){pics[v.peer]=x;ch=true}});if(ch)emit()},function(){if(!gone)setTimeout(psub,3000)})}
+        psub();
         hbT=setInterval(function(){if(!gone)write().catch(function(){})},HB);
         chkT=setInterval(emit,10000);
         function back(){if(gone)return;grace=Date.now()+20000;write().catch(function(){});sub()}
         document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')back()});
         addEventListener('pageshow',back);addEventListener('online',back);
-        addEventListener('pagehide',function(e){if(!gone&&!(e&&e.persisted))ref.delete().catch(function(){})});
+        addEventListener('pagehide',function(e){if(!gone&&!(e&&e.persisted)){ref.delete().catch(function(){});picRef.delete().catch(function(){})}});
         return r;
       });
     }};
