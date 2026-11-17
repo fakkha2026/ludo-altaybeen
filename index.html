@@ -55,6 +55,8 @@
     return{join:function(name){
       var me='k'+Math.random().toString(36).slice(2,10),id=name+'_'+me,ref=c.fs.collection('rooms').doc(id);
       var state={},cbs=[],known={},list=[],unsub=null,hbT=null,chkT=null,gone=false,seen={},netOk=Date.now(),grace=0;
+      // الصورة في ورقة لحالها: تنرسل مرة وحدة بس، بدل ما تنرسل مع كل رمية وحركة (كانت تبطّئ النرد)
+      var picRef=c.fs.collection('rooms').doc(id+'_pic'),picSent=null,pics={},punsub=null;
       function self(){return{peer:me,presence:JSON.parse(JSON.stringify(state)),sameTab:true}}
       var docs={};
       function emit(){
@@ -63,18 +65,20 @@
         Object.keys(docs).forEach(function(k){var d=docs[k];if(d.peer===me)return;
           var ls=seen[k]?seen[k].t:now;
           if(now-ls>STALE){if(judge){if(now-ls>600000)c.fs.collection('rooms').doc(k).delete().catch(function(){});return}if(!known[d.peer])return}
-          var pr={};try{pr=JSON.parse(d.p||'{}')}catch(e){}
+          var pr={};try{pr=JSON.parse(d.p||'{}')}catch(e){}if(pics[d.peer]&&!pr.pic)pr.pic=pics[d.peer];
           if(d.u)(window.__PU=window.__PU||{})[d.peer]=String(d.u);peers.push({peer:d.peer,presence:pr,sameTab:false});cur[d.peer]=1});
         var left=Object.keys(known).filter(function(p){return !cur[p]}).map(function(p){return{peer:p}});
         known=cur;list=peers;
         cbs.forEach(function(f){try{f({peers:peers,left:left})}catch(e){}});
       }
-      function write(){return ref.set({room:name,peer:me,u:c.uid,p:JSON.stringify(state),hb:Date.now()})}
+      function write(){var o={};for(var k in state)if(k!=='pic')o[k]=state[k];
+        var pc=state.pic||'';if(pc!==picSent){picSent=pc;picRef.set({room:name+'~pic',peer:me,u:c.uid,p:JSON.stringify({pic:pc}),hb:Date.now()}).catch(function(){picSent=null})}
+        return ref.set({room:name,peer:me,u:c.uid,p:JSON.stringify(o),hb:Date.now()})}
       var r={
         presence:function(o){if(gone)return Promise.resolve();Object.assign(state,o||{});return write()},
         onPeers:function(f){cbs.push(f);setTimeout(emit,0);return function(){cbs=cbs.filter(function(x){return x!==f})}},
         peers:function(){return list.length?list:[self()]},
-        leave:function(){gone=true;if(unsub)unsub();clearInterval(hbT);clearInterval(chkT);return ref.delete().catch(function(){})}
+        leave:function(){gone=true;if(unsub)unsub();if(punsub)punsub();clearInterval(hbT);clearInterval(chkT);picRef.delete().catch(function(){});return ref.delete().catch(function(){})}
       };
       return write().then(function(){
         function sub(){
@@ -85,12 +89,17 @@
           },function(){if(!gone)setTimeout(sub,2000)});
         }
         sub();
+        function psub(){if(punsub)try{punsub()}catch(e){}
+          punsub=c.fs.collection('rooms').where('room','==',name+'~pic').onSnapshot(function(s){var now=Date.now(),ch=false;
+            s.forEach(function(d){var v=d.data();if(v.peer===me)return;if(now-(+v.hb||0)>86400000){c.fs.collection('rooms').doc(d.id).delete().catch(function(){});return}
+              var x='';try{x=JSON.parse(v.p||'{}').pic||''}catch(e){}if(pics[v.peer]!==x){pics[v.peer]=x;ch=true}});if(ch)emit()},function(){if(!gone)setTimeout(psub,3000)})}
+        psub();
         hbT=setInterval(function(){if(!gone)write().catch(function(){})},HB);
         chkT=setInterval(emit,10000);
         function back(){if(gone)return;grace=Date.now()+20000;write().catch(function(){});sub()}
         document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')back()});
         addEventListener('pageshow',back);addEventListener('online',back);
-        addEventListener('pagehide',function(e){if(!gone&&!(e&&e.persisted))ref.delete().catch(function(){})});
+        addEventListener('pagehide',function(e){if(!gone&&!(e&&e.persisted)){ref.delete().catch(function(){});picRef.delete().catch(function(){})}});
         return r;
       });
     }};
@@ -1182,6 +1191,43 @@ body.ingame.nightg #starFx{opacity:1}
   </div>
 </div>
 
+<style>
+.rq-sec{display:flex;flex-direction:column;gap:8px}
+.rq-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rq-two button{border:2px solid #ffffff1a;background:var(--night);border-radius:12px;padding:10px 4px;font:800 1rem var(--body);cursor:pointer;color:inherit}
+.rq-two button.sel{border-color:var(--sand);background:#e9c46a1f}
+.rq-ring{width:92px;height:92px;margin:4px auto;position:relative}
+.rq-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.rq-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.7rem}
+.rq-slots{display:flex;flex-direction:column;gap:6px}
+.rq-slot{display:flex;align-items:center;gap:10px;background:var(--night);border-radius:12px;padding:8px 10px;min-height:44px}
+.rq-slot.empty{opacity:.45;border:1.5px dashed #ffffff33;background:transparent}
+.rq-slot .pic{width:34px;height:34px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:#ffffff12}
+.rq-slot .pic img{width:100%;height:100%;object-fit:cover}
+</style>
+<div class="overlay" id="rq" hidden>
+  <div class="card" id="rqA">
+    <h2>العب أونلاين</h2>
+    <p class="note" style="text-align:center">نجيب لك لاعبين من أي مكان يلعبون الحين</p>
+    <div class="rq-sec"><div class="pre-lbl">الطاولة</div><div class="bgrid" id="rqTables"></div></div>
+    <div class="rq-sec"><div class="pre-lbl">عدد اللاعبين</div>
+      <div class="rq-two"><button type="button" id="rqN2">٢ لاعبين</button><button type="button" id="rqN4">٤ لاعبين</button></div></div>
+    <div class="bet-info" id="rqInfo"></div>
+    <div class="err" id="rqErr"></div>
+    <button class="btn sand" id="rqGo" type="button">🔍 دوّر على لاعبين</button>
+    <div class="or">أو</div>
+    <button class="btn teal" id="rqFriends" type="button">👥 العب مع الربع برمز</button>
+    <button class="ghost" id="rqBack" type="button">رجوع</button>
+  </div>
+  <div class="card" id="rqB" hidden>
+    <h2 id="rqWTitle">ندوّر على لاعبين…</h2>
+    <div class="rq-ring"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="#ffffff1a" stroke-width="3"/><circle id="rqArc" cx="18" cy="18" r="16" fill="none" stroke="var(--sand)" stroke-width="3" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="0"/></svg><b id="rqSec">٣٠</b></div>
+    <div class="bet-info" id="rqWInfo"></div>
+    <div class="rq-slots" id="rqSlots"></div>
+    <p class="note" id="rqWNote" style="text-align:center">إذا ما اكتمل العدد، الكمبيوتر يكمّل الناقص</p>
+    <button class="ghost" id="rqCancel" type="button">إلغاء</button>
+  </div>
+</div>
 <div class="overlay" id="winBox" hidden>
   <div class="card">
     <h2 id="winTitle">فاز!</h2>
@@ -3848,7 +3894,8 @@ function throwDice(ci,v,col,o={}){
     shades[k].style.opacity=String((1-d)*.62)})}catch(e){}}
   if(gl)wrap.appendChild(gl);wrap.append(sh,cube);if(cr)wrap.appendChild(cr);document.body.appendChild(wrap);dice.style.opacity='0';let fN=0;
   // رمية واقعية: يطير قوس قصير، يلمس اللوحة، ثم يتدحرج على حوافه وجه بعد وجه ويبطّئ لين يثبت
-  const [fx,fy]=FACE_ROT[v],R=Math.random;
+  // رمية فورية: النرد يطير أول ما تضغط، ولو الرقم ما وصل للحين يكمّل يتقلب في الهوا لين يوصل، بعدين ينزل عليه
+  let pend=v==null,[fx,fy]=pend?[0,0]:FACE_ROT[v],fx0=0,fy0=0,fxT=fx,fyT=fy,swapAt=-1,pauseAt=-1,pausedMs=0,extra=0,exFrom=0,exTo=0,resumed=false,dead=false;const R=Math.random;
   let dx=ex-sx,dy=ey-sy;const D=Math.hypot(dx,dy)||1;dx/=D;dy/=D;
   const th=Math.atan2(dy,dx)*180/Math.PI;
   let m=3+Math.floor(R()*2);const step=Math.min(size*.95,D*.6/m);
@@ -3872,7 +3919,13 @@ function throwDice(ci,v,col,o={}){
     }else{const u=(ms-TF-TR)/TS;x=ex;y=ey;A=720-7*Math.sin(u*Math.PI*2)*Math.pow(1-u,2);
       if(lastF===m-1){thud(m);lastF=m}}
     return {x,y,h,A,yaw,wx}}
-  function frame(now){const ms=Math.min(T,now-t0),t=ms/T,P=pose(ms);
+  const PZ=TF*.45;
+  function frame(now){if(dead)return;
+    let ms=Math.min(T,now-t0-pausedMs);
+    if(pend&&ms>=PZ){if(pauseAt<0)pauseAt=now;ms=PZ;extra=(now-pauseAt)*.9}
+    else if(resumed){const u=Math.min(1,Math.max(0,(ms-PZ)/(TF-PZ)));extra=exFrom+(exTo-exFrom)*u}
+    if(swapAt>=0){const k=Math.min(1,(now-swapAt)/160);fx=fx0+(fxT-fx0)*k;fy=fy0+(fyT-fy0)*k}
+    const t=ms/T,P=pose(ms);P.A+=extra;
     if(!landed&&ms>=TF){landed=true;thud(0)}
     wrap.style.transform=`translate(${P.x}px,${P.y}px)`;
     const CT=`rotateZ(${P.yaw}deg) rotateY(${P.A}deg) rotateX(${P.wx}deg) rotateX(${fx}deg) rotateY(${fy}deg)`;cube.style.transform=`translateY(${-P.h}px) scale(${1+P.h/H*.3}) ${CT}`;light(CT);
@@ -3881,13 +3934,21 @@ function throwDice(ci,v,col,o={}){
     if(gl)gl.style.transform=`translateY(${-P.h}px) scale(${1+P.h/H*.3})`;
     if(cr)cr.style.transform=`translateY(${-P.h}px) rotate(${Math.sin(ms/160)*8}deg)`;
     if(DX.p&&ms<TF+TR+TS*.3)rollFx(DX.p,P.x,P.y-P.h,P.y,size,fN,dx,dy);fN++;
-    if(ms<T)requestAnimationFrame(frame);
+    if(ms<T||pend)requestAnimationFrame(frame);
     else{if(skin.fx)landSnd(skin.fx,v);
       if(gl)gl.style.transition='opacity .3s',gl.style.animation='none',gl.style.opacity='0';
       setTimeout(()=>{const [bx,by]=elPt(dice);wrap.classList.add('back');wrap.style.transform=`translate(${bx}px,${by}px) scale(.85)`;wrap.style.opacity='0';
         setTimeout(()=>{wrap.remove();dice.style.opacity=''},220)},o.hold||600)}}
   requestAnimationFrame(frame);
+  return {set(nv){if(!pend||dead)return;const now=performance.now();v=nv;fx0=fx;fy0=fy;[fxT,fyT]=FACE_ROT[nv];swapAt=now;pend=false;
+      if(pauseAt>=0){pausedMs+=now-pauseAt;pauseAt=-1;exFrom=extra;exTo=Math.ceil(extra/360)*360+360;resumed=true}},
+    cancel(){if(dead)return;dead=true;wrap.remove();dice.style.opacity=''}};
 }
+// رميتي في الأونلاين: النرد يطير على طول، والرقم ينحط أول ما يوصل من السيرفر
+let PEND=null;
+function pendThrow(ci){if(RM||!COL[ci])return false;try{if(PEND)PEND.h.cancel()}catch(e){}
+  const h=throwDice(ci,null,COL[ci].hex,{speed:.65,hold:350}),me={ci,h};PEND=me;
+  setTimeout(()=>{if(PEND===me){h.cancel();PEND=null}},9000);return true}
 function drawDice(n,color){
   if(hidFor())return;
   const p=S&&player();
@@ -3986,6 +4047,7 @@ function fxDemo(id,card){const r=card.getBoundingClientRect(),x=r.left+r.width/2
   else if(id==='w_fire'||id==='w_crown')fireWinFx(-1)}
 function fxEv(ev){
   const mine=ev.ci===meCi();
+  if(ev.t==='roll'&&PEND&&PEND.ci===ev.ci&&ev.v>=1&&ev.v<=6){spinOff();$('dice').classList.remove('ready');PEND.h.set(ev.v);PEND=null;return}
   if(ev.t==='roll'&&ev.h&&!mine&&MODE==='online'){
     $('dice').classList.remove('ready');if(!SPIN)SFX.roll();spinOn(ev.ci);
   }else if(ev.t==='rev'){
@@ -4670,7 +4732,7 @@ function readyRoll(){const p=player(),dice=$('dice'),mine=localControl(p);
 function roll(){
   if(!S||S.phase!=='roll')return;
   S.phase='rolling';S.dl=0;$('dice').disabled=true;
-  if(MODE==='online'&&SV()&&NET.host){if(player().kind!=='bot'){spinOn(player().ci);SFX.roll()}srvRoll(S.gid,S.turnId,0);return}
+  if(MODE==='online'&&SV()&&NET.host){if(player().kind!=='bot'){if(!(player().ci===NET.myCi&&pendThrow(NET.myCi)))spinOn(player().ci);SFX.roll()}srvRoll(S.gid,S.turnId,0);return}
   roll2(S.rng?S.rng():1+Math.floor(Math.random()*6),-1)}
 function srvRoll(gid,turn,tries){
   api('roll',{gid:tableId(gid)}).then(j=>{if(!S||S.gid!==gid||S.turnId!==turn||S.phase!=='rolling')return;roll2(j.v,j.n)})
@@ -5116,7 +5178,7 @@ $('dice').onclick=()=>{
   if(!S)return;
   if(NET.guest){if(player().ci===NET.myCi&&S.phase==='roll'&&!NET.wait){NET.wait=true;$('dice').disabled=true;$('dice').classList.remove('ready');
     // النرد يبدأ يلف على طول أول ما تضغط، بدل ما ينتظر رد الجوال الثاني
-    spinOn(NET.myCi);SFX.roll();const tn=S.turnId;setTimeout(()=>{if(SPIN&&S&&S.turnId===tn&&S.phase==='roll')spinOff()},9000);
+    if(!pendThrow(NET.myCi))spinOn(NET.myCi);SFX.roll();const tn=S.turnId;setTimeout(()=>{if(SPIN&&S&&S.turnId===tn&&S.phase==='roll')spinOff()},9000);
     sendAct({t:'roll'})}return}
   if(player().kind==='local')roll();
 };
@@ -5140,6 +5202,146 @@ $('logoA').textContent=parts0[0];$('logoB').textContent=parts0.slice(1).join(' '
 $('gameName').textContent=GAME_NAME;document.title=GAME_NAME;
 ['#e2453c','#27a35a','#f0b81c','#2f7fd8'].forEach((col,i)=>{const s=document.createElement('span');const svg=el('svg',{viewBox:'0 0 100 100',width:44,height:44});diceSvg({bg:col,pip:'#fff',edge:'#0004',six:'#fff'},[6,3,5,4][i],svg);s.appendChild(svg);s.style.transform=`rotate(${[-12,6,-4,10][i]}deg)`;$('logoDice').appendChild(s)});
 checkIn();save();ensureMissions();renderWallet();renderWheel();show('splash');setTimeout(initBoard,0);setTimeout(initCloud,0);
+
+/* ---------- أونلاين عشوائي (نسخة تجربة) ---------- */
+const WAIT=30000,JOIN_WAIT=10000;
+const Q={t:0,n:2,r:null,myPeer:'',ts:0,timer:null,gone:false,on:false,expect:[],hostT:null};
+function lockT(t){return level()<STAKES[TB[t]].lv&&!IS_ADMIN}
+function rqPaint(){
+  const box=$('rqTables');box.innerHTML='';
+  TB.forEach((k,v)=>{const o=STAKES[k],lock=lockT(v),b=document.createElement('button');b.type='button';b.className=Q.t===v?'sel':'';b.disabled=lock;
+    b.innerHTML=`<span>${lock?'🔒 ':o.icon+' '}${o.name}</span><small>${lock?'مستوى '+toAr(o.lv):'الجائزة '+fmtS(o.p[Q.n>2?'four':'two'])}</small>`;
+    b.onclick=()=>{Q.t=v;SFX.tap();rqPaint()};box.appendChild(b)});
+  $('rqN2').className=Q.n===2?'sel':'';$('rqN4').className=Q.n===4?'sel':'';
+  const o=STAKES[TB[Q.t]];
+  $('rqInfo').innerHTML=`${o.icon} طاولة ${o.name} · الدخول مجاني<br>جائزة الفايز: ${fmt(o.p[Q.n>2?'four':'two'])} ${coinI}`;
+}
+function rqOpen(){
+  document.querySelectorAll('.overlay').forEach(o=>o.hidden=true);
+  if(lockT(Q.t))Q.t=0;
+  $('rqErr').textContent='';$('rqA').hidden=false;$('rqB').hidden=true;$('rq').hidden=false;rqPaint();
+}
+function guard(){
+  if(IAMBANNED){$('rqErr').textContent='⛔ حسابك موقوف وما تقدر تلعب أونلاين.';return false}
+  if(!roomReady){$('rqErr').textContent='لحظة، نجهز الاتصال…';return false}
+  if(!roomNS){$('rqErr').textContent='ما قدرنا نتصل بالسيرفر. تأكد من الإنترنت وجرّب مرة ثانية.';return false}
+  return true;
+}
+function me(){return {nick:nick(),av:W.av,tok:W.tok,pid:W.pid,pic:myPic(),sub:subC()}}
+async function rqGo(){
+  if(!guard())return;
+  if(lockT(Q.t)){$('rqErr').textContent='هالطاولة مقفلة على مستواك';return}
+  Q.gone=false;Q.on=true;Q.ts=Date.now();Q.expect=[];
+  $('rqA').hidden=true;$('rqB').hidden=false;$('rqWTitle').textContent='ندوّر على لاعبين…';$('rqCancel').hidden=false;
+  const o=STAKES[TB[Q.t]];$('rqWInfo').innerHTML=`${o.icon} طاولة ${o.name}، ${toAr(Q.n)} لاعبين`;
+  slots([Object.assign({peer:'me'},me())]);
+  let r;try{r=await roomNS.join('ludo-q'+Q.t+'x'+Q.n)}catch(e){rqBack('ما قدرنا نتصل، جرّب مرة ثانية.');return}
+  if(Q.gone){r.leave().catch(()=>{});return}
+  Q.r=r;r.presence(Object.assign({role:'q',ts:Q.ts},me())).catch(()=>{});
+  r.onPeers(onQ);
+  Q.timer=setInterval(tick,250);tick();
+}
+function queue(ch){
+  const ps=(ch?ch.peers:Q.r.peers()).filter(p=>p.presence&&p.presence.role==='q'&&!p.presence.go);
+  const meP=ps.find(p=>p.sameTab);if(meP)Q.myPeer=meP.peer;
+  return ps.filter(p=>p.sameTab||!isBlocked(peerUid(p.peer))).sort((a,b)=>(a.presence.ts-b.presence.ts)||(a.peer<b.peer?-1:1));
+}
+function leader(ps){return ps[0]}
+function onQ(ch){
+  if(!Q.r||Q.gone)return;
+  // اللي يقود الطابور أرسل "يلا": إذا أنا من ضمنهم أدخل غرفته
+  const goP=ch.peers.find(p=>!p.sameTab&&p.presence&&p.presence.go&&Array.isArray(p.presence.go.who));
+  if(goP&&goP.presence.go.who.includes(Q.myPeer)){toGuest(goP.presence.go.code);return}
+  const ps=queue(ch);
+  slots(ps.slice(0,Q.n).map(p=>Object.assign({peer:p.peer},p.presence)));
+  const L=leader(ps);
+  if(L&&L.sameTab&&ps.length>=Q.n)launch(ps.slice(0,Q.n));
+}
+function tick(){
+  if(!Q.on||!Q.r)return;
+  const ps=queue(),L=leader(ps),start=L?L.presence.ts:Q.ts;
+  let left=Math.max(0,WAIT-(Date.now()-start));
+  // إذا القائد تعطّل، أنا أبدأ بروحي بعد وقت زيادة
+  if(L&&!L.sameTab&&Date.now()-Q.ts>WAIT+15000){launch([ps.find(p=>p.sameTab)].filter(Boolean));return}
+  const s=Math.ceil(left/1000);$('rqSec').textContent=toAr(s);
+  $('rqArc').setAttribute('stroke-dashoffset',String(100.5*(1-left/WAIT)));
+  if(left<=0&&L&&L.sameTab)launch(ps.slice(0,Q.n));
+}
+function slots(list){
+  const box=$('rqSlots');box.innerHTML='';
+  for(let i=0;i<Q.n;i++){const l=list[i],d=document.createElement('div');
+    if(l){const mine=l.peer==='me'||l.peer===Q.myPeer;d.className='rq-slot';
+      const pic=mine?myPic():(okPic(l.pic)?l.pic:'');
+      d.innerHTML=`<div class="pic">${pic?`<img src="${pic}" alt="">`:esc(String(l.av||'🙂').slice(0,4))}</div><b>${esc(safeName(String(l.nick||'لاعب').slice(0,14)))}</b><small style="margin-inline-start:auto;color:var(--muted)">${mine?'أنت':'✅ جاهز'}</small>`}
+    else{d.className='rq-slot empty';d.innerHTML='<div class="pic">⏳</div><b>ننتظر لاعب…</b>'}
+    box.appendChild(d)}
+}
+function stopQ(){Q.on=false;clearInterval(Q.timer);Q.timer=null;const r=Q.r;Q.r=null;if(r)r.leave().catch(()=>{})}
+function rqBack(err){Q.gone=true;stopQ();clearTimeout(Q.hostT);if(NET.r&&!S)leaveOnline();$('rqB').hidden=true;$('rqA').hidden=false;$('rq').hidden=false;$('rqErr').textContent=err||'';rqPaint()}
+// أنا القائد: أسوي غرفة وأعزم اللي معي، والناقص كمبيوتر
+async function launch(group){
+  if(!Q.on)return;
+  const code=String(10000+Math.floor(Math.random()*90000));
+  const who=group.filter(p=>!p.sameTab).map(p=>p.peer);
+  Q.on=false;clearInterval(Q.timer);
+  $('rqWTitle').textContent=who.length?'لقينا لاعبين! نجهّز الطاولة…':'نجهّز الطاولة…';$('rqCancel').hidden=true;
+  const qr=Q.r;
+  if(who.length&&qr){await qr.presence({go:{code,who}}).catch(()=>{})}
+  let r;try{r=await roomNS.join('ludo-'+code)}catch(e){if(qr)qr.leave().catch(()=>{});Q.r=null;rqBack('ما قدرنا ننشئ الطاولة، جرّب مرة ثانية.');return}
+  setTimeout(()=>{if(qr)qr.leave().catch(()=>{})},4000);Q.r=null;
+  resetNet();Object.assign(NET,{r,host:true,code,bet:Q.t});
+  NET.lobby=[{peer:'',nick:W.nick,av:W.av,tok:W.tok,pid:W.pid,sub:subC()}];
+  r.presence({role:'host',code,lobby:NET.lobby,g:null,pic:myPic(),bet:Q.t}).catch(()=>{});
+  r.onPeers(onHostPeers);
+  Q.expect=who;const t0=Date.now();
+  const wait=()=>{if(!NET.r||!NET.host||S)return;
+    const got=NET.lobby.length-1;
+    if(got>=who.length||Date.now()-t0>JOIN_WAIT)hostStart();else Q.hostT=setTimeout(wait,400)};
+  Q.hostT=setTimeout(wait,who.length?600:300);
+}
+function hostStart(){
+  if(!NET.host||!NET.r||S)return;
+  const n=Q.n,seats=SEATS[n],pool=BOTS.slice().sort(()=>Math.random()-.5);
+  const humans=NET.lobby.slice(0,n);
+  const players=seats.map((ci,i)=>{const l=humans[i];
+    if(l)return {ci,kind:i===0?'local':'remote',name:l.nick,av:l.av,peer:l.peer,tok:l.tok,pid:l.pid||'',sub:l.sub||'',fxE:l.fxE||'',fxW:l.fxW||''};
+    const b=pool.pop();return {ci,kind:'bot',name:b.n,av:b.a,tok:'tayb',peer:''}});
+  NET.r.peers().forEach(p=>{const a=p.presence&&p.presence.act;NET.last[p.peer]=a&&typeof a.n==='number'?a.n:0});
+  MODE='online';NET.myCi=seats[0];
+  document.querySelectorAll('.overlay').forEach(o=>o.hidden=true);
+  const keep=W.rule;W.rule='classic';newGame(players);W.rule=keep;
+  S.log=[];S.bet=Q.t;payBet(S.gid,Q.t);sync();show('game');
+  const bots=players.filter(p=>p.kind==='bot').length;
+  if(bots)setTimeout(()=>toast(bots===n-1?'ما لقينا لاعبين، الكمبيوتر يلعب معك 🤖':'الكمبيوتر كمّل الناقص 🤖'),900);
+}
+// أنا مدعو: أطلع من الطابور وأدخل غرفة القائد
+async function toGuest(code){
+  stopQ();$('rqWTitle').textContent='لقينا لاعبين! ندخل الطاولة…';$('rqCancel').hidden=true;
+  let r;try{r=await roomNS.join('ludo-'+code)}catch(e){rqBack('ما قدرنا ندخل الطاولة، جرّب مرة ثانية.');return}
+  resetNet();Object.assign(NET,{r,guest:true,code});
+  r.presence({role:'guest',nick:W.nick,av:W.av,tok:W.tok,pid:W.pid,act:null,pic:myPic(),cash:+W.coins||0,sub:subC(),fxE:plFx({pid:W.pid},'e'),fxW:plFx({pid:W.pid},'w')}).catch(()=>{});
+  r.onPeers(ch=>{onGuestPeers(ch);if(S&&MODE==='online')$('rq').hidden=true});
+  setTimeout(()=>{if(NET.guest&&NET.code===code&&!NET.hostPeer)rqBack('اللاعب الثاني طلع، دوّر مرة ثانية.')},12000);
+}
+// ربط الأزرار
+$('rqN2').onclick=()=>{Q.n=2;SFX.tap();rqPaint()};
+$('rqN4').onclick=()=>{Q.n=4;SFX.tap();rqPaint()};
+$('rqGo').onclick=rqGo;
+$('rqCancel').onclick=()=>rqBack();
+$('rqBack').onclick=()=>{$('rq').hidden=true};
+const modeO=$('modeO');modeO.querySelector('.nm').textContent='أونلاين';
+const origOpen=openOnline,origClick=modeO.onclick;let viaBtn=false;
+openOnline=function(){if(viaBtn){viaBtn=false;rqOpen();return}return origOpen.apply(this,arguments)};
+modeO.onclick=e=>{viaBtn=true;try{origClick.call(modeO,e)}finally{viaBtn=false}};
+$('rqFriends').onclick=()=>{$('rq').hidden=true;origOpen()};
+$('onBack').onclick=()=>{$('online').hidden=true;rqOpen()};
+// "العب مرة ثانية" في طاولة عشوائية: يرجع يدوّر بنفس الطاولة والعدد
+Q.used=false;
+$('rqGo').addEventListener('click',()=>{Q.used=true});
+$('onCreate').addEventListener('click',()=>{Q.used=false});
+$('onJoin').addEventListener('click',()=>{Q.used=false});
+const ag=$('again'),agOld=ag.onclick;
+ag.onclick=e=>{if(MODE==='online'&&Q.used){leaveOnline();GEN++;S=null;show('home');rqOpen();rqGo();return}agOld&&agOld.call(ag,e)};
 
 })();
 </script>
@@ -5198,4 +5400,5 @@ checkIn();save();ensureMissions();renderWallet();renderWheel();show('splash');se
   requestAnimationFrame(frame);
 })();
 </script>
+
 </body></html>
