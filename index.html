@@ -5204,7 +5204,7 @@ $('gameName').textContent=GAME_NAME;document.title=GAME_NAME;
 checkIn();save();ensureMissions();renderWallet();renderWheel();show('splash');setTimeout(initBoard,0);setTimeout(initCloud,0);
 
 /* ---------- أونلاين عشوائي (نسخة تجربة) ---------- */
-const WAIT=30000,JOIN_WAIT=10000;
+const WAIT=10000,JOIN_WAIT=10000;
 const Q={t:0,n:2,r:null,myPeer:'',ts:0,timer:null,gone:false,on:false,expect:[],hostT:null};
 function lockT(t){return level()<STAKES[TB[t]].lv&&!IS_ADMIN}
 function rqPaint(){
