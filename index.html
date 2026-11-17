@@ -659,6 +659,14 @@ body.fxTop #fx{z-index:300}body.fxTop .efx,body.fxTop .kfx,body.fxTop .kring,bod
 .d3 .face b{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none}
 .d3 .core{position:absolute;inset:1px;border-radius:6%}
 .d3 .face svg{width:100%;height:100%;display:block}
+.d3gl{position:absolute;left:calc(var(--s)*-1);top:calc(var(--s)*-1);width:calc(var(--s)*2);height:calc(var(--s)*2);border-radius:50%;background:radial-gradient(var(--gc) 0,transparent 62%);opacity:.6;mix-blend-mode:screen;animation:dglw .7s ease-in-out infinite alternate}
+@keyframes dglw{from{opacity:.38}to{opacity:.7}}
+.d3 .face u{position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,transparent 38%,var(--shc) 50%,transparent 62%) 0 0/300% 100%;mix-blend-mode:screen;opacity:.85;animation:dshn 1.1s linear infinite}
+.d3 .face u.rb{background:linear-gradient(115deg,transparent 30%,#ff9ad0aa 40%,#fff 48%,#9ae8ffaa 56%,#d0ff9a99 62%,transparent 70%) 0 0/300% 100%}
+@keyframes dshn{from{background-position:100% 0}to{background-position:-50% 0}}
+.d3cr{position:absolute;left:calc(var(--s)*-.32);top:calc(var(--s)*-1.25);width:calc(var(--s)*.64);height:calc(var(--s)*.64);filter:drop-shadow(0 0 5px #ffd76a);animation:dcrb .5s ease-in-out infinite alternate}
+@keyframes dcrb{from{filter:drop-shadow(0 0 3px #ffd76a)}to{filter:drop-shadow(0 0 9px #fff2b0)}}
+.d3cr svg{width:100%;height:100%;display:block}
 .d3sh{position:absolute;left:calc(var(--s)/-2);top:calc(var(--s)*.25);width:var(--s);height:calc(var(--s)*.35);border-radius:50%;background:radial-gradient(#000a,transparent 70%)}
 .flash{position:fixed;inset:0;z-index:49;pointer-events:none;background:radial-gradient(#bfe9ff99,#5cc2ff22 60%,transparent);animation:flash .4s ease-out forwards}
 @keyframes flash{0%{opacity:1}100%{opacity:0}}
@@ -2019,9 +2027,11 @@ function fxLoop(){
   cx.clearRect(0,0,innerWidth,innerHeight);
   parts=parts.filter(p=>p.life>0);
   parts.forEach(p=>{
-    p.vy+=p.g;p.vx*=.985;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life--;
-    cx.save();cx.globalAlpha=Math.min(1,p.life/25);cx.translate(p.x,p.y);cx.rotate(p.rot);cx.fillStyle=p.c;
-    if(p.k==='conf')cx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);
+    p.vy+=p.g;p.vx*=.985;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life--;if(p.gr)p.s=Math.max(.2,p.s+p.gr);
+    cx.save();cx.globalAlpha=Math.min(p.a||1,p.life/(p.fd||25));cx.translate(p.x,p.y);cx.rotate(p.rot);cx.fillStyle=p.c;cx.strokeStyle=p.c;
+    if(p.gl){cx.shadowColor=p.c;cx.shadowBlur=p.gl}
+    if(p.k&&DSHP[p.k])DSHP[p.k](p);
+    else if(p.k==='conf')cx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);
     else if(p.k==='coin'){cx.beginPath();cx.ellipse(0,0,p.s,p.s*Math.abs(Math.cos(p.rot*2))+1,0,0,7);cx.fill()}
     else if(p.k==='star'){cx.beginPath();for(let i=0;i<10;i++){const a=Math.PI/5*i,r=i%2?p.s*.45:p.s;cx.lineTo(Math.cos(a)*r,Math.sin(a)*r)}cx.fill()}
     else{cx.beginPath();cx.arc(0,0,p.s,0,7);cx.fill()}
@@ -2029,6 +2039,22 @@ function fxLoop(){
   });
   if(parts.length)requestAnimationFrame(fxLoop);else{fxOn=false;cx.clearRect(0,0,innerWidth,innerHeight)}
 }
+// أشكال مؤثرات النرد وهو يتدحرج
+const DSHP={
+  ring:p=>{cx.lineWidth=1.4;cx.beginPath();cx.arc(0,0,p.s,0,7);cx.stroke();cx.globalAlpha*=.5;cx.beginPath();cx.arc(-p.s*.35,-p.s*.35,p.s*.25,0,7);cx.fill()},
+  moon:p=>{cx.beginPath();cx.arc(0,0,p.s,0,7);cx.clip();cx.beginPath();cx.arc(0,0,p.s,0,7);cx.arc(p.s*.45,-p.s*.2,p.s*.85,0,7,true);cx.fill()},
+  arc:p=>{cx.lineCap='round';cx.lineWidth=p.w||3;cx.beginPath();cx.arc(0,0,p.s,-1,1);cx.stroke()},
+  bolt:p=>{cx.lineWidth=2.2;cx.lineJoin='round';cx.beginPath();const n=p.z||[];cx.moveTo(0,-p.s/2);n.forEach((q,i)=>cx.lineTo(q,-p.s/2+(i+1)*p.s/(n.length+1)));cx.lineTo(0,p.s/2);cx.stroke()},
+  petal:p=>{cx.beginPath();cx.ellipse(0,0,p.s,p.s*.55,0,0,7);cx.fill()},
+  leaf:p=>{cx.beginPath();cx.moveTo(-p.s,0);cx.quadraticCurveTo(0,-p.s*.7,p.s,0);cx.quadraticCurveTo(0,p.s*.7,-p.s,0);cx.fill();cx.globalAlpha*=.5;cx.strokeStyle='#0004';cx.lineWidth=.8;cx.beginPath();cx.moveTo(-p.s*.8,0);cx.lineTo(p.s*.8,0);cx.stroke()},
+  heart:p=>{const s=p.s;cx.beginPath();cx.moveTo(0,s*.35);cx.bezierCurveTo(-s*1.1,-s*.35,-s*.45,-s*1.05,0,-s*.4);cx.bezierCurveTo(s*.45,-s*1.05,s*1.1,-s*.35,0,s*.35);cx.fill()},
+  paw:p=>{const s=p.s;cx.beginPath();cx.ellipse(0,s*.35,s*.55,s*.45,0,0,7);cx.fill();[[-.62,-.2],[-.22,-.6],[.22,-.6],[.62,-.2]].forEach(([a,b])=>{cx.beginPath();cx.arc(a*s,b*s,s*.22,0,7);cx.fill()})},
+  claw:p=>{cx.lineCap='round';cx.lineWidth=2;[-1,0,1].forEach(i=>{cx.beginPath();cx.moveTo(i*p.s*.32-p.s*.2,-p.s*.6);cx.quadraticCurveTo(i*p.s*.32+p.s*.15,0,i*p.s*.32-p.s*.05,p.s*.6);cx.stroke()})},
+  bfly:p=>{const f=.35+Math.abs(Math.sin(p.life*.45))*.65;cx.save();cx.scale(f,1);cx.beginPath();cx.ellipse(-p.s*.55,-p.s*.25,p.s*.6,p.s*.45,-.5,0,7);cx.ellipse(p.s*.55,-p.s*.25,p.s*.6,p.s*.45,.5,0,7);cx.fill();cx.globalAlpha*=.8;cx.beginPath();cx.ellipse(-p.s*.4,p.s*.35,p.s*.35,p.s*.3,.4,0,7);cx.ellipse(p.s*.4,p.s*.35,p.s*.35,p.s*.3,-.4,0,7);cx.fill();cx.restore();cx.fillStyle='#3a2418';cx.fillRect(-.6,-p.s*.6,1.2,p.s*1.2)},
+  spark:p=>{const s=p.s;cx.beginPath();cx.moveTo(0,-s);cx.quadraticCurveTo(0,0,s,0);cx.quadraticCurveTo(0,0,0,s);cx.quadraticCurveTo(0,0,-s,0);cx.quadraticCurveTo(0,0,0,-s);cx.fill()},
+  planet:p=>{cx.beginPath();cx.arc(0,0,p.s,0,7);cx.fill();cx.lineWidth=1.2;cx.strokeStyle='#fff';cx.beginPath();cx.ellipse(0,0,p.s*1.8,p.s*.5,0,0,7);cx.stroke()},
+  rib:p=>{cx.fillRect(-p.s/2,-p.s/8,p.s,p.s/4);cx.fillStyle='#fff8';cx.fillRect(-p.s/2,-p.s/16,p.s,p.s/12)}
+};
 function emit(list){if(RM)return;parts.push(...list);if(!fxOn){fxOn=true;requestAnimationFrame(fxLoop)}}
 function burst(x,y,colors,n=24,kind='dot',power=5){
   const L=[];for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,v=power*(.4+Math.random());
@@ -2803,7 +2829,8 @@ function standToken(g,style,c,top,side){
     twin(g,'M-.3,.08 C-.31,-.06 -.22,-.12 -.14,-.12 C-.1,-.27 .05,-.27 .08,-.12 C.12,-.1 .16,-.13 .18,-.19 L.2,-.3 C.22,-.37 .32,-.37 .34,-.31 L.37,-.26 L.28,-.25 L.27,-.04 C.27,.05 .22,.11 .15,.11 L-.22,.11 C-.27,.11 -.3,.1 -.3,.08 Z',top,D);
     el('circle',{cx:.29,cy:-.31,r:.022,fill:'#1a1a1a'},g);el('path',{d:'M-.12,-.1 C-.08,-.2 .02,-.21 .05,-.12',stroke:'#fff',opacity:.5,'stroke-width':.03,fill:'none','stroke-linecap':'round'},g)}
 }
-const TOKFX={pawn:['#fff','#ffe58a'],fire:['#ffb347','#ff6a2b','#ffe08a'],lantern:['#f5d36b','#fff3b0']};
+// كل الأحجار بدون مؤثرات: لا نجوم ولا لمعة ولا توهج ولا حركة
+const TOKFX={};
 function tokenFx(g,style,c){const cols=TOKFX[style];if(!cols||RM)return;
   const aura=el('circle',{cx:0,cy:0,r:.42,fill:'none',stroke:cols[0],'stroke-width':.06,opacity:0},null);g.insertBefore(aura,g.firstChild);
   anim(aura,{attributeName:'r',values:'.36;.54',dur:'1.8s'});anim(aura,{attributeName:'opacity',values:'.85;0',dur:'1.8s'});
@@ -2816,7 +2843,7 @@ function tokenFx(g,style,c){const cols=TOKFX[style];if(!cols||RM)return;
     anim(rays,{tag:'animateTransform',attributeName:'transform',type:'rotate',values:'0 0 -.05;45 0 -.05',dur:'4s'});anim(rays,{attributeName:'opacity',values:'.2;.6;.2',dur:'2s'});
     [[-.12,0],[.1,.8],[0,1.6]].forEach(([x,b])=>{const m=el('circle',{cx:x,cy:.05,r:.025,fill:'#ffe9a0',opacity:0},g);anim(m,{attributeName:'cy',values:'.05;-.55',dur:'2.4s',begin:b+'s'});anim(m,{attributeName:'opacity',values:'0;1;0',dur:'2.4s',begin:b+'s'})})}
   [[.34,-.34,0],[-.36,.12,.7],[.3,.3,1.3]].forEach(([x,y,b],i)=>{const sp=el('polygon',{points:'0,-.09 .02,-.02 .09,0 .02,.02 0,.09 -.02,.02 -.09,0 -.02,-.02',fill:cols[i%cols.length],opacity:0,transform:`translate(${x},${y})`},g);anim(sp,{attributeName:'opacity',values:'0;1;0;0',keyTimes:'0;.2;.45;1',dur:'2s',begin:b+'s'})})}
-function tokenInner(g,style,c){tokenBody(g,style,c);tokenFx(g,style,c)}
+function tokenInner(g,style,c){const A=anim;anim=()=>null;try{tokenBody(g,style,c)}finally{anim=A}}
 function tokenBody(g,style,c){
   const [top,side]=grad(g,c);
   if(STAND.has(style)){standToken(g,style,c,top,side);return}
@@ -3137,7 +3164,7 @@ function fillGrid(id,kind,onlyOwned,after){
 }
 let itemCur=null;
 function openItem(it,kind){itemCur=[it,kind];$('itTitle').textContent=it.name;
-  $('itSub').textContent=kind==='e'?'حركة تطلع لما تاكل حجر خصمك، والكل يشوفها':kind==='w'?'حركة تطلع لما تفوز، والكل يشوفها':kind==='d'?({fire:'يطلع وراه لهب، ويرمي شرار لما يطيح',bolt:'يلمع وراه برق، ويضرب وميض لما يوقف',royal:'يبرق ذهب، ولما يطلع ٦ تتناثر عملات',crystal:'شفاف، ووراه لمعات بألوان قوس قزح',dust:'لما يطيح يثور حوله غبار',galaxy:'أسود فيه نجوم، ويترك وراه نجوم'})[it.fx]||'':'حجر واقف بلون اللاعب';
+  $('itSub').textContent=kind==='e'?'حركة تطلع لما تاكل حجر خصمك، والكل يشوفها':kind==='w'?'حركة تطلع لما تفوز، والكل يشوفها':kind==='d'?((DFX[it.id]||{}).d||''):'حجر واقف بلون اللاعب';
   const box=$('itShow');box.innerHTML='';
   if(kind==='d'){box.appendChild(cube3(it,92))}
   else if(kind==='e'||kind==='w'){const sv=el('svg',{viewBox:'0 0 100 100',width:96,height:96});fxThumb(it,sv);box.appendChild(sv)}
@@ -3727,6 +3754,73 @@ function landFx(fx,x,y,v){if(RM)return;
   if(fx==='galaxy'){burst(x,y,['#fff','#c9b8ff','#ffd84d','#7a5cff'],34,'star',4)}}
 // أصوات النرد المميز بدون أي نجوم أو جزيئات (طلب المطوّر)
 function landSnd(fx,v){if(fx==='fire')SFX.out();if(fx==='bolt')tone(1200,.12,'sawtooth',.06,0,-900);if(fx==='royal'&&v===6)SFX.coin();if(fx==='crystal'){tone(1568,.25,'sine',.08);tone(2093,.3,'sine',.06,.08)}}
+// ---------- مؤثر كل نرد وهو يتدحرج (حسب رسمته) ----------
+// p: نوع الجزيئات، sh: لمعة تمر على الوجه، gc: توهج حوله، cr: تاج فوقه، d: الوصف في المتجر
+const DFX={
+  sand:{p:'sand',d:'وهو يتدحرج تتناثر منه ذرات رمل'},
+  teal:{sh:'#c8fff6',d:'لمعة فيروزية هادية تمر عليه وهو يتدحرج'},
+  coral:{p:'bubble',d:'وهو يتدحرج تطلع منه فقاعات صغيرة'},
+  night:{p:'moon',gc:'#f5d36b55',d:'هلال يضوي خفيف جنبه وهو يتدحرج'},
+  gold:{sh:'#fff1b8',d:'بريق ذهبي يمر على وجهه وهو يتدحرج'},
+  fire:{p:'flame',gc:'#ff6a2b88',d:'لهب يلف حوله وهو يتدحرج'},
+  bolt:{p:'bolt',gc:'#7fc8ff77',d:'ومضات برق وشرار حوله وهو يتدحرج'},
+  royal:{cr:1,sh:'#fff1b8',d:'تاج صغير يلمع فوقه وهو يتدحرج'},
+  crystal:{sh:'rb',p:'prism',d:'انعكاس ضوء زجاجي بألوان قوس قزح وهو يتدحرج'},
+  dust:{p:'dust',d:'غبار يدور حوله وهو يتدحرج'},
+  galaxy:{p:'swirl',gc:'#7a5cff77',d:'دوامة ألوان كونية حوله وهو يتدحرج'},
+  ember:{p:'ember',gc:'#ff6a2b55',d:'شرر جمر يطلع لفوق وهو يتدحرج'},
+  nd:{gc:'#2ecc7199',d:'توهج أخضر حوله وهو يتدحرج'},
+  a_samurai:{p:'slash',d:'لمعة ضربة سيف وهو يتدحرج'},
+  a_witch:{p:'magic',gc:'#a66bff55',d:'شرارات سحر حوله وهو يتدحرج'},
+  a_ninja:{p:'smoke',d:'نفخات دخان وراه وهو يتدحرج'},
+  a_cat:{p:'claw',d:'أثر خدش مخالب وهو يتدحرج'},
+  w_jumj:{p:'skull',gc:'#e2333f44',d:'دخان أحمر غامق يطلع منه وهو يتدحرج'},
+  w_ward:{p:'petal',d:'بتلات ورد تتطاير وراه وهو يتدحرج'},
+  w_farash:{p:'bfly',d:'فراشات صغيرة تطير منه وهو يتدحرج'},
+  w_mawj:{p:'spray',d:'رذاذ موج يتناثر منه وهو يتدحرج'},
+  w_sulh:{p:'sbubble',d:'فقاعات بحر تطلع منه وهو يتدحرج'},
+  v_puppy:{p:'paw',d:'يترك وراه آثار رجول صغيرة وهو يتدحرج'},
+  v_magic:{p:'wand',gc:'#c9b8ff55',d:'شرارات سحر بنفسجية وهو يتدحرج'},
+  v_catgift:{p:'gift',d:'شرايط هدية ملوّنة تتطاير منه وهو يتدحرج'},
+  v_kitten:{p:'heart',d:'قلوب صغيرة تطلع منه وهو يتدحرج'},
+  v_astro:{p:'space',d:'كواكب صغيرة ولمعات فضاء حوله وهو يتدحرج'},
+  v_monkey:{p:'leaf',d:'أوراق شجر تتطاير وراه وهو يتدحرج'},
+  sub_p:{sh:'#e2c6ff',gc:'#c08bff88',d:'توهج نيون بنفسجي ولمعة وهو يتدحرج'},
+  sub_c:{sh:'#c6f6ff',gc:'#5fe6ff88',d:'توهج نيون سماوي ولمعة وهو يتدحرج'},
+  champ1:{cr:1,sh:'#fff1b8',gc:'#ffd76a66',d:'تاج البطل يلمع فوقه وتوهج ذهبي وهو يتدحرج'}
+};
+const DCROWN=`<svg viewBox="0 0 100 80"><defs><linearGradient id="dcrg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d0"/><stop offset=".5" stop-color="#ffd76a"/><stop offset="1" stop-color="#c9900a"/></linearGradient></defs><path d="M8,66 L14,22 L33,44 L50,10 L67,44 L86,22 L92,66 Z" fill="url(#dcrg)" stroke="#8a5c06" stroke-width="3" stroke-linejoin="round"/><rect x="8" y="62" width="84" height="12" rx="3" fill="url(#dcrg)" stroke="#8a5c06" stroke-width="3"/><circle cx="50" cy="44" r="6" fill="#b3121f"/><circle cx="14" cy="20" r="5" fill="#fff6d0"/><circle cx="50" cy="8" r="6" fill="#fff6d0"/><circle cx="86" cy="20" r="5" fill="#fff6d0"/></svg>`;
+// يطلق جزيئات النرد كل فريم: (x,y) مكان النرد، gy الأرض تحته، sz حجمه، f رقم الفريم، (dx,dy) اتجاه الحركة
+function rollFx(k,x,y,gy,sz,f,dx,dy){if(RM||!k)return;const R=Math.random,r=sz/2,L=[],pk=a=>a[Math.floor(R()*a.length)];
+  const bx=x-dx*r*.7,by=y-dy*r*.7,P=o=>L.push(Object.assign({x:bx+(R()-.5)*r,y:by+(R()-.5)*r,vx:0,vy:0,g:0,s:3,c:'#fff',life:30,rot:R()*6,vr:0,k:'dot'},o));
+  switch(k){
+  case 'sand':for(let i=0;i<2;i++)P({y:y+r*.4,vx:-dx*(.5+R())+(R()-.5)*1.2,vy:-1-R()*1.2,g:.12,s:1+R()*1.6,c:pk(['#e9c98a','#c99a55','#f6e0ae','#b8904a']),life:30+R()*12});break;
+  case 'bubble':if(f%3===0)P({vx:(R()-.5)*.5,vy:-.6-R()*.6,g:-.012,s:2+R()*3.5,c:pk(['#fff','#ffd2c6','#ffe9e2']),life:40+R()*15,k:'ring',a:.85});break;
+  case 'sbubble':if(f%3===0)P({vx:(R()-.5)*.5,vy:-.6-R()*.6,g:-.012,s:2+R()*3.5,c:pk(['#fff','#bdf0f6','#e2fbff']),life:40+R()*15,k:'ring',a:.85});break;
+  case 'moon':if(f%9===0)P({x:x+(R()<.5?-1:1)*r*(1.1+R()*.3),y:y-r*(.2+R()*.6),vy:-.25,s:4+R()*2.5,c:'#f5d36b',life:36,k:'moon',gl:10,rot:-.6+R()*.4});break;
+  case 'flame':for(let i=0;i<3;i++){const a=R()*Math.PI*2;P({x:x+Math.cos(a)*r*.85,y:y+Math.sin(a)*r*.85,vx:(R()-.5)*.6-dx*.5,vy:-1-R()*1.4,g:-.03,s:3+R()*4,gr:-.12,c:pk(['#ffb347','#ff6a2b','#ffe08a','#ff8a2b']),life:20+R()*10,gl:8,fd:12})}break;
+  case 'bolt':if(f%6===0){const z=[0,0,0].map(()=>(R()-.5)*10);P({x:x+(R()-.5)*r*2.4,y:y+(R()-.5)*r*2.4,s:r*(.8+R()*.6),c:pk(['#bfe6ff','#ffffff','#ffe14d']),life:8,k:'bolt',z,gl:12,fd:4,rot:(R()-.5)*1.2})}
+    if(f%2===0)P({vx:(R()-.5)*2,vy:(R()-.5)*2,s:1+R()*1.5,c:'#dff3ff',life:12,gl:6,fd:6});break;
+  case 'prism':if(f%3===0)P({x:x+(R()-.5)*r*2,y:y+(R()-.5)*r*2,s:2+R()*2.5,c:pk(['#ff9ad0','#9ae8ff','#d0ff9a','#fff59a','#d6b8ff']),life:18,k:'spark',gl:6,fd:10});break;
+  case 'dust':for(let i=0;i<2;i++){const a=f*.25+i*Math.PI+R()*.6,rr=r*(1+R()*.4);P({x:x+Math.cos(a)*rr,y:y+r*.35+Math.sin(a)*rr*.45,vx:-Math.sin(a)*1.3,vy:Math.cos(a)*.5-.2,s:3+R()*3,gr:.12,c:pk(['#d9b77a','#c99a55','#efd29a']),life:34+R()*12,a:.5,fd:20})}break;
+  case 'swirl':for(let i=0;i<2;i++){const a=f*.32+i*Math.PI,rr=r*1.25;P({x:x+Math.cos(a)*rr,y:y+Math.sin(a)*rr,vx:-Math.sin(a)*1.6+Math.cos(a)*.4,vy:Math.cos(a)*1.6+Math.sin(a)*.4,s:1.4+R()*2,c:pk(['#c9b8ff','#ff8ad8','#fff','#7a5cff','#7ee0ff']),life:26,gl:8,fd:14})}break;
+  case 'ember':if(f%2===0)P({x:x+(R()-.5)*r*1.4,y:y-r*.2,vx:(R()-.5)*.9,vy:-1.6-R()*1.4,g:-.01,s:1+R()*1.6,c:pk(['#ffb347','#ff6a2b','#ffd27a']),life:30+R()*14,gl:6,fd:14});break;
+  case 'slash':if(f%13===0)P({x,y,s:r*1.5,w:3,c:'#ffffff',life:10,k:'arc',gl:10,fd:6,rot:R()*6,vr:.12});break;
+  case 'magic':for(let i=0;i<2;i++)P({x:x+(R()-.5)*r*2.2,y:y+(R()-.5)*r*2.2,vy:-.3-R()*.5,s:1.6+R()*2.4,c:pk(['#c08bff','#ff7ad9','#ffd84d','#9be7ff']),life:22,k:R()<.4?'spark':'dot',gl:8,fd:12});break;
+  case 'wand':for(let i=0;i<2;i++)P({x:x+(R()-.5)*r*2.2,y:y+(R()-.5)*r*2.2,vy:-.3-R()*.5,s:1.6+R()*2.4,c:pk(['#c9b8ff','#ffffff','#9a7bff']),life:22,k:R()<.4?'spark':'dot',gl:8,fd:12});break;
+  case 'smoke':if(f%2===0)P({vx:-dx*.6+(R()-.5)*.5,vy:-.3-R()*.3,s:3+R()*3,gr:.3,c:pk(['#9aa3b2','#c8ced8','#6e7686']),life:32,a:.42,fd:24});break;
+  case 'skull':if(f%2===0)P({vx:(R()-.5)*.5,vy:-.6-R()*.4,s:3+R()*3,gr:.25,c:pk(['#5a0d14','#8a1420','#e2333f']),life:30,a:.4,fd:22});break;
+  case 'claw':if(f%15===0)P({x:x+(R()-.5)*r*1.6,y:y+(R()-.5)*r*1.6,s:r*.9,c:'#ffffff',life:16,k:'claw',gl:6,fd:8,rot:(R()-.5)*.8});break;
+  case 'petal':if(f%3===0)P({vx:-dx*.8+(R()-.5)*.8,vy:-.6-R()*.6,g:.03,s:2.5+R()*2.5,c:pk(['#e8486a','#ff8aa6','#c21d4a','#ffc2d1']),life:44,vr:(R()-.5)*.2});break;
+  case 'bfly':if(f%11===0)P({vx:-dx*.5+(R()-.5)*.8,vy:-.9-R()*.5,g:-.004,s:3.5+R()*2,c:pk(['#c86bd8','#a8327f','#7a3fd0','#ff9ad0']),life:48,k:'bfly',rot:(R()-.5)*.6,vr:(R()-.5)*.02});break;
+  case 'spray':for(let i=0;i<2;i++)P({y:y+r*.3,vx:-dx*.8+(R()-.5)*1.6,vy:-1.5-R()*1.5,g:.14,s:1+R()*2,c:pk(['#ffffff','#bfe8f2','#7cc6e8']),life:26,a:.9});break;
+  case 'paw':if(f%7===0)P({x:bx+(R()-.5)*4,y:gy+r*.55,s:3.2,c:'#8a5a3a',life:40,k:'paw',a:.7,rot:Math.atan2(dy,dx)+Math.PI/2});break;
+  case 'gift':if(f%3===0)P({vx:-dx*.8+(R()-.5)*1.2,vy:-1-R(),g:.06,s:6+R()*3,c:pk(['#d6457a','#e0b040','#ff8ab8','#fff2c0']),life:38,k:'rib',vr:(R()-.5)*.3});break;
+  case 'heart':if(f%5===0)P({vx:(R()-.5)*.6,vy:-.8-R()*.5,g:-.006,s:3+R()*2,c:pk(['#ff8ab8','#ffc2d9','#9ad0ff']),life:40,k:'heart'});break;
+  case 'space':if(f%9===0)P({x:x+(R()-.5)*r*2.4,y:y+(R()-.5)*r*2.4,vy:-.2,s:2+R()*1.5,c:pk(['#e0507a','#7ee0ff','#ffd84d']),life:36,k:'planet'});if(f%4===0)P({x:x+(R()-.5)*r*2.4,y:y+(R()-.5)*r*2.4,s:1.5+R()*1.5,c:'#ffffff',life:16,k:'spark',gl:6,fd:8});break;
+  case 'leaf':if(f%4===0)P({vx:-dx*.7+(R()-.5)*.8,vy:-.5-R()*.6,g:.035,s:3+R()*2.5,c:pk(['#4f9a3a','#7cc35a','#2f7a2a']),life:46,k:'leaf',vr:(R()-.5)*.18});break;
+  }
+  if(L.length)emit(L)}
 const THROW_MS=2500;
 function throwDice(ci,v,col,o={}){
   const dice=o.back||$('dice'),bb=o.area||$('boardBox').getBoundingClientRect(),[sx,sy]=o.from||elPt(dice);
@@ -3734,6 +3828,9 @@ function throwDice(ci,v,col,o={}){
   const ex=bb.left+bb.width/2+(Math.random()-.5)*bb.width*.22,ey=bb.top+bb.height/2+(Math.random()-.5)*bb.height*.22;
   const wrap=document.createElement('div');wrap.className='d3';wrap.style.setProperty('--s',size+'px');
   const sh=document.createElement('div');sh.className='d3sh';const cube=document.createElement('div');cube.className='cube';
+  const DX=DFX[skin.id]||{};let gl=null,cr=null;
+  if(DX.gc&&!RM){gl=document.createElement('div');gl.className='d3gl';gl.style.setProperty('--gc',DX.gc)}
+  if(DX.cr&&!RM){cr=document.createElement('div');cr.className='d3cr';cr.innerHTML=DCROWN}
   const FR=[[1,'rotateY(0deg)'],[6,'rotateY(180deg)'],[3,'rotateY(90deg)'],[4,'rotateY(-90deg)'],[5,'rotateX(90deg)'],[2,'rotateX(-90deg)']];
   // جسم داخلي مصمت يسد الفراغات عند الزوايا والحواف عشان النرد يبان قطعة وحدة
   FR.forEach(([n,t])=>{const c=document.createElement('div');c.className='core';c.style.background=skin.edge||'#222';c.style.transform=`${t} translateZ(calc(var(--s)/2 - 1.5px))`;cube.appendChild(c)});
@@ -3741,13 +3838,15 @@ function throwDice(ci,v,col,o={}){
   FR.forEach(([n,t])=>{
     const f=document.createElement('div');f.className='face';f.style.transform=`${t} translateZ(calc(var(--s)/2))`;
     const svg=el('svg',{viewBox:'4 4 92 92'});diceSvg(skin,n,svg,col,true);f.appendChild(svg);
-    const b=document.createElement('b'),i=document.createElement('i');f.append(b,i);shades.push(b);cube.appendChild(f)});
+    const b=document.createElement('b'),i=document.createElement('i');f.append(b,i);shades.push(b);
+    if(DX.sh&&!RM){const u=document.createElement('u');if(DX.sh==='rb')u.className='rb';else u.style.setProperty('--shc',DX.sh+'cc');u.style.animationDelay=(-Math.random()).toFixed(2)+'s';f.appendChild(u)}
+    cube.appendChild(f)});
   // إضاءة حقيقية: كل وجه يغمق أو يفتح حسب اتجاهه من الضوء وهو يتقلب
   const LX=-.3,LY=-.55,LZ=.78;
   function light(tr){try{const M=new DOMMatrix(tr);FM.forEach((F,k)=>{const m=M.multiply(F),o=m.transformPoint(new DOMPoint(0,0,0)),p=m.transformPoint(new DOMPoint(0,0,1));
     let nx=p.x-o.x,ny=p.y-o.y,nz=p.z-o.z;const L=Math.hypot(nx,ny,nz)||1;const d=Math.max(0,(nx*LX+ny*LY+nz*LZ)/L);
     shades[k].style.opacity=String((1-d)*.62)})}catch(e){}}
-  wrap.append(sh,cube);document.body.appendChild(wrap);dice.style.opacity='0';
+  if(gl)wrap.appendChild(gl);wrap.append(sh,cube);if(cr)wrap.appendChild(cr);document.body.appendChild(wrap);dice.style.opacity='0';let fN=0;
   // رمية واقعية: يطير قوس قصير، يلمس اللوحة، ثم يتدحرج على حوافه وجه بعد وجه ويبطّئ لين يثبت
   const [fx,fy]=FACE_ROT[v],R=Math.random;
   let dx=ex-sx,dy=ey-sy;const D=Math.hypot(dx,dy)||1;dx/=D;dy/=D;
@@ -3778,8 +3877,13 @@ function throwDice(ci,v,col,o={}){
     wrap.style.transform=`translate(${P.x}px,${P.y}px)`;
     const CT=`rotateZ(${P.yaw}deg) rotateY(${P.A}deg) rotateX(${P.wx}deg) rotateX(${fx}deg) rotateY(${fy}deg)`;cube.style.transform=`translateY(${-P.h}px) scale(${1+P.h/H*.3}) ${CT}`;light(CT);
     const hh=Math.min(1,P.h/H);sh.style.transform=`translateY(${P.h*.15}px) scale(${1-hh*.45})`;sh.style.opacity=String(.55-hh*.35);
+    // مؤثر النرد وهو يتدحرج (يوقف أول ما يثبت)
+    if(gl)gl.style.transform=`translateY(${-P.h}px) scale(${1+P.h/H*.3})`;
+    if(cr)cr.style.transform=`translateY(${-P.h}px) rotate(${Math.sin(ms/160)*8}deg)`;
+    if(DX.p&&ms<TF+TR+TS*.3)rollFx(DX.p,P.x,P.y-P.h,P.y,size,fN,dx,dy);fN++;
     if(ms<T)requestAnimationFrame(frame);
     else{if(skin.fx)landSnd(skin.fx,v);
+      if(gl)gl.style.transition='opacity .3s',gl.style.animation='none',gl.style.opacity='0';
       setTimeout(()=>{const [bx,by]=elPt(dice);wrap.classList.add('back');wrap.style.transform=`translate(${bx}px,${by}px) scale(.85)`;wrap.style.opacity='0';
         setTimeout(()=>{wrap.remove();dice.style.opacity=''},220)},o.hold||600)}}
   requestAnimationFrame(frame);
